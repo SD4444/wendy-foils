@@ -117,12 +117,22 @@ On bad-wind weeks the Monday email still goes out (Simon wants the weekly pictur
 
 ---
 
-## 5. Files
+## 5. Files & run architecture
 
-- `wendy.py` — the forecast engine. `python3 wendy.py weekly` (7-day Sunday planner, best_match blend) or `python3 wendy.py daily` (next-3-day HARMONIE lookout). Fetches multi-model wind + ICON-EU ensemble + EWAM waves/sea-temp, applies the good-day rule, and prints a human summary plus delimited blocks: `<!--SUBJECT_START-->`, `<!--EMAIL_HTML_START-->`, `<!--JSON_START-->`. The scheduled agent runs it, then passes the subject as the event title and the HTML as the event description to `create_event`.
+- `wendy.py` — the forecast engine. `python3 wendy.py weekly` (7-day Sunday planner, best_match blend) or `python3 wendy.py daily` (next-3-day HARMONIE lookout). Pure stdlib (urllib). Fetches multi-model wind + ICON-EU ensemble + EWAM waves/sea-temp, applies the good-day rule, and prints a human summary plus delimited blocks: `<!--SUBJECT_START-->`, `<!--EMAIL_HTML_START-->`, `<!--JSON_START-->`.
+- `.github/workflows/forecast.yml` — **GitHub Action that does the forecast FETCH.** Runs on cron (daily 04:50 UTC, Sunday 15:50 UTC) plus `workflow_dispatch` (input `mode`), executes `wendy.py`, and commits the full output to `data/<mode>.out.txt` + a `data/<mode>.fetched_at.txt` timestamp. Rebase-and-retry push (the cloud routine pushes to the same branch).
+- `data/` — committed forecast output the routines read (`weekly.out.txt`, `daily.out.txt`, `*.fetched_at.txt`).
+- `docs/index.html` — the linked dashboard, served by GitHub Pages at **https://sd4444.github.io/wendy-foils/** (repo is public; source = `main` /docs). Data currently hardcoded per-week; regenerating it from the engine JSON each run is a TODO.
 - `reference/` — research notes on forecast sources, spots, skill-level bands.
-- `logs/` — run logs / forecast history, to debug and dedupe alerts.
+- `logs/runs.md` — run log / dedupe history.
 - `.claude/skills/` — project-specific skills, if any get built.
+
+**Why the fetch lives in a GitHub Action, not the routine (verified 2026-07-04):** the Claude cloud-routine sandbox has a default-deny egress proxy. Open-Meteo hosts (`api.open-meteo.com`, `ensemble-api.open-meteo.com`, `marine-api.open-meteo.com`) return **403 host_not_allowed** inside the routine — `wendy.py` "works" but returns a false "no wind" negative. Egress is an **environment-level** setting only (claude.ai/customize/environments → Default → Network access → Custom → add the 3 domains); it is NOT settable in `.claude/settings.json` or the RemoteTrigger job body (the API silently strips a `networking` block). Rather than depend on that toggle, the fetch runs in GitHub Actions (open internet) and commits the result; **the two cloud routines only READ `data/` and send the Calendar invite** (clone + Calendar MCP both work in-sandbox). If you ever allowlist the domains in the environment, you can collapse this back to the routine running `wendy.py` directly.
+
+Scheduled cloud routines (created via the `schedule` skill / RemoteTrigger, run as SD4444):
+- `trig_01LoHfWH1ccCHDKoBnBoXTih` — Sunday week-ahead, cron `0 16 * * 0` (18:00 Amsterdam).
+- `trig_012gvAFWXAhNoMLcVPkcd4aZ` — daily scan, cron `0 5 * * *` (07:00 Amsterdam), dedupes against `logs/runs.md`.
+Each reads `data/<mode>.out.txt`, checks `fetched_at` is today (else alerts "stale"), and creates the Calendar event.
 
 **Email rendering caveat:** the HTML is all inline styles (no external CSS) so it survives email clients. Gmail renders the rich table + color tags when Simon opens the calendar event; the invitation *email* preview itself may show a simplified version. If inbox rendering ever disappoints, fall back to the linked-dashboard option (a hosted forecast page linked from a short invite).
 
