@@ -1,3 +1,4 @@
 # Wendy Foils run log
 
 2026-07-04 | daily | FAILED - forecast fetch blocked | Open-Meteo (api.open-meteo.com, ensemble-api.open-meteo.com, marine-api.open-meteo.com) all returned 403 via the sandbox egress proxy (org policy denial, not a transient error - confirmed on 2 consecutive runs). All 4 spots returned zero data; wendy.py's own "no foil window" output is a false negative, not a real forecast. No calendar invite sent. Needs proxy allowlist fix for open-meteo.com hosts before next scheduled run.
+2026-07-04 | daily | fetch OK (fetched_at 2026-07-04T07:02:12Z) | "🌬️ Lookout: no foil window" | all spots SKIP Sat 04-Mon 06 Jul, all too light (peaks 9-13kt, need 13kt+) except Wijk aan Zee (parked, coast). No GO/MAYBE windows (JSON empty). Nothing new vs prior state. Invite suppressed, nothing to alert.
