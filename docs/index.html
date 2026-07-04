@@ -13,6 +13,7 @@
     --skip:#7d8c92; --skip-bg:#eef1f2; --track:#e6ebec;
     --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --c1:200px;
   }
   @media (prefers-color-scheme:dark){
     :root{
@@ -34,73 +35,88 @@
     --go:#43c988; --go-bg:#123227; --maybe:#e0a13a; --maybe-bg:#33260f;
     --skip:#6f858c; --skip-bg:#152a34; --track:#122a34;
   }
+  html{-webkit-text-size-adjust:100%}
   body{background:var(--ground);color:var(--ink);font-family:var(--sans);
-    line-height:1.6;-webkit-font-smoothing:antialiased}
-  /* left-aligned container, consistent gutter, no centering */
-  .wrap{max-width:1180px;margin:0;padding:0 clamp(28px,6vw,80px)}
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0;padding:0 clamp(20px,5vw,80px)}
 
   .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
   #wind{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .hero-in{position:relative;z-index:2;padding:64px 0 56px}
-  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
-    color:var(--accent);margin:0 0 20px;display:flex;align-items:center;gap:11px}
-  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);
+  .hero-in{position:relative;z-index:2;padding:clamp(44px,9vw,64px) 0 clamp(38px,7vw,56px)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 20px;display:flex;align-items:center;gap:11px;
+    flex-wrap:wrap;line-height:1.5}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;
     box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
-  h1{font-size:clamp(30px,6vw,52px);line-height:1.04;margin:0 0 22px;font-weight:800;
+  h1{font-size:clamp(28px,7vw,52px);line-height:1.05;margin:0 0 20px;font-weight:800;
     letter-spacing:-.02em;text-wrap:balance;max-width:15ch}
-  .verdict-line{font-size:17px;color:var(--ink-soft);max-width:60ch;margin:0}
+  .verdict-line{font-size:clamp(15px,2.4vw,17px);color:var(--ink-soft);max-width:60ch;margin:0}
   .verdict-line strong{color:var(--ink)}
-  .meta{display:flex;flex-wrap:wrap;gap:14px 34px;margin-top:34px;
+  .meta{display:flex;flex-wrap:wrap;gap:12px 30px;margin-top:30px;
     font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
   .meta b{color:var(--ink);font-weight:600}
 
-  section{padding:52px 0}
-  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  section{padding:clamp(34px,7vw,52px) 0}
+  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--ink-soft);margin:0 0 8px}
-  .sec-note{font-size:13px;color:var(--ink-soft);margin:0 0 26px;max-width:60ch}
+  .sec-note{font-size:13px;color:var(--ink-soft);margin:0 0 24px;max-width:62ch}
   .sec-note .swatch{display:inline-block;width:26px;height:6px;border-radius:3px;vertical-align:middle;
     background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 30%,transparent),var(--accent));margin:0 3px}
 
-  .scroll{overflow-x:auto;padding-bottom:4px}
-  table{border-collapse:separate;border-spacing:0;width:100%}
-  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink-soft);font-weight:600;white-space:nowrap;text-align:left;
-    padding:0 14px 16px;border-bottom:1px solid var(--hair)}
-  thead th:first-child{padding-left:0}
-  tbody th{text-align:left;font-weight:600;white-space:nowrap;vertical-align:middle;
-    padding:22px 14px 22px 0;border-bottom:1px solid var(--hair);font-size:15px}
+  /* matrix: one grid on desktop (display:contents wrappers), card-per-spot on mobile */
+  .matrix{display:grid;grid-template-columns:var(--c1) repeat(7,minmax(0,1fr));
+    column-gap:6px;align-items:stretch}
+  .mhead,.srow{display:contents}
+  .corner{border-bottom:1px solid var(--hair)}
+  .dh{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:600;padding:0 4px 16px;border-bottom:1px solid var(--hair)}
+  .sname{font-weight:600;font-size:15px;padding:20px 12px 20px 0;border-bottom:1px solid var(--hair);
+    align-self:center}
   .spot-sub{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);
     font-family:var(--mono);letter-spacing:.02em;margin-top:3px}
-  tbody td{padding:18px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
-
-  .cellwrap{display:flex;flex-direction:column;gap:9px;align-items:flex-start;min-width:64px}
+  .cell{display:flex;flex-direction:column;gap:9px;align-items:flex-start;
+    padding:18px 4px;border-bottom:1px solid var(--hair)}
+  .dlabel{display:none;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+    color:var(--ink-soft)}
   .tag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;
-    letter-spacing:.07em;padding:3px 7px;border-radius:5px}
+    letter-spacing:.06em;padding:3px 7px;border-radius:5px;white-space:nowrap}
   .kt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;
-    line-height:1;color:var(--ink)}
-  .go .tag{background:var(--go-bg);color:var(--go)} .go .kt{color:var(--go)}
-  .maybe .tag{background:var(--maybe-bg);color:var(--maybe)} .maybe .kt{color:var(--maybe)}
+    line-height:1;color:var(--ink);white-space:nowrap}
   .skip .tag{background:var(--skip-bg);color:var(--skip)} .skip .kt{color:var(--ink-soft)}
-  /* wind-quality bar — teal, fuller = closer to foilable band */
-  .qbar{width:52px;height:5px;border-radius:3px;background:var(--track);overflow:hidden}
+  .maybe .tag{background:var(--maybe-bg);color:var(--maybe)} .maybe .kt{color:var(--maybe)}
+  .go .tag{background:var(--go-bg);color:var(--go)} .go .kt{color:var(--go)}
+  .qbar{width:100%;max-width:56px;height:5px;border-radius:3px;background:var(--track);overflow:hidden}
   .qbar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
   .best .kt{color:var(--accent);font-weight:700}
   .best .qbar i{box-shadow:0 0 8px color-mix(in srgb,var(--accent) 70%,transparent)}
 
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
-  .card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:22px 22px 24px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:20px}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:22px}
   .card h3{margin:0 0 12px;font-size:13px;font-family:var(--mono);letter-spacing:.04em;
     text-transform:uppercase;color:var(--ink-soft);font-weight:600}
   .card p{margin:0;font-size:14px;color:var(--ink);line-height:1.6}
   .card .big{font-family:var(--mono);font-weight:700;font-size:15px}
 
-  footer{border-top:1px solid var(--hair);margin-top:8px;padding:34px 0 56px;
+  footer{border-top:1px solid var(--hair);padding:32px 0 clamp(40px,10vw,56px);
     font-size:12.5px;color:var(--ink-soft);line-height:1.9}
-  footer .src{font-family:var(--mono);margin-bottom:14px}
+  footer .src{font-family:var(--mono);margin-bottom:14px;word-break:break-word}
   footer a{color:var(--accent);text-decoration:none}
   footer a:hover{text-decoration:underline}
   a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
   @media (prefers-reduced-motion:reduce){#wind{display:none}}
+
+  /* ---- mobile: reflow matrix into a card per spot, no horizontal scroll ---- */
+  @media (max-width:760px){
+    .matrix{display:block}
+    .mhead{display:none}
+    .srow{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;
+      background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+      padding:16px;margin-bottom:14px}
+    .sname{grid-column:1/-1;padding:0 0 4px;border-bottom:1px solid var(--hair);margin-bottom:4px}
+    .cell{border-bottom:none;padding:4px 0;gap:7px}
+    .dlabel{display:block}
+    .qbar{max-width:none}
+  }
 </style>
 </head>
 <body>
@@ -117,12 +133,12 @@
 
 <section class="wrap">
   <p class="sec-note">Each cell shows the call and peak wind. The <span class="swatch"></span> bar is wind quality &mdash; how close that day sits to your foilable window (fuller and brighter = better). GO days glow.</p>
-  <div class="scroll"><table id="matrix"><thead></thead><tbody></tbody></table></div>
+  <div class="matrix" id="matrix"></div>
 </section>
 
 <section class="wrap">
   <h2 class="sec-h">How the call is made</h2>
-  <div class="cards" style="margin-top:20px">
+  <div class="cards">
     <div class="card"><h3>Foilable wind</h3><p><span class="big">13&ndash;22 kt</span>, ideal 15&ndash;20. Below 13 you can't get up on the 95L.</p></div>
     <div class="card"><h3>Steady, not spiky</h3><p>Gust minus average <span class="big">&le; 5 kt</span>. A 15-gusting-28 day is a no-go on a 5m.</p></div>
     <div class="card"><h3>Direction</h3><p>Side-shore / side-onshore only. <span class="big">Offshore blocks</span> the spot regardless of speed.</p></div>
@@ -153,7 +169,7 @@ const GRID = {
   "Schellinkhout":    [["skip",14,.46],["skip",12,.37],["skip","13g26",.27],["skip","15g31",.24],["skip",10,.31],["skip",8,.25],["skip",9,.28]],
   "Wijk aan Zee":     [["skip","0.8m",.08],["skip","0.8m",.08],["skip","0.7m",.08],["skip","0.5m",.10],["skip","—",0],["skip","—",0],["skip","—",0]],
 };
-const BEST = {spot:"Schellinkhout", day:0}; // week's least-bad cell, gets the glow
+const BEST = {spot:"Schellinkhout", day:0};
 const NOTES = {
   "13g26":"peak 13kt but gusting 26 — too spiky on a 5m",
   "13g30":"peak 13kt but gusting 30 — overpowered/unstable",
@@ -172,25 +188,27 @@ const meta = [
 ];
 document.getElementById("meta").innerHTML = meta.map(m=>`<span><b>${m[0]}:</b> ${m[1]}</span>`).join("");
 
-const thead = document.querySelector("#matrix thead");
-thead.innerHTML = "<tr><th>Spot</th>"+DAYS.map(d=>`<th>${d}</th>`).join("")+"</tr>";
-const tbody = document.querySelector("#matrix tbody");
-tbody.innerHTML = SPOTS.map(s=>{
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let html = `<div class="mhead"><div class="corner"></div>`+
+  DAYS.map(d=>`<div class="dh">${d}</div>`).join("")+`</div>`;
+html += SPOTS.map(s=>{
   const cells = GRID[s.name].map((c,di)=>{
     const [call,val,q] = c;
-    const note = NOTES[val] ? ` title="${NOTES[val]}"` : "";
+    const title = NOTES[val] ? ` title="${esc(NOTES[val])}"` : "";
     const isBest = (s.name===BEST.spot && di===BEST.day) ? " best" : "";
     const shown = typeof val==="number" ? val+"kt" : String(val).replace(/g\d+/,m=>" g"+m.slice(1));
     const pct = Math.max(q>0?10:0, Math.round(q*100));
     const op = (0.4 + 0.6*q).toFixed(2);
-    return `<td class="cell ${call}${isBest}"${note}><div class="cellwrap">`+
+    return `<div class="cell ${call}${isBest}"${title}>`+
+      `<span class="dlabel">${DAYS[di]}</span>`+
       `<span class="tag">${call.toUpperCase()}</span>`+
       `<span class="kt">${shown}</span>`+
       `<div class="qbar"><i style="width:${pct}%;opacity:${op}"></i></div>`+
-      `</div></td>`;
+      `</div>`;
   }).join("");
-  return `<tr><th>${s.name}<span class="spot-sub">${s.sub}</span></th>${cells}</tr>`;
+  return `<div class="srow"><div class="sname">${s.name}<span class="spot-sub">${s.sub}</span></div>${cells}</div>`;
 }).join("");
+document.getElementById("matrix").innerHTML = html;
 
 (function(){
   const c = document.getElementById("wind"), x = c.getContext("2d");
