@@ -110,23 +110,24 @@ def build_data(grid):
 
     gos = [r for r in gm if r["verdict"] == "GO"]
     maybes = [r for r in gm if r["verdict"] == "MAYBE"]
+    def dayname(d): return datetime.fromisoformat(d+"T00:00").strftime("%A")
     if gos:
         b = gos[0]
-        headline = "There's a window this week."
-        verdict = (f"<strong>{dlong(b['date'])} at {b['spot']}</strong> is the pick. "
-                   f"The rest of the week is ranked below, with why each day works or doesn't.")
+        headline = f"{dayname(b['date'])}'s on."
+        verdict = (f"<strong>{dlong(b['date'])} at {b['spot']}</strong> is the pick — "
+                   f"{(b.get('why') or '').split('|')[0].strip()}. The rest of the week's ranked below.")
     elif maybes:
         days_txt = ", ".join(daylabel(d) for d in sorted({r["date"] for r in maybes}))
         b = maybes[0]
-        headline = "The models can't agree."
-        verdict = (f"No clean GO, but forecasts <strong>split</strong> on {days_txt}. Our high-res near-term "
-                   f"model reads light while the global models run foilable over open water. "
-                   f"<strong>{b['spot']}</strong> is the one to watch — commit only if the stronger model "
-                   f"firms up closer in. Coast stays parked until you're foil-stable.")
+        headline = f"{dayname(b['date'])}'s playing hard to get."
+        verdict = (f"The models split on {days_txt}: my high-res near-term read is light, the global models "
+                   f"run foilable over open water. <strong>{b['spot']}</strong> is the one to watch — "
+                   f"commit only if the stronger model firms up. I'll flag it the second it does. "
+                   f"Coast stays parked until you're foil-stable.")
     else:
-        headline = "Nothing rideable yet."
-        verdict = ("Light all week at your calm-water spots, and no model finds a steady in-band window in "
-                   "your hours. The daily scan keeps watching and will ping you the moment that changes.")
+        headline = "Flat and lazy out there."
+        verdict = ("No steady wind in your hours all week, and every model agrees. Rest those arms — "
+                   "I'm still watching, and I don't miss a good day.")
 
     airs = [r["air"] for r in grid if r.get("air") is not None]
     waters = [r["water"] for r in grid if r.get("water") is not None]
