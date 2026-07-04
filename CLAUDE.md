@@ -65,6 +65,7 @@ Tag each spot `inland` (wind only, no swell) or `coast` (wind + waves). Coordina
 | **Muiderberg** (IJmeer) | inland | 52.3291, 5.1134 | N, NW, NE, light E | **S, SW, SE** | ~20min | Closest. Standing-depth flat 300m+ out. Gusty near tree-lined launch, launch from the water. Top beginner pick. |
 | **Schellinkhout** (Markermeer) | inland | 52.6167, 5.1350 *(approx)* | SW, W, S, SE | N, NE | ~45min | Safest water in region — shallow standing depth 500-800m out. |
 | **Almere Muiderzand** (IJmeer) | inland | 52.3390, 5.1740 *(approx)* | N, NW, W, SW | **E** | ~25-30min | Official spot, a bit deeper. Open Apr 1-Oct 31 only. |
+| **Loosdrecht** (Loosdrechtse Plassen) | inland | 52.1960, 5.0650 *(approx)* | SW, WSW, W, S, SSW, NW, N | E, ENE | ~30min | Added 2026-07-04. Shallow sheltered lake system, gusty near tree-lined shores, popular beginner spot. Windguru 26078. |
 | **Wijk aan Zee** (North Sea) | coast | 52.4930, 4.5880 *(approx)* | SW, W-NW | E, SE | ~35-40min | Waves/tides/currents — **intermediate, skip until foil-stable on flat water.** |
 
 Friesland spots (Workum, Makkum, Hindeloopen) are the region's best beginner flats but ~80-90min away — day-trip only, out of normal radius.
@@ -131,7 +132,7 @@ On bad-wind weeks the Monday email still goes out (Simon wants the weekly pictur
 - `.github/workflows/forecast.yml` — **GitHub Action that does the forecast FETCH.** Runs on cron (daily 04:50 UTC, Sunday 15:50 UTC) plus `workflow_dispatch` (input `mode`), executes `wendy.py`, and commits the full output to `data/<mode>.out.txt` + a `data/<mode>.fetched_at.txt` timestamp. Rebase-and-retry push (the cloud routine pushes to the same branch).
 - `data/` — committed forecast output the routines read (`weekly.out.txt`, `daily.out.txt`, `*.fetched_at.txt`).
 - `docs/index.html` — the linked dashboard, served by GitHub Pages at **https://sd4444.github.io/wendy-foils/** (repo is public; source = `main` /docs). **Auto-generated** by `gen_dashboard.py` from the engine's `<!--GRID_START-->` block; the Action rebuilds it every run so it always shows the current 7-day outlook. Do not hand-edit it; edit the template inside `gen_dashboard.py`.
-- `gen_dashboard.py` — reads a `wendy.py` weekly output file's GRID block and writes `docs/index.html`. Usage: `python3 gen_dashboard.py data/weekly.out.txt docs/index.html`.
+- `gen_dashboard.py` — reads a `wendy.py` weekly output file's GRID block and writes `docs/index.html`. Usage: `python3 gen_dashboard.py data/weekly.out.txt docs/index.html`. **Click-to-expand day view:** cells for the near days (day-of to +2, where the engine emits an `hourly` 06:00-22:00 array) are clickable and open a modal with a per-hour wind bar chart (gust caps, shaded 13-22 foilable + 15-20 ideal bands, direction arrows). Far days aren't clickable (no trustworthy hourly that far out). Modal closes on X / backdrop / Esc; becomes a bottom-sheet on mobile.
 - `reference/` — research notes on forecast sources, spots, skill-level bands.
 - `logs/runs.md` — run log / dedupe history.
 - `.claude/skills/` — project-specific skills, if any get built.

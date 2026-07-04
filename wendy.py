@@ -53,6 +53,9 @@ SPOTS = [
     {"name":"Almere Muiderzand","lat":52.3390,"lon":5.1740,"type":"inland",
      "blocked":{"E","ENE","ESE"}, "good":{"N","NNW","NW","W","SW","WSW"},
      "wg":"https://www.windguru.cz/19","note":"~25min, official spot, a bit deeper"},
+    {"name":"Loosdrecht","lat":52.1960,"lon":5.0650,"type":"inland",
+     "blocked":{"E","ENE"}, "good":{"SW","WSW","W","S","SSW","NW","N"},
+     "wg":"https://www.windguru.cz/26078","note":"~30min, shallow sheltered lake system, gusty near tree-lined shores, popular beginner spot"},
     {"name":"Wijk aan Zee","lat":52.4930,"lon":4.5880,"type":"coast",
      "blocked":{"E","ENE","ESE","SE"}, "good":{"SW","WSW","W","WNW","NW"},
      "wg":"https://www.windguru.cz/113","note":"coast/waves - PARKED until foil-stable on flat water"},
@@ -213,7 +216,7 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
                              "air":air[i] if i < len(air) else None})
     # build best window per day
     results = []
-    for date in sorted(by_day):
+    for day_idx, date in enumerate(sorted(by_day)):
         hours = by_day[date]
         # find longest run of qualifying consecutive hours
         best = None; run = []
@@ -255,6 +258,14 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
             if ens:
                 ps = [ens[x["t"]] for x in br if x["t"] in ens]
                 if ps: prob = round(sum(ps)/len(ps), 2)
+        # hourly breakdown 06:00-22:00 for the near days only (day-of to +2), where the
+        # short-range models are trustworthy; powers the click-to-expand day view.
+        hourly = None
+        if day_idx <= 2:
+            hourly = [{"h": x["h"], "s": round(x["s"],1),
+                       "g": round(x["g"],1) if x["g"] is not None else None,
+                       "dir": x["dir"], "deg": x["deg"]}
+                      for x in sorted(hours, key=lambda x: x["h"]) if 6 <= x["h"] <= 22]
         results.append({"date":date,"spot":spot["name"],"type":spot["type"],
                         "verdict":verdict,"score":score,"why":why,"best":best,
                         "avg": round(best["avg"],1) if best else None,
@@ -263,7 +274,8 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
                         "wave": round(wave,1) if wave is not None else None,
                         "air": round(max(air_go),1) if air_go else None,
                         "water": water, "wetsuit": suit_for(water),
-                        "dir": bdir, "win": bwin, "deg": bdeg, "prob": prob, "obs": None})
+                        "dir": bdir, "win": bwin, "deg": bdeg, "prob": prob, "obs": None,
+                        "hourly": hourly})
     return results
 
 def weekday_name(date):
@@ -497,7 +509,7 @@ def main():
     print(f"=== {mode.upper()} ===")
     for r in sorted(all_results, key=lambda r:(r["date"], r["spot"])):
         print(f"{weekday_name(r['date'])}  {r['spot']:<18} {r['verdict']:<5} {stars(r['score']) if r['verdict']!='SKIP' else '':<7} {r['why']}")
-    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why","dir","win","deg","prob","obs")
+    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why","dir","win","deg","prob","obs","hourly")
     grid = [{k: r.get(k) for k in grid_keys} for r in all_results]
     print(f"\n<!--SUBJECT_START-->{subject}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged)}<!--JSON_END-->")

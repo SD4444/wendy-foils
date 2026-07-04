@@ -8,13 +8,15 @@ Edit the design in TEMPLATE below; never hand-edit docs/index.html (it is genera
 import sys, json, re
 from datetime import datetime
 
-WIND_MIN, GUST_MAX = 13, 25
+WIND_MIN, WIND_MAX, GUST_MAX = 13, 22, 25
 SPOT_SUB = {
     "Muiderberg": ("IJmeer", "inland flat", "~20 min"),
     "Almere Muiderzand": ("IJmeer", "inland flat", "~25 min"),
     "Schellinkhout": ("Markermeer", "inland flat", "~45 min"),
+    "Loosdrecht": ("Loosdrechtse Plassen", "inland flat", "~30 min"),
     "Wijk aan Zee": ("North Sea", "coast / waves", "~40 min"),
 }
+BAND = {"lo": WIND_MIN, "hi": WIND_MAX, "ideal_lo": 15, "ideal_hi": 20, "gustmax": GUST_MAX}
 SOURCES = [
     "KNMI HARMONIE-AROME · NL 2 km anchor",
     "ICON-D2 · 2 km near-term check",
@@ -143,10 +145,18 @@ def build_data(grid):
         tiles.append(["Air / water", f"{min(airs):.0f}–{max(airs):.0f}° / {wt:.0f}°", "°C"])
     tiles.append(["Confidence", conf, "model agreement"])
 
+    # hourly breakdown for the near days, keyed "spot|date" (only present day-of to +2)
+    hourly = {}
+    for r in grid:
+        if r.get("hourly"):
+            hourly[f"{r['spot']}|{r['date']}"] = r["hourly"]
+    daylong = {d: dlong(d) for d in dates}
+
     weeklabel = datetime.fromisoformat(dates[0]+"T00:00").strftime("Week of %-d %b %Y")
-    return {"days": days, "spots": spots, "grid": matrix, "best": best, "feature": feature,
-            "headline": headline, "verdict": verdict, "tiles": tiles,
-            "sources": SOURCES, "weeklabel": weeklabel}
+    return {"days": days, "dates": dates, "daylong": daylong, "spots": spots, "grid": matrix,
+            "best": best, "feature": feature, "headline": headline, "verdict": verdict,
+            "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel,
+            "hourly": hourly, "band": BAND}
 
 def main():
     src, dest = sys.argv[1], sys.argv[2]
@@ -185,7 +195,7 @@ TEMPLATE = r"""<!doctype html>
   html{-webkit-text-size-adjust:100%}
   body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
     -webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:.002em}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,48px)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(26px,6vw,52px)}
   .mono{font-family:var(--mono)}
   ::selection{background:rgba(57,215,223,.28)}
 
@@ -238,9 +248,10 @@ TEMPLATE = r"""<!doctype html>
     background:rgba(57,215,223,.1);padding:2px 8px;border-radius:12px;letter-spacing:.03em}
   .feat-where .spot{display:flex;align-items:center;gap:10px}
   .compass{flex:none}
-  .live{display:flex;align-items:center;gap:9px;margin-top:15px;padding-top:14px;
+  .live{display:flex;align-items:flex-start;gap:9px;margin-top:15px;padding-top:14px;
     border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
-  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;
+  .live .lt{flex:1;line-height:1.5}
+  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px;
     box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
   .live b{color:var(--ink);font-weight:600}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
@@ -309,7 +320,40 @@ TEMPLATE = r"""<!doctype html>
   .fmeta{font-size:12.5px;color:var(--faint);line-height:1.8}
   .fmeta a{color:var(--accent);text-decoration:none} .fmeta a:hover{text-decoration:underline}
 
-  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  /* clickable day cells */
+  .cell.clickable{cursor:pointer}
+  .cell .exp{position:absolute;bottom:9px;right:10px;color:var(--faint);font-size:12px;line-height:1;
+    opacity:.6;transition:opacity .15s ease,color .15s ease}
+  .cell.clickable:hover .exp{opacity:1;color:var(--accent)}
+  /* day detail modal */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    padding:clamp(16px,4vw,40px);background:rgba(3,9,12,.72);backdrop-filter:blur(5px)}
+  .modal.open{display:flex}
+  .sheet{position:relative;width:100%;max-width:620px;max-height:92vh;overflow:auto;
+    background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--hair2);
+    border-radius:20px;padding:clamp(20px,3.5vw,28px);
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.8);transform:translateY(10px);opacity:0;
+    transition:transform .28s cubic-bezier(.2,.7,.2,1),opacity .22s ease}
+  .modal.open .sheet{transform:none;opacity:1}
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px}
+  .sheet-head .sk{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .sheet-head h3{font-family:var(--disp);font-size:clamp(20px,3.6vw,26px);font-weight:600;margin:2px 0 0;color:#fff}
+  .sheet-head .sd{font-family:var(--mono);font-size:12px;color:var(--soft);margin-top:3px}
+  .xbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--hair2);
+    background:transparent;color:var(--soft);font-size:17px;cursor:pointer;line-height:1;
+    display:grid;place-items:center;transition:background .15s,color .15s}
+  .xbtn:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+  .chartwrap{margin:18px 0 6px}
+  .chartwrap svg{display:block;width:100%;height:auto}
+  .chlegend{display:flex;flex-wrap:wrap;gap:8px 16px;font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:4px}
+  .chlegend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+  .sheet-note{font-size:13.5px;color:var(--soft);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
+  .sheet-note b{color:var(--ink);font-weight:600}
+  @media (max-width:560px){
+    .modal{padding:0;align-items:flex-end}
+    .sheet{max-width:none;max-height:94vh;border-radius:20px 20px 0 0;border-bottom:none}
+  }
   .reveal{opacity:0;transform:translateY(14px)}
   .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
   @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}.live .ld{animation:none}}
@@ -379,6 +423,10 @@ TEMPLATE = r"""<!doctype html>
   </div>
 </footer>
 
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
+  <div class="sheet" id="sheet"></div>
+</div>
+
 <script>
 /*DATA*/
 const $ = s => document.querySelector(s);
@@ -415,7 +463,7 @@ if (DATA.feature){
        <span>dir <b>${esc(f.dir)}</b></span><span>gust <b>${esc(f.gust)}</b></span>
        <span>air <b>${esc(f.air)}</b></span><span>water <b>${esc(f.water)}</b></span>
      </div>
-     ${f.obs?`<div class="live"><span class="ld"></span> Live now <b>${esc(f.obs.kt)} kt</b> gusting ${esc(f.obs.gust)} ${esc(f.obs.dir)} &middot; ${esc(f.obs.station)} ${esc(f.obs.km)} km</div>`:""}
+     ${f.obs?`<div class="live"><span class="ld"></span><span class="lt">Live now <b>${esc(f.obs.kt)} kt</b> gusting ${esc(f.obs.gust)} ${esc(f.obs.dir)} &middot; ${esc(f.obs.station)} ${esc(f.obs.km)} km</span></div>`:""}
      <div class="feat-note">${esc(f.wetsuit)}${f.note?(" &middot; "+esc(f.note)):""}</div>`;
 } else { $("#feature").style.display="none"; }
 
@@ -437,15 +485,74 @@ html += DATA.spots.map(s=>{
     const num = /^[\d.]+$/.test(val);
     const gust = /g/.test(val);
     const disp = num ? `${esc(val)}<span class="kt">kt</span>` : (gust? esc(val).replace('g','<span class="kt">g</span>') : esc(val));
-    return `<div class="cell ${call}${isBest}" title="${esc(title||"")}">`+
+    const key = s.name+"|"+(DATA.dates[di]||"");
+    const clk = (DATA.hourly && DATA.hourly[key]) ? " clickable" : "";
+    const attrs = clk ? ` data-key="${esc(key)}" tabindex="0" role="button" aria-label="${esc(s.name)} ${esc(DATA.days[di]||"")} hourly detail"` : "";
+    return `<div class="cell ${call}${isBest}${clk}"${attrs} title="${esc(clk?"Tap for the hourly breakdown":(title||""))}">`+
       `<span class="dlabel">${esc(DATA.days[di]||"")}</span>`+
       `<span class="tag">${call.toUpperCase()}</span>`+
       `<span class="val">${disp}</span>`+
-      `<div class="qbar"><i style="width:${pct}%"></i></div></div>`;
+      `<div class="qbar"><i style="width:${pct}%"></i></div>`+
+      (clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
   }).join("");
   return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; ${esc(s.drive)}</span></div>${cells}</div>`;
 }).join("");
 $(".matrix").innerHTML = html;
+
+// ---- day detail modal (hourly breakdown) ----
+const modal = $("#modal"), sheet = $("#sheet");
+function chart(hrs){
+  const B=DATA.band, W=680,H=300,L=36,R=14,T=16,Bt=52;
+  const pw=W-L-R, ph=H-T-Bt, n=hrs.length||1, bw=pw/n, barw=Math.min(20,bw*0.58);
+  const maxV=Math.max(B.hi+4, ...hrs.map(h=>Math.max(h.s, h.g||0)));
+  const maxY=Math.max(25, Math.ceil((maxV+2)/5)*5);
+  const y=v=>T+ph*(1-v/maxY), base=T+ph;
+  const p=[];
+  p.push(`<rect x="${L}" y="${y(B.hi).toFixed(1)}" width="${pw}" height="${(y(B.lo)-y(B.hi)).toFixed(1)}" fill="var(--accent)" opacity="0.07"/>`);
+  p.push(`<rect x="${L}" y="${y(B.ideal_hi).toFixed(1)}" width="${pw}" height="${(y(B.ideal_lo)-y(B.ideal_hi)).toFixed(1)}" fill="var(--accent)" opacity="0.1"/>`);
+  [10,20].forEach(v=>{ if(v<maxY){ p.push(`<line x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--hair)" stroke-width="1"/>`);
+    p.push(`<text x="${(L-6)}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--faint)">${v}</text>`);}});
+  hrs.forEach((h,i)=>{
+    const cx=L+i*bw+bw/2;
+    const col=(h.s<B.lo)?"var(--faint)":(((h.g!=null&&h.g>B.gustmax)||h.s>B.hi)?"var(--maybe)":"var(--accent)");
+    p.push(`<rect x="${(cx-barw/2).toFixed(1)}" y="${y(h.s).toFixed(1)}" width="${barw.toFixed(1)}" height="${Math.max(0,base-y(h.s)).toFixed(1)}" rx="2" fill="${col}" opacity="0.92"/>`);
+    if(h.g!=null) p.push(`<line x1="${(cx-barw/2).toFixed(1)}" x2="${(cx+barw/2).toFixed(1)}" y1="${y(h.g).toFixed(1)}" y2="${y(h.g).toFixed(1)}" stroke="var(--ink)" stroke-width="1.5" opacity="0.5"/>`);
+    if((h.h-6)%3===0){
+      p.push(`<text x="${cx.toFixed(1)}" y="${(base+16).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--faint)">${h.h}:00</text>`);
+      if(h.deg!=null) p.push(`<g transform="translate(${cx.toFixed(1)},${(base+32).toFixed(1)}) rotate(${h.deg})"><path d="M0 -5 L3 4 L0 2 L-3 4 Z" fill="var(--soft)"/></g>`);
+    }
+  });
+  p.push(`<line x1="${L}" x2="${W-R}" y1="${base.toFixed(1)}" y2="${base.toFixed(1)}" stroke="var(--hair2)" stroke-width="1"/>`);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="hourly wind, knots">${p.join("")}</svg>`;
+}
+function buildSheet(key){
+  const hrs=DATA.hourly[key]; if(!hrs) return;
+  const [spot,date]=key.split("|");
+  const di=DATA.dates.indexOf(date), cell=(DATA.grid[spot]||[])[di]||[];
+  const call=(cell[0]||"skip"), title=cell[3]||"";
+  sheet.innerHTML =
+    `<div class="sheet-head"><div>
+       <div class="sk">Hourly &middot; 06:00&ndash;22:00 kt</div>
+       <h3 id="sheet-h">${esc(spot)}</h3>
+       <div class="sd">${esc(DATA.daylong[date]||date)} <span class="pill ${call}">${call.toUpperCase()}</span></div>
+     </div><button class="xbtn" id="xbtn" aria-label="Close">&#10005;</button></div>
+     <div class="chartwrap">${chart(hrs)}</div>
+     <div class="chlegend">
+       <span><i style="background:var(--accent)"></i>foilable 13&ndash;22</span>
+       <span><i style="background:var(--maybe)"></i>over-powered</span>
+       <span><i style="background:var(--faint)"></i>too light</span>
+       <span>&#124; gust</span>
+       <span style="color:var(--faint)">shaded = your ideal 15&ndash;20</span>
+     </div>
+     ${title?`<div class="sheet-note">${esc(title)}</div>`:""}`;
+  $("#xbtn").onclick=closeModal;
+}
+function openModal(key){ buildSheet(key); modal.classList.add("open"); document.body.style.overflow="hidden"; const x=$("#xbtn"); if(x) x.focus(); }
+function closeModal(){ modal.classList.remove("open"); document.body.style.overflow=""; }
+modal.addEventListener("click", e=>{ if(e.target===modal) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && modal.classList.contains("open")) closeModal(); });
+$(".matrix").addEventListener("click", e=>{ const c=e.target.closest(".cell.clickable"); if(c) openModal(c.dataset.key); });
+$(".matrix").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ const c=e.target.closest(".cell.clickable"); if(c){ e.preventDefault(); openModal(c.dataset.key);} } });
 
 // reveal on scroll
 const io = new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12});
