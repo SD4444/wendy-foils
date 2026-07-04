@@ -79,6 +79,10 @@ Friesland spots (Workum, Makkum, Hindeloopen) are the region's best beginner fla
 - **Human cross-check:** link the Windguru spot page in the alert so Simon can eyeball it (IJsselmeer north `windguru.cz/19`, Wijk aan Zee `windguru.cz/113`). No clean API — for viewing only.
 - Attribution: Open-Meteo is CC BY 4.0, non-commercial free tier (10k calls/day). A personal watchdog is well within limits.
 
+**Multi-model verdict (added 2026-07-04, important):** KNMI HARMONIE is the primary, but it runs LOW over open IJsselmeer water and repeatedly under-called days that GFS (what Windguru's IJsselmeer page shows) read as foilable. The engine now also pulls ICON-EU, ECMWF, and **GFS**, and when the primary shows no in-band window but a stronger model reads foilable (>=13kt, >=3kt above primary) in the go-hours, the day is surfaced as **MAYBE "models split - watch it"** instead of a false SKIP. Every row shows the per-model go-hours peak range so the disagreement is visible. This is the never-miss-a-good-day guarantee against model spread. (Note: our spot points are the sheltered southern IJmeer/Markermeer basins, deliberately flat-water for a beginner; the open IJsselmeer proper reads windier. If Simon wants the windier open-lake spots, add them to the SPOTS table.)
+
+**Temps + wetsuit (added 2026-07-04):** report includes air temp (Open-Meteo `temperature_2m`) and water temp with a wetsuit call. No free lake-temp API and EWAM doesn't cover the enclosed lakes, so inland water uses a seasonal monthly estimate (`LAKE_TEMP_BY_MONTH`); coast uses real EWAM sea-surface temp.
+
 ### Cadence & lead time (Simon's chosen flow, tuned 2026-07-03)
 
 Three delivery types, all as Calendar invites (section 2). Scope: all four spots incl. Wijk aan Zee (coast flagged intermediate/skip until foil-stable).
@@ -122,7 +126,8 @@ On bad-wind weeks the Monday email still goes out (Simon wants the weekly pictur
 - `wendy.py` — the forecast engine. `python3 wendy.py weekly` (7-day Sunday planner, best_match blend) or `python3 wendy.py daily` (next-3-day HARMONIE lookout). Pure stdlib (urllib). Fetches multi-model wind + ICON-EU ensemble + EWAM waves/sea-temp, applies the good-day rule, and prints a human summary plus delimited blocks: `<!--SUBJECT_START-->`, `<!--EMAIL_HTML_START-->`, `<!--JSON_START-->`.
 - `.github/workflows/forecast.yml` — **GitHub Action that does the forecast FETCH.** Runs on cron (daily 04:50 UTC, Sunday 15:50 UTC) plus `workflow_dispatch` (input `mode`), executes `wendy.py`, and commits the full output to `data/<mode>.out.txt` + a `data/<mode>.fetched_at.txt` timestamp. Rebase-and-retry push (the cloud routine pushes to the same branch).
 - `data/` — committed forecast output the routines read (`weekly.out.txt`, `daily.out.txt`, `*.fetched_at.txt`).
-- `docs/index.html` — the linked dashboard, served by GitHub Pages at **https://sd4444.github.io/wendy-foils/** (repo is public; source = `main` /docs). Data currently hardcoded per-week; regenerating it from the engine JSON each run is a TODO.
+- `docs/index.html` — the linked dashboard, served by GitHub Pages at **https://sd4444.github.io/wendy-foils/** (repo is public; source = `main` /docs). **Auto-generated** by `gen_dashboard.py` from the engine's `<!--GRID_START-->` block; the Action rebuilds it every run so it always shows the current 7-day outlook. Do not hand-edit it; edit the template inside `gen_dashboard.py`.
+- `gen_dashboard.py` — reads a `wendy.py` weekly output file's GRID block and writes `docs/index.html`. Usage: `python3 gen_dashboard.py data/weekly.out.txt docs/index.html`.
 - `reference/` — research notes on forecast sources, spots, skill-level bands.
 - `logs/runs.md` — run log / dedupe history.
 - `.claude/skills/` — project-specific skills, if any get built.
