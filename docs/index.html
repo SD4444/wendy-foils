@@ -24,7 +24,7 @@
   html{-webkit-text-size-adjust:100%}
   body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
     -webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:.002em}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(26px,6vw,52px)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(30px,7.5vw,56px)}
   .mono{font-family:var(--mono)}
   ::selection{background:rgba(57,215,223,.28)}
 
@@ -180,8 +180,9 @@
   .sheet-note{font-size:13.5px;color:var(--soft);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
   .sheet-note b{color:var(--ink);font-weight:600}
   @media (max-width:560px){
-    .modal{padding:0;align-items:flex-end}
-    .sheet{max-width:none;max-height:94vh;border-radius:20px 20px 0 0;border-bottom:none}
+    /* stay centered mid-screen on mobile, not a bottom sheet */
+    .modal{padding:18px;align-items:center}
+    .sheet{max-width:none;max-height:88vh;border-radius:18px}
   }
   .reveal{opacity:0;transform:translateY(14px)}
   .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
