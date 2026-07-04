@@ -17,17 +17,23 @@ ICON-EU ensemble for probability, Marine/EWAM for waves + sea temp). No API key.
 Attribution: Open-Meteo CC BY 4.0.
 """
 
-import sys, json, urllib.request, urllib.error
-from datetime import datetime
+import sys, os, json, math, urllib.request, urllib.error
+from datetime import datetime, timezone
 
 # ---- rider profile ----
 RIDER_KG = 78
+# Progression toggle: set WENDY_LEVEL=progressing once Simon rides upwind reliably and
+# can self-rescue. It widens the ceiling toward 22-24kt and eases the steadiness/wave
+# penalties. Default stays the strict beginner band. (Documented in CLAUDE.md section 3.)
+LEVEL = os.environ.get("WENDY_LEVEL", "beginner").strip().lower()
+PROGRESSING = LEVEL in ("progressing", "intermediate", "improver")
+
 WIND_MIN = 13          # kt avg, foiling floor for 5m/95L at 78kg
 WIND_IDEAL_LO = 15
-WIND_IDEAL_HI = 20
-WIND_MAX = 22          # kt avg, beginner ceiling on a 5m
-GUST_MAX = 25          # kt, hard block
-SPREAD_OK = 5          # kt, gust - avg <= this is steady
+WIND_IDEAL_HI = 20 if not PROGRESSING else 22
+WIND_MAX = 22 if not PROGRESSING else 25   # kt avg ceiling on a 5m
+GUST_MAX = 25 if not PROGRESSING else 30   # kt, hard block
+SPREAD_OK = 5 if not PROGRESSING else 7    # kt, gust - avg <= this is steady
 MIN_WINDOW_HRS = 2     # sustained window
 
 DIRS16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
@@ -67,6 +73,40 @@ def try_json(url):
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
         sys.stderr.write(f"WARN fetch failed: {e} :: {url[:90]}\n")
         return None
+
+BUIENRADAR = "https://data.buienradar.nl/2.0/feed/json"
+MS_TO_KT = 1.94384
+
+def haversine(a_lat, a_lon, b_lat, b_lon):
+    r = 6371.0
+    p1, p2 = math.radians(a_lat), math.radians(b_lat)
+    dp = math.radians(b_lat - a_lat); dl = math.radians(b_lon - a_lon)
+    h = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+    return 2*r*math.asin(math.sqrt(h))
+
+def fetch_obs():
+    """Live station wind from Buienradar (free, no key). Returns list of stations with
+    wind in KNOTS. Used as a nowcast reality-check against the models in the daily scan."""
+    j = try_json(BUIENRADAR)
+    if not j: return []
+    out = []
+    for s in j.get("actual", {}).get("stationmeasurements", []):
+        ws = s.get("windspeed");
+        if ws is None: continue
+        out.append({"name": s.get("stationname","").replace("Meetstation ","").strip(),
+                    "lat": s.get("lat"), "lon": s.get("lon"),
+                    "kt": ws*MS_TO_KT,
+                    "gust": (s.get("windgusts") or ws)*MS_TO_KT,
+                    "deg": s.get("winddirectiondegrees")})
+    return out
+
+def nearest_obs(spot, obs):
+    cand = [o for o in obs if o.get("lat") is not None and o.get("lon") is not None]
+    if not cand: return None
+    o = min(cand, key=lambda o: haversine(spot["lat"], spot["lon"], o["lat"], o["lon"]))
+    return {"station": o["name"], "kt": round(o["kt"],1), "gust": round(o["gust"],1),
+            "deg": o["deg"], "dir": dir16(o["deg"]) if o["deg"] is not None else None,
+            "km": round(haversine(spot["lat"], spot["lon"], o["lat"], o["lon"]))}
 
 # ---- go-hours: weekday early(6-9) + evening(17-21); weekend all daylight ----
 def in_go_hours(ts, is_day):
@@ -204,11 +244,17 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
             wave = max((p["wave"] for p in dp if p["wave"] is not None), default=None)
             water = next((p["sst"] for p in dp if p["sst"] is not None), None)
         if water is None: water = lake_temp(date)
-        bdir = bwin = None
+        bdir = bwin = bdeg = prob = None
         if best:
             br = best["run"]
             bdir = max(set(x["dir"] for x in br), key=lambda d: sum(1 for x in br if x["dir"]==d))
             bwin = [br[0]["h"], br[-1]["h"]+1]
+            xs = sum(math.sin(math.radians(x["deg"])) for x in br)
+            ys = sum(math.cos(math.radians(x["deg"])) for x in br)
+            bdeg = round(math.degrees(math.atan2(xs, ys)) % 360)
+            if ens:
+                ps = [ens[x["t"]] for x in br if x["t"] in ens]
+                if ps: prob = round(sum(ps)/len(ps), 2)
         results.append({"date":date,"spot":spot["name"],"type":spot["type"],
                         "verdict":verdict,"score":score,"why":why,"best":best,
                         "avg": round(best["avg"],1) if best else None,
@@ -217,7 +263,7 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
                         "wave": round(wave,1) if wave is not None else None,
                         "air": round(max(air_go),1) if air_go else None,
                         "water": water, "wetsuit": suit_for(water),
-                        "dir": bdir, "win": bwin})
+                        "dir": bdir, "win": bwin, "deg": bdeg, "prob": prob, "obs": None})
     return results
 
 def weekday_name(date):
@@ -423,12 +469,20 @@ def main():
     else:
         days, primary, primary_label = 3, "knmi_harmonie_arome_netherlands", "HARMONIE"
 
+    # live station wind for a nowcast reality-check (most useful in the daily scan)
+    obs = fetch_obs()
+
     all_results = []
     for spot in SPOTS:
         prim, cons, ens, marine = fetch_spot(spot, days, primary)
         if not prim or "hourly" not in prim:
             sys.stderr.write(f"no data for {spot['name']}\n"); continue
-        all_results += analyse(spot, prim, cons, ens, marine, primary_label)
+        rs = analyse(spot, prim, cons, ens, marine, primary_label)
+        # attach the nearest live obs to this spot's today row (obs is a "now" reading)
+        so = nearest_obs(spot, obs) if obs else None
+        if so and rs:
+            rs[0]["obs"] = so
+        all_results += rs
 
     now = datetime.fromisoformat(SPOTS and all_results[0]["date"]+"T00:00") if all_results else None
     generated = weekday_name(sorted({r["date"] for r in all_results})[0]) if all_results else ""
@@ -443,7 +497,7 @@ def main():
     print(f"=== {mode.upper()} ===")
     for r in sorted(all_results, key=lambda r:(r["date"], r["spot"])):
         print(f"{weekday_name(r['date'])}  {r['spot']:<18} {r['verdict']:<5} {stars(r['score']) if r['verdict']!='SKIP' else '':<7} {r['why']}")
-    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why","dir","win")
+    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why","dir","win","deg","prob","obs")
     grid = [{k: r.get(k) for k in grid_keys} for r in all_results]
     print(f"\n<!--SUBJECT_START-->{subject}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged)}<!--JSON_END-->")

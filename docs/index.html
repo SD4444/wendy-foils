@@ -73,6 +73,16 @@
     border-top:1px solid var(--hair);font-family:var(--mono);font-size:12.5px;color:var(--soft)}
   .feat-row b{color:var(--ink);font-weight:600}
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
+  .ens{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent);
+    background:rgba(57,215,223,.1);padding:2px 8px;border-radius:12px;letter-spacing:.03em}
+  .feat-where .spot{display:flex;align-items:center;gap:10px}
+  .compass{flex:none}
+  .live{display:flex;align-items:center;gap:9px;margin-top:15px;padding-top:14px;
+    border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
+  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;
+    box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
+  .live b{color:var(--ink);font-weight:600}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
   .tile{border:1px solid var(--hair);border-radius:14px;padding:16px 18px;background:var(--panel);
@@ -141,7 +151,7 @@
   a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
   .reveal{opacity:0;transform:translateY(14px)}
   .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
-  @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}.live .ld{animation:none}}
 
   @media (max-width:860px){
     .herogrid{grid-template-columns:1fr}
@@ -209,7 +219,7 @@
 </footer>
 
 <script>
-const DATA = {"days": ["Sat 4", "Sun 5", "Mon 6", "Tue 7", "Wed 8", "Thu 9", "Fri 10"], "spots": [{"name": "Muiderberg", "sub": "IJmeer \u00b7 inland flat", "drive": "~20 min"}, {"name": "Schellinkhout", "sub": "Markermeer \u00b7 inland flat", "drive": "~45 min"}, {"name": "Almere Muiderzand", "sub": "IJmeer \u00b7 inland flat", "drive": "~25 min"}, {"name": "Wijk aan Zee", "sub": "North Sea \u00b7 coast / waves", "drive": "~40 min"}], "grid": {"Muiderberg": [["skip", "11", 0.3, "too light, peaks only ~11kt (need 13kt+ to foil)"], ["skip", "10", 0.3, "too light, peaks only ~10kt (need 13kt+ to foil)"], ["skip", "11", 0.24, "too light, peaks only ~11kt (need 13kt+ to foil)"], ["skip", "13g30", 0.2, "windy (peak 13kt) but gusting 30kt - too unstable/overpowered on a 5m"], ["skip", "8", 0.09, "too light, peaks only ~8kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "6", 0.11, "too light, peaks only ~6kt (need 13kt+ to foil)"]], "Schellinkhout": [["maybe", "18", 0.56, "models split - blend only ~13kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"], ["maybe", "18", 0.56, "models split - blend only ~11kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"], ["maybe", "15", 0.56, "models split - blend only ~12kt in your hours but GFS shows ~15kt; foilable if the stronger model verifies, worth watching"], ["skip", "15g31", 0.2, "windy (peak 15kt) but gusting 31kt - too unstable/overpowered on a 5m"], ["skip", "10", 0.23, "too light, peaks only ~10kt (need 13kt+ to foil)"], ["skip", "8", 0.31, "too light, peaks only ~8kt (need 13kt+ to foil)"], ["skip", "9", 0.23, "too light, peaks only ~9kt (need 13kt+ to foil)"]], "Almere Muiderzand": [["skip", "12", 0.3, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["skip", "10", 0.3, "too light, peaks only ~10kt (need 13kt+ to foil)"], ["skip", "11", 0.24, "too light, peaks only ~11kt (need 13kt+ to foil)"], ["skip", "13g30", 0.2, "windy (peak 13kt) but gusting 30kt - too unstable/overpowered on a 5m"], ["skip", "8", 0.09, "too light, peaks only ~8kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "6", 0.11, "too light, peaks only ~6kt (need 13kt+ to foil)"]], "Wijk aan Zee": [["skip", "0.8m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea; air 21C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.8m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea; air 19C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.7m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.7m sea; air 20C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.5m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.5m sea; air 19C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 20C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 24C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 26C; water ~21C: shorty / 2mm or boardies"]]}, "best": {"spot": "Schellinkhout", "day": 0}, "feature": {"label": "ONE TO WATCH", "verdict": "MAYBE", "q": 0.56, "day": "Saturday 4 Jul", "spot": "Schellinkhout", "sub": "Markermeer \u00b7 inland flat", "wind": "13\u201318", "windsub": "kt (models split)", "dir": "\u2013", "window": "your hours", "gust": "21 kt", "air": "20\u00b0", "water": "21\u00b0", "wetsuit": "shorty / 2mm or boardies", "note": "models split - blend only ~13kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"}, "headline": "The models can't agree.", "verdict": "No clean GO, but forecasts <strong>split</strong> on Sat 4, Sun 5, Mon 6. Our high-res near-term model reads light while the global models run foilable over open water. <strong>Schellinkhout</strong> is the one to watch \u2014 commit only if the stronger model firms up closer in. Coast stays parked until you're foil-stable.", "tiles": [["Best window", "Saturday Schellinkhout", "your hours"], ["Wind range", "8\u201318", "kt across the week"], ["Air / water", "18\u201329\u00b0 / 21\u00b0", "\u00b0C"], ["Confidence", "Split (global models hotter)", "model agreement"]], "sources": ["KNMI HARMONIE-AROME \u00b7 NL 2 km anchor", "ICON-D2 \u00b7 2 km near-term check", "ECMWF IFS \u00b7 GFS \u00b7 ICON-EU spread", "ICON-D2 / ECMWF ensemble \u00b7 probability", "EWAM \u00b7 waves + sea temp"], "weeklabel": "Week of 4 Jul 2026"};
+const DATA = {"days": ["Sat 4", "Sun 5", "Mon 6", "Tue 7", "Wed 8", "Thu 9", "Fri 10"], "spots": [{"name": "Muiderberg", "sub": "IJmeer \u00b7 inland flat", "drive": "~20 min"}, {"name": "Schellinkhout", "sub": "Markermeer \u00b7 inland flat", "drive": "~45 min"}, {"name": "Almere Muiderzand", "sub": "IJmeer \u00b7 inland flat", "drive": "~25 min"}, {"name": "Wijk aan Zee", "sub": "North Sea \u00b7 coast / waves", "drive": "~40 min"}], "grid": {"Muiderberg": [["skip", "11", 0.3, "too light, peaks only ~11kt (need 13kt+ to foil)"], ["skip", "10", 0.3, "too light, peaks only ~10kt (need 13kt+ to foil)"], ["skip", "12", 0.24, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["skip", "12g27", 0.2, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "9", 0.12, "too light, peaks only ~9kt (need 13kt+ to foil)"]], "Schellinkhout": [["maybe", "18", 0.56, "models split - blend only ~14kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"], ["maybe", "18", 0.56, "models split - blend only ~10kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"], ["skip", "12", 0.4, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["maybe", "16", 0.56, "models split - blend only ~13kt in your hours but GFS shows ~16kt; foilable if the stronger model verifies, worth watching"], ["skip", "8", 0.23, "too light, peaks only ~8kt (need 13kt+ to foil)"], ["skip", "7", 0.31, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "9", 0.23, "too light, peaks only ~9kt (need 13kt+ to foil)"]], "Almere Muiderzand": [["skip", "12", 0.3, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["skip", "9", 0.3, "too light, peaks only ~9kt (need 13kt+ to foil)"], ["skip", "11", 0.24, "too light, peaks only ~11kt (need 13kt+ to foil)"], ["skip", "12g27", 0.2, "too light, peaks only ~12kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "7", 0.09, "too light, peaks only ~7kt (need 13kt+ to foil)"], ["skip", "9", 0.12, "too light, peaks only ~9kt (need 13kt+ to foil)"]], "Wijk aan Zee": [["skip", "0.8m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea; air 21C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.8m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea; air 18C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.7m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.7m sea; air 21C; water ~21C: shorty / 2mm or boardies"], ["skip", "0.5m", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; ~0.5m sea; air 20C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 21C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 26C; water ~21C: shorty / 2mm or boardies"], ["skip", "flat", 0.06, "coast/wave spot - parked until you're foil-stable on flat water; air 26C; water ~21C: shorty / 2mm or boardies"]]}, "best": {"spot": "Schellinkhout", "day": 0}, "feature": {"label": "ONE TO WATCH", "verdict": "MAYBE", "q": 0.56, "day": "Saturday 4 Jul", "spot": "Schellinkhout", "sub": "Markermeer \u00b7 inland flat", "wind": "14\u201318", "windsub": "kt (models split)", "dir": "W", "deg": 260, "window": "your hours", "gust": "23 kt", "air": "21\u00b0", "water": "21\u00b0", "wetsuit": "shorty / 2mm or boardies", "prob": null, "obs": {"kt": "11", "gust": "17", "dir": "W", "station": "Wijdenes", "km": 3}, "note": "models split - blend only ~14kt in your hours but GFS shows ~18kt; foilable if the stronger model verifies, worth watching"}, "headline": "The models can't agree.", "verdict": "No clean GO, but forecasts <strong>split</strong> on Sat 4, Sun 5, Tue 7. Our high-res near-term model reads light while the global models run foilable over open water. <strong>Schellinkhout</strong> is the one to watch \u2014 commit only if the stronger model firms up closer in. Coast stays parked until you're foil-stable.", "tiles": [["Best window", "Saturday Schellinkhout", "your hours"], ["Wind range", "8\u201318", "kt across the week"], ["Air / water", "18\u201328\u00b0 / 21\u00b0", "\u00b0C"], ["Confidence", "Split (global models hotter)", "model agreement"]], "sources": ["KNMI HARMONIE-AROME \u00b7 NL 2 km anchor", "ICON-D2 \u00b7 2 km near-term check", "ECMWF IFS \u00b7 GFS \u00b7 ICON-EU spread", "ICON-D2 / ECMWF ensemble \u00b7 probability", "EWAM \u00b7 waves + sea temp"], "weeklabel": "Week of 4 Jul 2026"};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -218,13 +228,18 @@ $("#h1").textContent = DATA.headline;
 $("#verdict").innerHTML = DATA.verdict;
 
 // feature card
+const compass = (deg,dir) => (deg==null)? "" :
+  `<svg class="compass" width="30" height="30" viewBox="0 0 30 30" role="img" aria-label="wind from ${esc(dir||"")}">
+     <circle cx="15" cy="15" r="13" fill="none" stroke="var(--hair2)" stroke-width="1.5"/>
+     <g transform="rotate(${deg} 15 15)"><path d="M15 4 L19 16 L15 13 L11 16 Z" fill="var(--accent)"/></g>
+   </svg>`;
 if (DATA.feature){
   const f = DATA.feature, r = 34, C = 2*Math.PI*r, off = C*(1-Math.max(.06,f.q));
   $("#feature").innerHTML =
-    `<div class="flabel">${esc(f.label)} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
+    `<div class="flabel">${esc(f.label)} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span>${f.prob!=null?` <span class="ens">${f.prob}% in-band</span>`:""}</div>
      <div class="feat-main">
        <div class="bigwind"><span class="n">${esc(f.wind)}</span><span class="u">${esc(f.windsub)}</span></div>
-       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="wind quality ${Math.round(f.q*100)} of 100">
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/>
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"
            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 42 42)"/>
@@ -232,13 +247,14 @@ if (DATA.feature){
        </svg>
      </div>
      <div class="feat-where">
-       <div class="spot">${esc(f.spot)}</div>
+       <div class="spot">${esc(f.spot)} ${compass(f.deg, f.dir)}</div>
        <div class="when">${esc(f.day)} &middot; ${esc(f.window)}</div>
      </div>
      <div class="feat-row">
        <span>dir <b>${esc(f.dir)}</b></span><span>gust <b>${esc(f.gust)}</b></span>
        <span>air <b>${esc(f.air)}</b></span><span>water <b>${esc(f.water)}</b></span>
      </div>
+     ${f.obs?`<div class="live"><span class="ld"></span> Live now <b>${esc(f.obs.kt)} kt</b> gusting ${esc(f.obs.gust)} ${esc(f.obs.dir)} &middot; ${esc(f.obs.station)} ${esc(f.obs.km)} km</div>`:""}
      <div class="feat-note">${esc(f.wetsuit)}${f.note?(" &middot; "+esc(f.note)):""}</div>`;
 } else { $("#feature").style.display="none"; }
 

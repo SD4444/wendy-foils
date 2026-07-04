@@ -86,18 +86,25 @@ def build_data(grid):
         b = pool[0]
         best = {"spot": b["spot"], "day": dates.index(b["date"])}
         w, wsub = wind_str(b)
+        obs = b.get("obs") or None
+        deg = b.get("deg")
+        if deg is None and obs: deg = obs.get("deg")
         feature = {
             "label": {"GO": "BEST DAY", "MAYBE": "ONE TO WATCH"}.get(b["verdict"], "CLOSEST THIS WEEK"),
             "verdict": b["verdict"], "q": cell_q(b),
             "day": dlong(b["date"]), "spot": b["spot"],
             "sub": " · ".join(SPOT_SUB.get(b["spot"], ("",))[:2]).strip(" ·"),
             "wind": w, "windsub": wsub,
-            "dir": b.get("dir") or "–",
+            "dir": b.get("dir") or (obs.get("dir") if obs else None) or "–",
+            "deg": deg,
             "window": (f"{b['win'][0]:02d}:00–{b['win'][1]:02d}:00" if b.get("win") else "your hours"),
             "gust": (f"{b['gust']:.0f} kt" if b.get("gust") else "–"),
             "air": (f"{b['air']:.0f}°" if b.get("air") is not None else "–"),
             "water": (f"{b['water']:.0f}°" if b.get("water") is not None else "–"),
             "wetsuit": b.get("wetsuit") or "",
+            "prob": (round(b["prob"]*100) if b.get("prob") is not None else None),
+            "obs": ({"kt": f"{obs['kt']:.0f}", "gust": f"{obs['gust']:.0f}", "dir": obs.get("dir") or "–",
+                     "station": obs["station"], "km": obs["km"]} if obs else None),
             "note": (b.get("why") or "").split("|")[0].strip(),
         }
 
@@ -226,6 +233,16 @@ TEMPLATE = r"""<!doctype html>
     border-top:1px solid var(--hair);font-family:var(--mono);font-size:12.5px;color:var(--soft)}
   .feat-row b{color:var(--ink);font-weight:600}
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
+  .ens{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent);
+    background:rgba(57,215,223,.1);padding:2px 8px;border-radius:12px;letter-spacing:.03em}
+  .feat-where .spot{display:flex;align-items:center;gap:10px}
+  .compass{flex:none}
+  .live{display:flex;align-items:center;gap:9px;margin-top:15px;padding-top:14px;
+    border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
+  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;
+    box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
+  .live b{color:var(--ink);font-weight:600}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
   .tile{border:1px solid var(--hair);border-radius:14px;padding:16px 18px;background:var(--panel);
@@ -294,7 +311,7 @@ TEMPLATE = r"""<!doctype html>
   a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
   .reveal{opacity:0;transform:translateY(14px)}
   .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
-  @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}.live .ld{animation:none}}
 
   @media (max-width:860px){
     .herogrid{grid-template-columns:1fr}
@@ -371,13 +388,18 @@ $("#h1").textContent = DATA.headline;
 $("#verdict").innerHTML = DATA.verdict;
 
 // feature card
+const compass = (deg,dir) => (deg==null)? "" :
+  `<svg class="compass" width="30" height="30" viewBox="0 0 30 30" role="img" aria-label="wind from ${esc(dir||"")}">
+     <circle cx="15" cy="15" r="13" fill="none" stroke="var(--hair2)" stroke-width="1.5"/>
+     <g transform="rotate(${deg} 15 15)"><path d="M15 4 L19 16 L15 13 L11 16 Z" fill="var(--accent)"/></g>
+   </svg>`;
 if (DATA.feature){
   const f = DATA.feature, r = 34, C = 2*Math.PI*r, off = C*(1-Math.max(.06,f.q));
   $("#feature").innerHTML =
-    `<div class="flabel">${esc(f.label)} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
+    `<div class="flabel">${esc(f.label)} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span>${f.prob!=null?` <span class="ens">${f.prob}% in-band</span>`:""}</div>
      <div class="feat-main">
        <div class="bigwind"><span class="n">${esc(f.wind)}</span><span class="u">${esc(f.windsub)}</span></div>
-       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="wind quality ${Math.round(f.q*100)} of 100">
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/>
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"
            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 42 42)"/>
@@ -385,13 +407,14 @@ if (DATA.feature){
        </svg>
      </div>
      <div class="feat-where">
-       <div class="spot">${esc(f.spot)}</div>
+       <div class="spot">${esc(f.spot)} ${compass(f.deg, f.dir)}</div>
        <div class="when">${esc(f.day)} &middot; ${esc(f.window)}</div>
      </div>
      <div class="feat-row">
        <span>dir <b>${esc(f.dir)}</b></span><span>gust <b>${esc(f.gust)}</b></span>
        <span>air <b>${esc(f.air)}</b></span><span>water <b>${esc(f.water)}</b></span>
      </div>
+     ${f.obs?`<div class="live"><span class="ld"></span> Live now <b>${esc(f.obs.kt)} kt</b> gusting ${esc(f.obs.gust)} ${esc(f.obs.dir)} &middot; ${esc(f.obs.station)} ${esc(f.obs.km)} km</div>`:""}
      <div class="feat-note">${esc(f.wetsuit)}${f.note?(" &middot; "+esc(f.note)):""}</div>`;
 } else { $("#feature").style.display="none"; }
 
