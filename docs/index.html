@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wendy Foils — Wind outlook</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --ground:#f3f6f7; --panel:#ffffff; --ink:#0c1d26; --ink-soft:#4a5f68;
+    --hair:#dbe4e6; --accent:#0a9aa2; --accent-soft:#e2f4f4;
+    --go:#1f9d63; --go-bg:#e4f4ea; --maybe:#c07d15; --maybe-bg:#fbf1de;
+    --skip:#7d8c92; --skip-bg:#eef1f2;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#081720; --panel:#0f2530; --ink:#e9f2f3; --ink-soft:#8ba7af;
+      --hair:#1c3846; --accent:#3fd0d8; --accent-soft:#123039;
+      --go:#43c988; --go-bg:#123227; --maybe:#e0a13a; --maybe-bg:#33260f;
+      --skip:#6f858c; --skip-bg:#152a34;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f3f6f7; --panel:#ffffff; --ink:#0c1d26; --ink-soft:#4a5f68;
+    --hair:#dbe4e6; --accent:#0a9aa2; --accent-soft:#e2f4f4;
+    --go:#1f9d63; --go-bg:#e4f4ea; --maybe:#c07d15; --maybe-bg:#fbf1de;
+    --skip:#7d8c92; --skip-bg:#eef1f2;
+  }
+  :root[data-theme="dark"]{
+    --ground:#081720; --panel:#0f2530; --ink:#e9f2f3; --ink-soft:#8ba7af;
+    --hair:#1c3846; --accent:#3fd0d8; --accent-soft:#123039;
+    --go:#43c988; --go-bg:#123227; --maybe:#e0a13a; --maybe-bg:#33260f;
+    --skip:#6f858c; --skip-bg:#152a34;
+  }
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
+  #wind{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .hero-in{position:relative;z-index:2;padding:52px 0 44px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+  h1{font-size:clamp(30px,6vw,52px);line-height:1.02;margin:0 0 16px;font-weight:800;
+    letter-spacing:-.02em;text-wrap:balance;max-width:16ch}
+  .verdict-line{font-size:17px;color:var(--ink-soft);max-width:56ch;margin:0}
+  .verdict-line strong{color:var(--ink)}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+  .meta b{color:var(--ink);font-weight:600}
+  section{padding:40px 0}
+  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 18px}
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:660px;font-size:14px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--hair)}
+  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:600;white-space:nowrap}
+  tbody th{font-weight:600;white-space:nowrap}
+  .spot-sub{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);
+    font-family:var(--mono);letter-spacing:.02em}
+  td.cell{white-space:nowrap}
+  .kt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+    letter-spacing:.06em;padding:2px 7px;border-radius:5px;margin-right:7px;vertical-align:1px}
+  .go .tag{background:var(--go-bg);color:var(--go)} .go .kt{color:var(--go)}
+  .maybe .tag{background:var(--maybe-bg);color:var(--maybe)} .maybe .kt{color:var(--maybe)}
+  .skip .tag{background:var(--skip-bg);color:var(--skip)} .skip .kt{color:var(--skip)}
+  tbody tr:hover td,tbody tr:hover th{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:16px 18px}
+  .card h3{margin:0 0 8px;font-size:13px;font-family:var(--mono);letter-spacing:.04em;
+    text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .card p{margin:0;font-size:13.5px;color:var(--ink)}
+  .card .big{font-family:var(--mono);font-weight:700;font-size:15px}
+  footer{border-top:1px solid var(--hair);padding:26px 0 44px;font-size:12.5px;color:var(--ink-soft)}
+  footer a{color:var(--accent);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+  footer .src{font-family:var(--mono);margin-bottom:8px}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  @media (prefers-reduced-motion:reduce){#wind{display:none}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <canvas id="wind"></canvas>
+  <div class="wrap hero-in">
+    <p class="eyebrow"><span class="dot"></span> Wendy Foils · week of 4 Jul 2026</p>
+    <h1 id="h1">No foil window this week.</h1>
+    <p class="verdict-line" id="verdict"></p>
+    <div class="meta" id="meta"></div>
+  </div>
+</div>
+
+<section class="wrap">
+  <h2 class="sec-h">Spot × day — 5m wing, 95L, 78kg beginner</h2>
+  <div class="scroll"><table id="matrix"><thead></thead><tbody></tbody></table></div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec-h">How the call is made</h2>
+  <div class="cards">
+    <div class="card"><h3>Foilable wind</h3><p><span class="big">13–22 kt</span>, ideal 15–20. Below 13 you can't get up on the 95L.</p></div>
+    <div class="card"><h3>Steady, not spiky</h3><p>Gust minus average <span class="big">≤ 5 kt</span>. A 15-gusting-28 day is a no-go on a 5m.</p></div>
+    <div class="card"><h3>Direction</h3><p>Side-shore / side-onshore only. <span class="big">Offshore blocks</span> the spot regardless of speed.</p></div>
+    <div class="card"><h3>Your hours</h3><p>Early mornings, evenings, weekends ranked first. Coast spots parked until foil-stable.</p></div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="src">Source: KNMI HARMONIE-AROME + ICON-EU ensemble + EWAM waves, via Open-Meteo (CC BY 4.0).</div>
+  Cross-check on Windguru:
+  <a href="https://www.windguru.cz/19">Muiderberg</a> ·
+  <a href="https://www.windguru.cz/3601">Schellinkhout</a> ·
+  <a href="https://www.windguru.cz/113">Wijk aan Zee</a>
+</footer>
+
+<script>
+const DAYS = ["Sat 4","Sun 5","Mon 6","Tue 7","Wed 8","Thu 9","Fri 10"];
+const SPOTS = [
+  {name:"Muiderberg",   sub:"IJmeer · inland · ~20min"},
+  {name:"Almere Muiderzand", sub:"IJmeer · inland · ~25min"},
+  {name:"Schellinkhout",sub:"Markermeer · inland · ~45min"},
+  {name:"Wijk aan Zee", sub:"North Sea · coast · ~40min"},
+];
+const GRID = {
+  "Muiderberg":       [["skip",12],["skip",10],["skip",11],["skip","13g30"],["skip",8],["skip",7],["skip",6]],
+  "Almere Muiderzand":[["skip",12],["skip",9], ["skip",11],["skip","13g30"],["skip",8],["skip",7],["skip",6]],
+  "Schellinkhout":    [["skip",14],["skip",12],["skip","13g26"],["skip","15g31"],["skip",10],["skip",8],["skip",9]],
+  "Wijk aan Zee":     [["skip","0.8m"],["skip","0.8m"],["skip","0.7m"],["skip","0.5m"],["skip","—"],["skip","—"],["skip","—"]],
+};
+const NOTES = {
+  "13g26":"peak 13kt but gusting 26 — too spiky on a 5m",
+  "13g30":"peak 13kt but gusting 30 — overpowered/unstable",
+  "15g31":"peak 15kt but gusting 31 — overpowered/unstable",
+};
+document.getElementById("verdict").innerHTML =
+  "Light all week on the lakes, and the two windier days (Tue, and Schellinkhout Mon) are "+
+  "<strong>gusting 26–31 kt</strong> against a peak in the low teens — too spiky for the 5m. "+
+  "Coast spots stay parked until you're foil-stable. The daily scan keeps watching in case Tue firms up steadier.";
+const meta = [
+  ["Best day","none (Tue windiest but too gusty)"],
+  ["Spots checked","4"],
+  ["Confidence","high thru Mon, lower after"],
+];
+document.getElementById("meta").innerHTML = meta.map(m=>`<span><b>${m[0]}:</b> ${m[1]}</span>`).join("");
+const thead = document.querySelector("#matrix thead");
+thead.innerHTML = "<tr><th>Spot</th>"+DAYS.map(d=>`<th>${d}</th>`).join("")+"</tr>";
+const tbody = document.querySelector("#matrix tbody");
+tbody.innerHTML = SPOTS.map(s=>{
+  const cells = GRID[s.name].map(c=>{
+    const [call,val] = c;
+    const note = NOTES[val] ? ` title="${NOTES[val]}"` : "";
+    const label = call.toUpperCase();
+    const shown = typeof val==="number" ? val+"kt" : String(val).replace(/g\d+/,m=>" g"+m.slice(1));
+    return `<td class="cell ${call}"${note}><span class="tag">${label}</span><span class="kt">${shown}</span></td>`;
+  }).join("");
+  return `<tr><th>${s.name}<span class="spot-sub">${s.sub}</span></th>${cells}</tr>`;
+}).join("");
+(function(){
+  const c = document.getElementById("wind"), x = c.getContext("2d");
+  let W,H,streaks=[], raf;
+  const accent = ()=>getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  function size(){ W=c.width=c.offsetWidth*devicePixelRatio; H=c.height=c.offsetHeight*devicePixelRatio; }
+  function seed(){ streaks = Array.from({length:34},(_,i)=>({
+    y:(H/34)*i + (i*53%40), len:80+ (i*97%220), v:0.6+((i*31)%50)/60, o:0.05+((i*17)%20)/180 }));}
+  function step(){
+    x.clearRect(0,0,W,H); const col=accent();
+    for(const s of streaks){
+      s.x = (s.x==null? -s.len - (s.y*3%W) : s.x) + s.v*devicePixelRatio*1.4;
+      if(s.x > W+s.len) s.x = -s.len;
+      const g = x.createLinearGradient(s.x,0,s.x+s.len,0);
+      g.addColorStop(0,"transparent"); g.addColorStop(.5,col); g.addColorStop(1,"transparent");
+      x.globalAlpha=s.o; x.strokeStyle=g; x.lineWidth=1.2*devicePixelRatio;
+      x.beginPath(); x.moveTo(s.x,s.y); x.lineTo(s.x+s.len,s.y); x.stroke();
+    }
+    x.globalAlpha=1; raf=requestAnimationFrame(step);
+  }
+  function start(){ size(); seed(); cancelAnimationFrame(raf); step(); }
+  addEventListener("resize", start); start();
+})();
+</script>
+</body>
+</html>
