@@ -1,0 +1,39 @@
+=== DAILY ===
+Sat 04 Jul  Almere Muiderzand  SKIP          too light, peaks only ~12kt (need 13kt+ to foil)
+Sat 04 Jul  Muiderberg         SKIP          too light, peaks only ~11kt (need 13kt+ to foil)
+Sat 04 Jul  Schellinkhout      SKIP          too light, peaks only ~13kt (need 13kt+ to foil)
+Sat 04 Jul  Wijk aan Zee       SKIP          coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea
+Sun 05 Jul  Almere Muiderzand  SKIP          too light, peaks only ~9kt (need 13kt+ to foil)
+Sun 05 Jul  Muiderberg         SKIP          too light, peaks only ~10kt (need 13kt+ to foil)
+Sun 05 Jul  Schellinkhout      SKIP          too light, peaks only ~11kt (need 13kt+ to foil)
+Sun 05 Jul  Wijk aan Zee       SKIP          coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea
+Mon 06 Jul  Almere Muiderzand  SKIP          too light, peaks only ~11kt (need 13kt+ to foil)
+Mon 06 Jul  Muiderberg         SKIP          too light, peaks only ~11kt (need 13kt+ to foil)
+Mon 06 Jul  Schellinkhout      SKIP          peaks ~13kt but no steady 2h+ window in your hours
+Mon 06 Jul  Wijk aan Zee       SKIP          coast/wave spot - parked until you're foil-stable on flat water; ~0.7m sea
+
+<!--SUBJECT_START-->🌬️ Lookout: no foil window<!--SUBJECT_END-->
+<!--JSON_START-->[]<!--JSON_END-->
+<!--EMAIL_HTML_START-->
+<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;line-height:1.5;max-width:640px">
+<h2 style="margin:0 0 4px">🌬️ Wendy Foils - Short-range lookout</h2>
+<div style="color:#666;font-size:13px;margin-bottom:14px">forecast from Sat 04 Jul · 5m wing · 78kg · beginner</div>
+<div style="background:#f2f2f2;border-left:4px solid #999;padding:12px 14px;border-radius:6px;margin-bottom:16px"><strong>Nothing rideable in range.</strong> No steady in-band window at your spots. Rest up.</div>
+<table style="border-collapse:collapse;width:100%;font-size:14px">
+<tr style="text-align:left;border-bottom:2px solid #ddd"><th style="padding:6px 8px">Day</th><th style="padding:6px 8px">Spot</th><th style="padding:6px 8px">Call</th><th style="padding:6px 8px">Detail</th></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sat 04 Jul</td><td style="padding:6px 8px">Muiderberg</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~11kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sat 04 Jul</td><td style="padding:6px 8px">Schellinkhout</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~13kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sat 04 Jul</td><td style="padding:6px 8px">Almere Muiderzand</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~12kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sat 04 Jul</td><td style="padding:6px 8px">Wijk aan Zee</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sun 05 Jul</td><td style="padding:6px 8px">Muiderberg</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~10kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sun 05 Jul</td><td style="padding:6px 8px">Schellinkhout</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~11kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sun 05 Jul</td><td style="padding:6px 8px">Almere Muiderzand</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~9kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Sun 05 Jul</td><td style="padding:6px 8px">Wijk aan Zee</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">coast/wave spot - parked until you're foil-stable on flat water; ~0.8m sea</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Mon 06 Jul</td><td style="padding:6px 8px">Schellinkhout</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">peaks ~13kt but no steady 2h+ window in your hours</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Mon 06 Jul</td><td style="padding:6px 8px">Muiderberg</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~11kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Mon 06 Jul</td><td style="padding:6px 8px">Almere Muiderzand</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">too light, peaks only ~11kt (need 13kt+ to foil)</td></tr>
+<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;white-space:nowrap">Mon 06 Jul</td><td style="padding:6px 8px">Wijk aan Zee</td><td style="padding:6px 8px;white-space:nowrap"><span style="background:#999999;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600">SKIP</span> </td><td style="padding:6px 8px;color:#444">coast/wave spot - parked until you're foil-stable on flat water; ~0.7m sea</td></tr>
+</table>
+<div style="margin-top:16px;font-size:12px;color:#777">Source: KNMI HARMONIE-AROME + ICON-EU ensemble + EWAM waves, via Open-Meteo (CC BY 4.0). Cross-check on Windguru: <a href="https://www.windguru.cz/19">Muiderberg</a> · <a href="https://www.windguru.cz/3601">Schellinkhout</a> · <a href="https://www.windguru.cz/19">Almere Muiderzand</a> · <a href="https://www.windguru.cz/113">Wijk aan Zee</a>.<br>Rules: foil 13-22kt, ideal 15-20, steady (gust-avg ≤5), side-onshore only, offshore blocked, your go-hours.</div>
+</div>
+<!--EMAIL_HTML_END-->
