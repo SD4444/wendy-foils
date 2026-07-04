@@ -2,43 +2,60 @@
 """Regenerate docs/index.html from a wendy.py output file's GRID block.
 
 Usage: python3 gen_dashboard.py data/weekly.out.txt docs/index.html
-Keeps the dashboard always current: the GitHub Action runs this after each fetch.
+The GitHub Action runs this after each fetch so the hosted page is always current.
+Edit the design in TEMPLATE below; never hand-edit docs/index.html (it is generated).
 """
 import sys, json, re
 from datetime import datetime
 
 WIND_MIN, GUST_MAX = 13, 25
 SPOT_SUB = {
-    "Muiderberg": "IJmeer · inland · ~20min",
-    "Almere Muiderzand": "IJmeer · inland · ~25min",
-    "Schellinkhout": "Markermeer · inland · ~45min",
-    "Wijk aan Zee": "North Sea · coast · ~40min",
+    "Muiderberg": ("IJmeer", "inland flat", "~20 min"),
+    "Almere Muiderzand": ("IJmeer", "inland flat", "~25 min"),
+    "Schellinkhout": ("Markermeer", "inland flat", "~45 min"),
+    "Wijk aan Zee": ("North Sea", "coast / waves", "~40 min"),
 }
+SOURCES = [
+    "KNMI HARMONIE-AROME · NL 2 km anchor",
+    "ICON-D2 · 2 km near-term check",
+    "ECMWF IFS · GFS · ICON-EU spread",
+    "ICON-D2 / ECMWF ensemble · probability",
+    "EWAM · waves + sea temp",
+]
 
 def daylabel(date):
     return datetime.fromisoformat(date+"T00:00").strftime("%a %-d")
 
+def dlong(date):
+    return datetime.fromisoformat(date+"T00:00").strftime("%A %-d %b")
+
 def cell_val(r):
     if r["type"] == "coast":
-        return f"{r['wave']:.1f}m" if r.get("wave") is not None else "—"
+        return f"{r['wave']:.1f}m" if r.get("wave") is not None else "flat"
     if r.get("avg") is not None:
-        return f"{r['avg']:.0f}kt"
+        return f"{r['avg']:.0f}"
     if r["verdict"] == "MAYBE" and r.get("hotpeak"):
-        return f"{r['hotpeak']:.0f}kt"
+        return f"{r['hotpeak']:.0f}"
     if r["verdict"] == "SKIP" and r.get("gust",0) > GUST_MAX and r.get("peak",0) >= WIND_MIN-1:
-        return f"{r['peak']:.0f} g{r['gust']:.0f}"
-    return f"{r.get('peak',0):.0f}kt"
+        return f"{r['peak']:.0f}g{r['gust']:.0f}"
+    return f"{r.get('peak',0):.0f}"
 
 def cell_q(r):
-    if r["type"] == "coast":
-        return 0.08
+    if r["type"] == "coast": return 0.06
     v = r["verdict"]
     if v == "GO":    return round(min(1.0, 0.82 + r.get("score",3)/40), 2)
-    if v == "MAYBE": return 0.55
-    if r.get("gust",0) > GUST_MAX and r.get("peak",0) >= WIND_MIN-1:
-        return 0.2  # windy but overpowered/spiky
+    if v == "MAYBE": return 0.56
+    if r.get("gust",0) > GUST_MAX and r.get("peak",0) >= WIND_MIN-1: return 0.2
     hp = r.get("hotpeak", r.get("peak",0))
     return round(max(0.05, min(0.4, (hp-6)/(15-6)*0.4)), 2)
+
+def wind_str(r):
+    if r["type"] == "coast":
+        return (f"{r['wave']:.1f} m" if r.get("wave") is not None else "flat"), "sea"
+    if r.get("avg") is not None: return f"{r['avg']:.0f}", "kt avg"
+    if r["verdict"] == "MAYBE" and r.get("hotpeak") and r.get("peak") and r["hotpeak"] > r["peak"]:
+        return f"{r['peak']:.0f}–{r['hotpeak']:.0f}", "kt (models split)"
+    return f"{r.get('hotpeak', r.get('peak',0)):.0f}", "kt peak"
 
 def build_data(grid):
     dates = sorted({r["date"] for r in grid})
@@ -46,60 +63,82 @@ def build_data(grid):
     spot_order = []
     for r in grid:
         if r["spot"] not in spot_order: spot_order.append(r["spot"])
-    spots = [{"name": s, "sub": SPOT_SUB.get(s, "")} for s in spot_order]
+    spots = [{"name": s, "sub": " · ".join(SPOT_SUB.get(s, ("",))[:2]).strip(" ·"),
+              "drive": SPOT_SUB.get(s, ("","",""))[2]} for s in spot_order]
     by = {(r["spot"], r["date"]): r for r in grid}
     matrix = {}
     for s in spot_order:
         row = []
         for d in dates:
             r = by.get((s, d))
-            if r is None: row.append(["skip", "—", 0]); continue
-            row.append([r["verdict"].lower(), cell_val(r), cell_q(r)])
+            if r is None: row.append(["skip", "–", 0, ""]); continue
+            title = (r.get("why") or "").split("|")[0].strip()
+            row.append([r["verdict"].lower(), cell_val(r), cell_q(r), title])
         matrix[s] = row
 
     gm = [r for r in grid if r["verdict"] in ("GO", "MAYBE")]
     gm.sort(key=lambda r: (-r.get("score",0), r["date"]))
     best = None
-    if gm:
-        b = gm[0]
+    feature = None
+    pool = gm if gm else sorted([r for r in grid if r["type"] != "coast"],
+                                key=lambda r: (-(r.get("hotpeak") or 0), r["date"]))
+    if pool:
+        b = pool[0]
         best = {"spot": b["spot"], "day": dates.index(b["date"])}
+        w, wsub = wind_str(b)
+        feature = {
+            "label": {"GO": "BEST DAY", "MAYBE": "ONE TO WATCH"}.get(b["verdict"], "CLOSEST THIS WEEK"),
+            "verdict": b["verdict"], "q": cell_q(b),
+            "day": dlong(b["date"]), "spot": b["spot"],
+            "sub": " · ".join(SPOT_SUB.get(b["spot"], ("",))[:2]).strip(" ·"),
+            "wind": w, "windsub": wsub,
+            "dir": b.get("dir") or "–",
+            "window": (f"{b['win'][0]:02d}:00–{b['win'][1]:02d}:00" if b.get("win") else "your hours"),
+            "gust": (f"{b['gust']:.0f} kt" if b.get("gust") else "–"),
+            "air": (f"{b['air']:.0f}°" if b.get("air") is not None else "–"),
+            "water": (f"{b['water']:.0f}°" if b.get("water") is not None else "–"),
+            "wetsuit": b.get("wetsuit") or "",
+            "note": (b.get("why") or "").split("|")[0].strip(),
+        }
 
     gos = [r for r in gm if r["verdict"] == "GO"]
     maybes = [r for r in gm if r["verdict"] == "MAYBE"]
     if gos:
         b = gos[0]
-        headline = "Foilable window this week."
-        verdict = (f"Best day: <strong>{daylabel(b['date'])} at {b['spot']}</strong>. {b['why'].split('|')[0].strip()}. "
-                   f"Other days ranked below.")
-        bestday = f"{daylabel(b['date'])} {b['spot']}"
+        headline = "There's a window this week."
+        verdict = (f"<strong>{dlong(b['date'])} at {b['spot']}</strong> is the pick. "
+                   f"The rest of the week is ranked below, with why each day works or doesn't.")
     elif maybes:
-        days_txt = ", ".join(sorted({daylabel(r["date"]) for r in maybes}))
+        days_txt = ", ".join(daylabel(d) for d in sorted({r["date"] for r in maybes}))
         b = maybes[0]
-        headline = "Models split — one to watch."
-        verdict = (f"No clear GO, but the models <strong>split</strong> on {days_txt}: our primary reads light while "
-                   f"GFS runs foilable over open water. {b['spot']} is the one to watch &mdash; go only if the stronger "
-                   f"model firms up closer in. Coast spots parked until you're foil-stable.")
-        bestday = "none clean (watch " + b["spot"] + ")"
+        headline = "The models can't agree."
+        verdict = (f"No clean GO, but forecasts <strong>split</strong> on {days_txt}. Our high-res near-term "
+                   f"model reads light while the global models run foilable over open water. "
+                   f"<strong>{b['spot']}</strong> is the one to watch — commit only if the stronger model "
+                   f"firms up closer in. Coast stays parked until you're foil-stable.")
     else:
-        headline = "No foil window this week."
-        verdict = ("Nothing rideable in range. Light all week at your spots, and no model shows a steady in-band "
-                   "window in your hours. The daily scan keeps watching.")
-        bestday = "none"
+        headline = "Nothing rideable yet."
+        verdict = ("Light all week at your calm-water spots, and no model finds a steady in-band window in "
+                   "your hours. The daily scan keeps watching and will ping you the moment that changes.")
 
-    conf = "models split (GFS hotter than HARMONIE)" if maybes and not gos else "high near-term, lower late-week"
     airs = [r["air"] for r in grid if r.get("air") is not None]
     waters = [r["water"] for r in grid if r.get("water") is not None]
-    tline = ""
+    conf = "Split (global models hotter)" if (maybes and not gos) else ("Firm" if gos else "Low — all models light")
+    peaks = [r.get("hotpeak") for r in grid if r["type"] != "coast" and r.get("hotpeak")]
+    tiles = []
+    if feature:
+        tiles.append(["Best window", f"{feature['day'].split()[0]} {feature['spot'].split()[0]}", feature["window"]])
+    if peaks:
+        tiles.append(["Wind range", f"{min(peaks):.0f}–{max(peaks):.0f}", "kt across the week"])
     if airs and waters:
-        tline = f"air {min(airs):.0f}-{max(airs):.0f}C · water ~{max(set(waters), key=waters.count):.0f}C"
-    meta = [["Setup", "5m · 95L · 78kg · beginner"],
-            ["Best day", bestday],
-            ["Spots", f"{len(spots)} checked"],
-            ["Confidence", conf]]
-    if tline: meta.insert(2, ["Temp", tline])
-    weeklabel = datetime.fromisoformat(dates[0]+"T00:00").strftime("week of %-d %b %Y")
-    return {"days": days, "spots": spots, "grid": matrix, "best": best, "headline": headline,
-            "verdict": verdict, "meta": meta, "weeklabel": weeklabel}
+        wt = max(set(waters), key=waters.count)
+        tiles.append(["Air / water", f"{min(airs):.0f}–{max(airs):.0f}° / {wt:.0f}°", "°C"])
+    tiles.append(["Confidence", conf, "model agreement"])
+
+    weeklabel = datetime.fromisoformat(dates[0]+"T00:00").strftime("Week of %-d %b %Y")
+    return {"days": days, "spots": spots, "grid": matrix, "best": best, "feature": feature,
+            "headline": headline, "verdict": verdict, "tiles": tiles,
+            "sources": SOURCES, "weeklabel": weeklabel}
 
 def main():
     src, dest = sys.argv[1], sys.argv[2]
@@ -107,8 +146,7 @@ def main():
     m = re.search(r"<!--GRID_START-->(.*?)<!--GRID_END-->", txt, re.S)
     if not m:
         sys.stderr.write("no GRID block in "+src+"\n"); sys.exit(1)
-    grid = json.loads(m.group(1))
-    data = build_data(grid)
+    data = build_data(json.loads(m.group(1)))
     html = TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(data) + ";")
     open(dest, "w", encoding="utf-8").write(html)
     print(f"wrote {dest} ({len(data['days'])} days, {len(data['spots'])} spots)")
@@ -119,176 +157,299 @@ TEMPLATE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wendy Foils — Wind outlook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   :root{
-    --ground:#f3f6f7; --panel:#ffffff; --ink:#0c1d26; --ink-soft:#4a5f68;
-    --hair:#dbe4e6; --accent:#0a9aa2;
-    --go:#1f9d63; --go-bg:#e4f4ea; --maybe:#c07d15; --maybe-bg:#fbf1de;
-    --skip:#7d8c92; --skip-bg:#eef1f2; --track:#e6ebec;
-    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --c1:200px;
+    --bg:#050d12; --bg2:#081820; --panel:#0c1c24; --panel2:#0f232c;
+    --ink:#eef6f7; --soft:#93b0b7; --faint:#5f7a82; --hair:#183038; --hair2:#1f3b45;
+    --accent:#39d7df; --accent-dim:#1c9aa2;
+    --go:#3fd29a; --go-bg:rgba(63,210,154,.13);
+    --maybe:#f4b73f; --maybe-bg:rgba(244,183,63,.13);
+    --skip:#6f8990; --skip-bg:rgba(111,137,144,.10);
+    --disp:"IBM Plex Sans Condensed",system-ui,sans-serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    --maxw:1120px;
   }
-  @media (prefers-color-scheme:dark){:root{
-    --ground:#081720; --panel:#0f2530; --ink:#e9f2f3; --ink-soft:#8ba7af;
-    --hair:#1c3846; --accent:#3fd0d8;
-    --go:#43c988; --go-bg:#123227; --maybe:#e0a13a; --maybe-bg:#33260f;
-    --skip:#6f858c; --skip-bg:#152a34; --track:#122a34;}}
-  :root[data-theme="light"]{
-    --ground:#f3f6f7; --panel:#ffffff; --ink:#0c1d26; --ink-soft:#4a5f68;
-    --hair:#dbe4e6; --accent:#0a9aa2;
-    --go:#1f9d63; --go-bg:#e4f4ea; --maybe:#c07d15; --maybe-bg:#fbf1de;
-    --skip:#7d8c92; --skip-bg:#eef1f2; --track:#e6ebec;}
-  :root[data-theme="dark"]{
-    --ground:#081720; --panel:#0f2530; --ink:#e9f2f3; --ink-soft:#8ba7af;
-    --hair:#1c3846; --accent:#3fd0d8;
-    --go:#43c988; --go-bg:#123227; --maybe:#e0a13a; --maybe-bg:#33260f;
-    --skip:#6f858c; --skip-bg:#152a34; --track:#122a34;}
   html{-webkit-text-size-adjust:100%}
-  body{background:var(--ground);color:var(--ink);font-family:var(--sans);
-    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  .wrap{max-width:1180px;margin:0;padding:0 clamp(20px,5vw,80px)}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:.002em}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,48px)}
+  .mono{font-family:var(--mono)}
+  ::selection{background:rgba(57,215,223,.28)}
+
+  /* hero */
   .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
-  #wind{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .hero-in{position:relative;z-index:2;padding:clamp(44px,9vw,64px) 0 clamp(38px,7vw,56px)}
-  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
-    color:var(--accent);margin:0 0 20px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;line-height:1.5}
-  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;
-    box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
-  h1{font-size:clamp(28px,7vw,52px);line-height:1.05;margin:0 0 20px;font-weight:800;
-    letter-spacing:-.02em;text-wrap:balance;max-width:15ch}
-  .verdict-line{font-size:clamp(15px,2.4vw,17px);color:var(--ink-soft);max-width:62ch;margin:0}
-  .verdict-line strong{color:var(--ink)}
-  .meta{display:flex;flex-wrap:wrap;gap:12px 30px;margin-top:30px;
-    font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
-  .meta b{color:var(--ink);font-weight:600}
-  section{padding:clamp(34px,7vw,52px) 0}
-  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--ink-soft);margin:0 0 8px}
-  .sec-note{font-size:13px;color:var(--ink-soft);margin:0 0 24px;max-width:62ch}
-  .sec-note .swatch{display:inline-block;width:26px;height:6px;border-radius:3px;vertical-align:middle;
-    background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 30%,transparent),var(--accent));margin:0 3px}
-  .matrix{display:grid;grid-template-columns:var(--c1) repeat(var(--ndays,7),minmax(0,1fr));column-gap:6px;align-items:stretch}
+  .hero::before{content:"";position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(57,215,223,.16), transparent 55%),
+      radial-gradient(90% 80% at 10% 0%, rgba(28,154,162,.12), transparent 60%),
+      linear-gradient(180deg,#071820,var(--bg));}
+  #wind{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;opacity:.9}
+  .hero-in{position:relative;z-index:2;padding:clamp(40px,7vw,68px) 0 clamp(30px,5vw,44px)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 22px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;
+    box-shadow:0 0 0 4px rgba(57,215,223,.18),0 0 14px 2px rgba(57,215,223,.6)}
+  .eyebrow .sep{color:var(--faint)}
+  h1{font-family:var(--disp);font-size:clamp(38px,7.5vw,76px);line-height:.98;margin:0 0 20px;
+    font-weight:700;letter-spacing:-.015em;text-wrap:balance;max-width:16ch;color:#fff}
+  .verdict{font-size:clamp(15px,2.3vw,18px);color:var(--soft);max-width:60ch;margin:0}
+  .verdict strong{color:var(--ink);font-weight:600}
+
+  /* hero grid: feature card + tiles */
+  .herogrid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;
+    margin-top:clamp(30px,4vw,44px);align-items:stretch}
+  .feature{position:relative;border:1px solid var(--hair2);border-radius:18px;padding:26px 28px;
+    background:linear-gradient(160deg,rgba(18,42,50,.9),rgba(10,26,32,.75));
+    backdrop-filter:blur(6px);overflow:hidden}
+  .feature .flabel{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--accent);display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;
+    padding:3px 9px;border-radius:20px}
+  .pill.go{background:var(--go-bg);color:var(--go);box-shadow:inset 0 0 0 1px rgba(63,210,154,.3)}
+  .pill.maybe{background:var(--maybe-bg);color:var(--maybe);box-shadow:inset 0 0 0 1px rgba(244,183,63,.3)}
+  .pill.skip{background:var(--skip-bg);color:var(--soft);box-shadow:inset 0 0 0 1px var(--hair2)}
+  .feat-main{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+  .bigwind{font-family:var(--disp);font-weight:700;line-height:.9;letter-spacing:-.02em}
+  .bigwind .n{font-size:clamp(52px,9vw,84px);color:#fff}
+  .bigwind .u{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--soft);
+    letter-spacing:.04em;display:block;margin-top:6px}
+  .gauge{flex:none}
+  .feat-where{margin-top:18px}
+  .feat-where .spot{font-family:var(--disp);font-size:23px;font-weight:600;color:var(--ink)}
+  .feat-where .when{color:var(--soft);font-size:14px;margin-top:2px}
+  .feat-row{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;padding-top:16px;
+    border-top:1px solid var(--hair);font-family:var(--mono);font-size:12.5px;color:var(--soft)}
+  .feat-row b{color:var(--ink);font-weight:600}
+  .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
+
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+  .tile{border:1px solid var(--hair);border-radius:14px;padding:16px 18px;background:var(--panel);
+    display:flex;flex-direction:column;gap:6px;min-height:104px;justify-content:center}
+  .tile .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--disp);font-size:23px;font-weight:600;color:var(--ink);line-height:1.05}
+  .tile .s{font-family:var(--mono);font-size:11.5px;color:var(--soft)}
+
+  /* sections */
+  section{padding:clamp(38px,6vw,60px) 0}
+  .shead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .shead h2{font-family:var(--disp);font-size:clamp(22px,3vw,30px);font-weight:600;letter-spacing:-.01em}
+  .shead .legend{font-family:var(--mono);font-size:11.5px;color:var(--faint);display:flex;align-items:center;gap:8px}
+  .shead .swatch{display:inline-block;width:30px;height:6px;border-radius:3px;
+    background:linear-gradient(90deg,rgba(57,215,223,.25),var(--accent))}
+  .snote{font-size:13.5px;color:var(--soft);margin:0 0 26px;max-width:70ch}
+
+  /* outlook matrix */
+  .matrix{display:grid;grid-template-columns:200px repeat(var(--ndays,7),minmax(0,1fr));gap:8px}
   .mhead,.srow{display:contents}
   .corner{border-bottom:1px solid var(--hair)}
-  .dh{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--ink-soft);font-weight:600;padding:0 4px 16px;border-bottom:1px solid var(--hair)}
-  .sname{font-weight:600;font-size:15px;padding:20px 12px 20px 0;border-bottom:1px solid var(--hair);align-self:center}
-  .spot-sub{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);
-    font-family:var(--mono);letter-spacing:.02em;margin-top:3px}
-  .cell{display:flex;flex-direction:column;gap:9px;align-items:flex-start;padding:18px 4px;border-bottom:1px solid var(--hair)}
-  .dlabel{display:none;font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-soft)}
-  .tag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;
-    letter-spacing:.06em;padding:3px 7px;border-radius:5px;white-space:nowrap}
-  .kt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;
-    line-height:1;color:var(--ink);white-space:nowrap}
-  .skip .tag{background:var(--skip-bg);color:var(--skip)} .skip .kt{color:var(--ink-soft)}
-  .maybe .tag{background:var(--maybe-bg);color:var(--maybe)} .maybe .kt{color:var(--maybe)}
-  .go .tag{background:var(--go-bg);color:var(--go)} .go .kt{color:var(--go)}
-  .qbar{width:100%;max-width:56px;height:5px;border-radius:3px;background:var(--track);overflow:hidden}
-  .qbar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
-  .best .kt{color:var(--accent);font-weight:700}
-  .best .qbar i{box-shadow:0 0 8px color-mix(in srgb,var(--accent) 70%,transparent)}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:20px}
-  .card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:22px}
-  .card h3{margin:0 0 12px;font-size:13px;font-family:var(--mono);letter-spacing:.04em;
-    text-transform:uppercase;color:var(--ink-soft);font-weight:600}
-  .card p{margin:0;font-size:14px;color:var(--ink);line-height:1.6}
-  .card .big{font-family:var(--mono);font-weight:700;font-size:15px}
-  footer{border-top:1px solid var(--hair);padding:32px 0 clamp(40px,10vw,56px);
-    font-size:12.5px;color:var(--ink-soft);line-height:1.9}
-  footer .src{font-family:var(--mono);margin-bottom:14px;word-break:break-word}
-  footer a{color:var(--accent);text-decoration:none} footer a:hover{text-decoration:underline}
-  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
-  @media (prefers-reduced-motion:reduce){#wind{display:none}}
+  .dh{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--faint);font-weight:500;padding:2px 6px 14px;border-bottom:1px solid var(--hair)}
+  .sname{padding:18px 14px 18px 2px;border-bottom:1px solid var(--hair);align-self:stretch;
+    display:flex;flex-direction:column;justify-content:center}
+  .sname .nm{font-family:var(--disp);font-weight:600;font-size:17px;color:var(--ink)}
+  .sname .sub{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:3px;letter-spacing:.01em}
+  .cell{position:relative;border:1px solid var(--hair);border-radius:12px;padding:14px 12px;
+    display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+    background:rgba(255,255,255,.012);transition:transform .15s ease,border-color .15s ease}
+  .cell:hover{transform:translateY(-2px);border-color:var(--hair2)}
+  .dlabel{display:none}
+  .cell .tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.07em;
+    padding:3px 8px;border-radius:16px}
+  .go .tag{background:var(--go-bg);color:var(--go)}
+  .maybe .tag{background:var(--maybe-bg);color:var(--maybe)}
+  .skip .tag{background:var(--skip-bg);color:var(--soft)}
+  .cell .val{font-family:var(--disp);font-weight:600;font-size:24px;line-height:1;color:var(--ink)}
+  .cell .val .kt{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--faint);margin-left:3px}
+  .go .val{color:#fff} .maybe .val{color:#fff} .skip .val{color:var(--soft)}
+  .qbar{width:100%;height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+  .qbar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent-dim),var(--accent))}
+  .cell.best{border-color:rgba(57,215,223,.5);box-shadow:0 0 0 1px rgba(57,215,223,.25),0 6px 26px -12px rgba(57,215,223,.6)}
+  .cell.best::after{content:"WATCH";position:absolute;top:-8px;right:10px;font-family:var(--mono);
+    font-size:9px;letter-spacing:.12em;color:var(--accent);background:var(--bg);padding:1px 6px;border-radius:8px}
+
+  /* rules cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .card{border:1px solid var(--hair);border-radius:16px;padding:22px 22px 24px;background:var(--panel);
+    transition:transform .15s ease,border-color .15s ease}
+  .card:hover{transform:translateY(-2px);border-color:var(--hair2)}
+  .card .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;margin-bottom:14px;
+    background:rgba(57,215,223,.1);color:var(--accent);font-size:17px}
+  .card h3{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--soft);font-weight:600;margin:0 0 8px}
+  .card p{font-size:14px;color:var(--ink);line-height:1.6}
+  .card .big{font-family:var(--disp);font-weight:600}
+
+  footer{border-top:1px solid var(--hair);padding:34px 0 clamp(44px,8vw,64px)}
+  .srcgrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+  .srcgrid .s{font-family:var(--mono);font-size:11.5px;color:var(--soft);border:1px solid var(--hair);
+    border-radius:20px;padding:5px 12px;background:var(--panel)}
+  .fmeta{font-size:12.5px;color:var(--faint);line-height:1.8}
+  .fmeta a{color:var(--accent);text-decoration:none} .fmeta a:hover{text-decoration:underline}
+
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  .reveal{opacity:0;transform:translateY(14px)}
+  .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+  @media (prefers-reduced-motion:reduce){#wind{display:none}.reveal{opacity:1;transform:none}}
+
+  @media (max-width:860px){
+    .herogrid{grid-template-columns:1fr}
+  }
   @media (max-width:760px){
     .matrix{display:block}
     .mhead{display:none}
-    .srow{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;
-      background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:16px;margin-bottom:14px}
-    .sname{grid-column:1/-1;padding:0 0 4px;border-bottom:1px solid var(--hair);margin-bottom:4px}
-    .cell{border-bottom:none;padding:4px 0;gap:7px}
-    .dlabel{display:block}
-    .qbar{max-width:none}
+    .srow{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:9px;
+      border:1px solid var(--hair);border-radius:16px;padding:16px;margin-bottom:14px;background:var(--panel)}
+    .sname{grid-column:1/-1;border-bottom:1px solid var(--hair);padding:0 0 12px;margin-bottom:4px}
+    .cell{border:none;background:none;padding:2px 0;gap:7px}
+    .cell:hover{transform:none}
+    .cell.best{box-shadow:none;border:none} .cell.best::after{display:none}
+    .dlabel{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+    .tiles{grid-template-columns:1fr 1fr}
   }
+  @media (max-width:430px){ .tiles{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
-<div class="hero">
+<header class="hero">
   <canvas id="wind"></canvas>
   <div class="wrap hero-in">
     <p class="eyebrow"><span class="dot"></span> <span id="eyebrow">Wendy Foils</span></p>
     <h1 id="h1"></h1>
-    <p class="verdict-line" id="verdict"></p>
-    <div class="meta" id="meta"></div>
+    <p class="verdict" id="verdict"></p>
+    <div class="herogrid">
+      <article class="feature reveal" id="feature"></article>
+      <div class="tiles reveal" id="tiles"></div>
+    </div>
   </div>
-</div>
+</header>
+
+<main>
 <section class="wrap">
-  <p class="sec-note">Each cell shows the call and peak wind. The <span class="swatch"></span> bar is wind quality &mdash; how close that day sits to your foilable window (fuller and brighter = better). GO days glow. Wind is the strongest credible model in your go-hours, so a GFS-hot day still shows up.</p>
-  <div class="matrix" id="matrix"></div>
+  <div class="shead">
+    <h2>7-day outlook</h2>
+    <span class="legend"><span class="swatch"></span> wind quality &middot; fuller = closer to foilable</span>
+  </div>
+  <p class="snote">Wind shown is the strongest credible model in your go-hours, so a day the global models like still surfaces even when the high-res model reads light. Calm-water spots first; the coast stays parked until you're foil-stable.</p>
+  <div class="matrix reveal" id="matrix"></div>
 </section>
+
 <section class="wrap">
-  <h2 class="sec-h">How the call is made</h2>
+  <div class="shead"><h2>How the call is made</h2></div>
   <div class="cards">
-    <div class="card"><h3>Foilable wind</h3><p><span class="big">13&ndash;22 kt</span>, ideal 15&ndash;20. Below 13 you can't get up on the 95L.</p></div>
-    <div class="card"><h3>Steady, not spiky</h3><p>Gust minus average <span class="big">&le; 5 kt</span>. A 15-gusting-28 day is a no-go on a 5m.</p></div>
-    <div class="card"><h3>Direction</h3><p>Side-shore / side-onshore only. <span class="big">Offshore blocks</span> the spot regardless of speed.</p></div>
-    <div class="card"><h3>Your hours</h3><p>Early mornings, evenings, weekends ranked first. Coast spots parked until foil-stable.</p></div>
+    <div class="card reveal"><div class="ic">&#9683;</div><h3>Foilable wind</h3><p><span class="big">13&ndash;22 kt</span>, ideal 15&ndash;20. Below 13 you can't get up on the 95L.</p></div>
+    <div class="card reveal"><div class="ic">&#8776;</div><h3>Steady, not spiky</h3><p>Gust minus average <span class="big">&le; 5 kt</span>. A 15-gusting-28 day is a no-go on a 5m.</p></div>
+    <div class="card reveal"><div class="ic">&#10138;</div><h3>Direction</h3><p>Side-shore / side-onshore only. <span class="big">Offshore blocks</span> the spot regardless of speed.</p></div>
+    <div class="card reveal"><div class="ic">&#9788;</div><h3>Your hours</h3><p>Early mornings, evenings, weekends ranked first. Coast parked until foil-stable.</p></div>
   </div>
 </section>
-<footer class="wrap">
-  <div class="src">Source: KNMI HARMONIE-AROME + ICON-EU + GFS + ECMWF + ICON-EU ensemble + EWAM waves, via Open-Meteo (CC BY 4.0).</div>
-  Cross-check on Windguru:
-  <a href="https://www.windguru.cz/19">Muiderberg</a> ·
-  <a href="https://www.windguru.cz/3601">Schellinkhout</a> ·
-  <a href="https://www.windguru.cz/113">Wijk aan Zee</a>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="srcgrid" id="sources"></div>
+    <div class="fmeta">
+      Triangulated across multiple models via <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0), refreshed every run.
+      Cross-check on Windguru: <a href="https://www.windguru.cz/19">Muiderberg</a> &middot;
+      <a href="https://www.windguru.cz/3601">Schellinkhout</a> &middot;
+      <a href="https://www.windguru.cz/113">Wijk aan Zee</a>.
+    </div>
+  </div>
 </footer>
+
 <script>
 /*DATA*/
-document.getElementById("eyebrow").textContent = "Wendy Foils · " + DATA.weeklabel;
-document.getElementById("h1").textContent = DATA.headline;
-document.getElementById("verdict").innerHTML = DATA.verdict;
-document.getElementById("meta").innerHTML = DATA.meta.map(m=>`<span><b>${m[0]}:</b> ${m[1]}</span>`).join("");
+const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-document.querySelector(".matrix").style.setProperty("--ndays", DATA.days.length);
+
+$("#eyebrow").innerHTML = 'Wendy Foils <span class="sep">&middot;</span> ' + esc(DATA.weeklabel);
+$("#h1").textContent = DATA.headline;
+$("#verdict").innerHTML = DATA.verdict;
+
+// feature card
+if (DATA.feature){
+  const f = DATA.feature, r = 34, C = 2*Math.PI*r, off = C*(1-Math.max(.06,f.q));
+  $("#feature").innerHTML =
+    `<div class="flabel">${esc(f.label)} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
+     <div class="feat-main">
+       <div class="bigwind"><span class="n">${esc(f.wind)}</span><span class="u">${esc(f.windsub)}</span></div>
+       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+         <circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/>
+         <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"
+           stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 42 42)"/>
+         <text x="42" y="47" text-anchor="middle" font-family="var(--mono)" font-size="15" fill="var(--accent)">${Math.round(f.q*100)}</text>
+       </svg>
+     </div>
+     <div class="feat-where">
+       <div class="spot">${esc(f.spot)}</div>
+       <div class="when">${esc(f.day)} &middot; ${esc(f.window)}</div>
+     </div>
+     <div class="feat-row">
+       <span>dir <b>${esc(f.dir)}</b></span><span>gust <b>${esc(f.gust)}</b></span>
+       <span>air <b>${esc(f.air)}</b></span><span>water <b>${esc(f.water)}</b></span>
+     </div>
+     <div class="feat-note">${esc(f.wetsuit)}${f.note?(" &middot; "+esc(f.note)):""}</div>`;
+} else { $("#feature").style.display="none"; }
+
+// tiles
+$("#tiles").innerHTML = DATA.tiles.map(t=>
+  `<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
+
+// sources
+$("#sources").innerHTML = DATA.sources.map(s=>`<span class="s">${esc(s)}</span>`).join("");
+
+// matrix
+$(".matrix").style.setProperty("--ndays", DATA.days.length);
 let html = `<div class="mhead"><div class="corner"></div>`+DATA.days.map(d=>`<div class="dh">${esc(d)}</div>`).join("")+`</div>`;
 html += DATA.spots.map(s=>{
   const cells = (DATA.grid[s.name]||[]).map((c,di)=>{
-    const [call,val,q] = c;
+    const [call,val,q,title] = c;
     const isBest = (DATA.best && DATA.best.spot===s.name && di===DATA.best.day) ? " best" : "";
-    const pct = Math.max(q>0?10:0, Math.round(q*100));
-    const op = (0.4 + 0.6*q).toFixed(2);
-    return `<div class="cell ${call}${isBest}">`+
+    const pct = Math.max(q>0?12:0, Math.round(q*100));
+    const num = /^[\d.]+$/.test(val);
+    const gust = /g/.test(val);
+    const disp = num ? `${esc(val)}<span class="kt">kt</span>` : (gust? esc(val).replace('g','<span class="kt">g</span>') : esc(val));
+    return `<div class="cell ${call}${isBest}" title="${esc(title||"")}">`+
       `<span class="dlabel">${esc(DATA.days[di]||"")}</span>`+
       `<span class="tag">${call.toUpperCase()}</span>`+
-      `<span class="kt">${esc(val)}</span>`+
-      `<div class="qbar"><i style="width:${pct}%;opacity:${op}"></i></div></div>`;
+      `<span class="val">${disp}</span>`+
+      `<div class="qbar"><i style="width:${pct}%"></i></div></div>`;
   }).join("");
-  return `<div class="srow"><div class="sname">${esc(s.name)}<span class="spot-sub">${esc(s.sub)}</span></div>${cells}</div>`;
+  return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; ${esc(s.drive)}</span></div>${cells}</div>`;
 }).join("");
-document.querySelector(".matrix").innerHTML = html;
+$(".matrix").innerHTML = html;
+
+// reveal on scroll
+const io = new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll(".reveal").forEach((el,i)=>{el.style.transitionDelay=(i%4*60)+"ms";io.observe(el);});
+
+// ambient wind streaks
 (function(){
-  const c = document.getElementById("wind"), x = c.getContext("2d");
-  let W,H,streaks=[], raf;
+  const c = $("#wind"), x = c.getContext("2d");
+  let W,H,streaks=[],raf;
   const accent = ()=>getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   function size(){ W=c.width=c.offsetWidth*devicePixelRatio; H=c.height=c.offsetHeight*devicePixelRatio; }
-  function seed(){ streaks = Array.from({length:34},(_,i)=>({
-    y:(H/34)*i + (i*53%40), len:80+ (i*97%220), v:0.6+((i*31)%50)/60, o:0.05+((i*17)%20)/180 }));}
+  function seed(){ streaks=Array.from({length:40},(_,i)=>({
+    y:(H/40)*i+(i*61%46), len:(90+(i*103%260))*devicePixelRatio,
+    v:(0.5+((i*29)%55)/55)*devicePixelRatio, o:0.04+((i*17)%22)/240, x:null })); }
   function step(){
     x.clearRect(0,0,W,H); const col=accent();
     for(const s of streaks){
-      s.x = (s.x==null? -s.len - (s.y*3%W) : s.x) + s.v*devicePixelRatio*1.4;
-      if(s.x > W+s.len) s.x = -s.len;
-      const g = x.createLinearGradient(s.x,0,s.x+s.len,0);
+      s.x = (s.x==null? -s.len-(s.y*4%W) : s.x)+s.v*1.3;
+      if(s.x>W+s.len) s.x=-s.len;
+      const g=x.createLinearGradient(s.x,0,s.x+s.len,0);
       g.addColorStop(0,"transparent"); g.addColorStop(.5,col); g.addColorStop(1,"transparent");
-      x.globalAlpha=s.o; x.strokeStyle=g; x.lineWidth=1.2*devicePixelRatio;
+      x.globalAlpha=s.o; x.strokeStyle=g; x.lineWidth=1.1*devicePixelRatio;
       x.beginPath(); x.moveTo(s.x,s.y); x.lineTo(s.x+s.len,s.y); x.stroke();
     }
     x.globalAlpha=1; raf=requestAnimationFrame(step);
   }
   function start(){ size(); seed(); cancelAnimationFrame(raf); step(); }
-  addEventListener("resize", start); start();
+  addEventListener("resize",start); start();
 })();
 </script>
 </body>

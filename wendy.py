@@ -110,18 +110,20 @@ def fetch_spot(spot, days, primary_model):
         purl = (f"{FORECAST}?{common}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,is_day"
                 f"&daily=sunrise,sunset")
         prim = try_json(purl)
-    # consensus models (wind speed only), aligned by time. GFS included: it reads
-    # highest over open IJsselmeer water and is what Windguru's IJsselmeer page shows,
-    # so keeping it stops the verdict from hiding behind the low HARMONIE member.
+    # consensus models (wind speed only), aligned by time. Triangulation set (researched
+    # 2026-07-04): ICON-D2 is the best independent 2km near-term check against HARMONIE;
+    # ICON-EU/ECMWF/GFS give mid/far-term spread. GFS reads highest over open IJsselmeer
+    # (what Windguru shows), so keeping it stops the verdict hiding behind the low member.
     consensus = {}
-    for m in ("icon_eu","ecmwf_ifs025","gfs_seamless"):
+    for m in ("icon_d2","icon_eu","ecmwf_ifs025","gfs_seamless"):
         u = f"{FORECAST}?{common}&hourly=wind_speed_10m&models={m}"
         j = try_json(u)
         if j and "hourly" in j:
             consensus[m] = dict(zip(j["hourly"]["time"], j["hourly"]["wind_speed_10m"]))
-    # ensemble probability (ICON-EU members)
+    # ensemble probability: ICON-D2-EPS near-term (2km, ~48h), ECMWF-EPS for the week-ahead.
     ens = None
-    eu = f"{ENSEMBLE}?latitude={lat}&longitude={lon}&wind_speed_unit=kn&timezone=Europe/Amsterdam&forecast_days={days}&hourly=wind_speed_10m&models=icon_eu"
+    ens_model = "ecmwf_ifs025" if days > 3 else "icon_d2"
+    eu = f"{ENSEMBLE}?latitude={lat}&longitude={lon}&wind_speed_unit=kn&timezone=Europe/Amsterdam&forecast_days={days}&hourly=wind_speed_10m&models={ens_model}"
     ej = try_json(eu)
     if ej and "hourly" in ej:
         h = ej["hourly"]
@@ -202,6 +204,11 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
             wave = max((p["wave"] for p in dp if p["wave"] is not None), default=None)
             water = next((p["sst"] for p in dp if p["sst"] is not None), None)
         if water is None: water = lake_temp(date)
+        bdir = bwin = None
+        if best:
+            br = best["run"]
+            bdir = max(set(x["dir"] for x in br), key=lambda d: sum(1 for x in br if x["dir"]==d))
+            bwin = [br[0]["h"], br[-1]["h"]+1]
         results.append({"date":date,"spot":spot["name"],"type":spot["type"],
                         "verdict":verdict,"score":score,"why":why,"best":best,
                         "avg": round(best["avg"],1) if best else None,
@@ -209,13 +216,14 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
                         "hotpeak": round(max(peaks.values(), default=allpeak),1),
                         "wave": round(wave,1) if wave is not None else None,
                         "air": round(max(air_go),1) if air_go else None,
-                        "water": water, "wetsuit": suit_for(water)})
+                        "water": water, "wetsuit": suit_for(water),
+                        "dir": bdir, "win": bwin})
     return results
 
 def weekday_name(date):
     return datetime.fromisoformat(date+"T00:00").strftime("%a %d %b")
 
-MODEL_NAMES = {"icon_eu":"ICON","ecmwf_ifs025":"ECMWF","gfs_seamless":"GFS"}
+MODEL_NAMES = {"icon_d2":"ICON-D2","icon_eu":"ICON","ecmwf_ifs025":"ECMWF","gfs_seamless":"GFS"}
 
 def model_gohr_peaks(hours, consensus, primary_label):
     # peak wind during your go-hours, per model (primary + every consensus model).
@@ -242,7 +250,7 @@ def temp_line(spot, date, hours):
 
 def range_line(peaks, primary_label):
     if len(peaks) < 2: return ""
-    order = [primary_label] + [n for n in ("GFS","ICON","ECMWF") if n in peaks and n != primary_label]
+    order = [primary_label] + [n for n in ("ICON-D2","GFS","ICON","ECMWF") if n in peaks and n != primary_label]
     order += [n for n in peaks if n not in order]
     return "go-hrs peak by model: " + ", ".join(f"{n} {peaks[n]:.0f}" for n in order if n in peaks) + "kt"
 
@@ -435,7 +443,7 @@ def main():
     print(f"=== {mode.upper()} ===")
     for r in sorted(all_results, key=lambda r:(r["date"], r["spot"])):
         print(f"{weekday_name(r['date'])}  {r['spot']:<18} {r['verdict']:<5} {stars(r['score']) if r['verdict']!='SKIP' else '':<7} {r['why']}")
-    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why")
+    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why","dir","win")
     grid = [{k: r.get(k) for k in grid_keys} for r in all_results]
     print(f"\n<!--SUBJECT_START-->{subject}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged)}<!--JSON_END-->")
