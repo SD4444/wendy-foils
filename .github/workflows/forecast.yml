@@ -1,0 +1,68 @@
+name: Wendy forecast fetch
+
+# GitHub runners have open internet, so the Open-Meteo pull works here even though
+# the Claude cloud-routine sandbox blocks it. This job fetches + renders the forecast
+# and commits the output; the cloud routine then just reads the committed file and
+# sends the calendar invite (no blocked egress on the routine side).
+
+on:
+  schedule:
+    - cron: "50 4 * * *"    # daily  04:50 UTC (06:50 Amsterdam) - 10 min before the daily routine
+    - cron: "50 15 * * 0"   # Sunday 15:50 UTC (17:50 Amsterdam) - 10 min before the weekly routine
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "weekly or daily"
+        required: true
+        default: daily
+        type: choice
+        options: [daily, weekly]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wendy-forecast
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "50 15 * * 0" ]; then echo "mode=weekly" >> "$GITHUB_OUTPUT";
+            else echo "mode=daily" >> "$GITHUB_OUTPUT"; fi
+          else
+            echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run forecast engine
+        run: |
+          mkdir -p data
+          MODE="${{ steps.mode.outputs.mode }}"
+          echo "Running wendy.py $MODE"
+          # Capture the full engine output (human summary + SUBJECT/EMAIL_HTML/JSON blocks).
+          python3 wendy.py "$MODE" > "data/$MODE.out.txt" 2>"data/$MODE.err.txt" || {
+            echo "engine exited non-zero; err:"; cat "data/$MODE.err.txt";
+          }
+          # Stamp when this data was produced so the routine can detect staleness.
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > "data/$MODE.fetched_at.txt"
+          echo "=== head of output ==="; head -5 "data/$MODE.out.txt" || true
+
+      - name: Commit output
+        run: |
+          MODE="${{ steps.mode.outputs.mode }}"
+          git config user.name "wendy-bot"
+          git config user.email "actions@github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Wendy: $MODE forecast data $(date -u +%Y-%m-%d)"
+            git push
+          fi
