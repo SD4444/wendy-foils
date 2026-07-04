@@ -1,4 +1,119 @@
-<!doctype html>
+#!/usr/bin/env python3
+"""Regenerate docs/index.html from a wendy.py output file's GRID block.
+
+Usage: python3 gen_dashboard.py data/weekly.out.txt docs/index.html
+Keeps the dashboard always current: the GitHub Action runs this after each fetch.
+"""
+import sys, json, re
+from datetime import datetime
+
+WIND_MIN, GUST_MAX = 13, 25
+SPOT_SUB = {
+    "Muiderberg": "IJmeer · inland · ~20min",
+    "Almere Muiderzand": "IJmeer · inland · ~25min",
+    "Schellinkhout": "Markermeer · inland · ~45min",
+    "Wijk aan Zee": "North Sea · coast · ~40min",
+}
+
+def daylabel(date):
+    return datetime.fromisoformat(date+"T00:00").strftime("%a %-d")
+
+def cell_val(r):
+    if r["type"] == "coast":
+        return f"{r['wave']:.1f}m" if r.get("wave") is not None else "—"
+    if r.get("avg") is not None:
+        return f"{r['avg']:.0f}kt"
+    if r["verdict"] == "MAYBE" and r.get("hotpeak"):
+        return f"{r['hotpeak']:.0f}kt"
+    if r["verdict"] == "SKIP" and r.get("gust",0) > GUST_MAX and r.get("peak",0) >= WIND_MIN-1:
+        return f"{r['peak']:.0f} g{r['gust']:.0f}"
+    return f"{r.get('peak',0):.0f}kt"
+
+def cell_q(r):
+    if r["type"] == "coast":
+        return 0.08
+    v = r["verdict"]
+    if v == "GO":    return round(min(1.0, 0.82 + r.get("score",3)/40), 2)
+    if v == "MAYBE": return 0.55
+    if r.get("gust",0) > GUST_MAX and r.get("peak",0) >= WIND_MIN-1:
+        return 0.2  # windy but overpowered/spiky
+    hp = r.get("hotpeak", r.get("peak",0))
+    return round(max(0.05, min(0.4, (hp-6)/(15-6)*0.4)), 2)
+
+def build_data(grid):
+    dates = sorted({r["date"] for r in grid})
+    days = [daylabel(d) for d in dates]
+    spot_order = []
+    for r in grid:
+        if r["spot"] not in spot_order: spot_order.append(r["spot"])
+    spots = [{"name": s, "sub": SPOT_SUB.get(s, "")} for s in spot_order]
+    by = {(r["spot"], r["date"]): r for r in grid}
+    matrix = {}
+    for s in spot_order:
+        row = []
+        for d in dates:
+            r = by.get((s, d))
+            if r is None: row.append(["skip", "—", 0]); continue
+            row.append([r["verdict"].lower(), cell_val(r), cell_q(r)])
+        matrix[s] = row
+
+    gm = [r for r in grid if r["verdict"] in ("GO", "MAYBE")]
+    gm.sort(key=lambda r: (-r.get("score",0), r["date"]))
+    best = None
+    if gm:
+        b = gm[0]
+        best = {"spot": b["spot"], "day": dates.index(b["date"])}
+
+    gos = [r for r in gm if r["verdict"] == "GO"]
+    maybes = [r for r in gm if r["verdict"] == "MAYBE"]
+    if gos:
+        b = gos[0]
+        headline = "Foilable window this week."
+        verdict = (f"Best day: <strong>{daylabel(b['date'])} at {b['spot']}</strong>. {b['why'].split('|')[0].strip()}. "
+                   f"Other days ranked below.")
+        bestday = f"{daylabel(b['date'])} {b['spot']}"
+    elif maybes:
+        days_txt = ", ".join(sorted({daylabel(r["date"]) for r in maybes}))
+        b = maybes[0]
+        headline = "Models split — one to watch."
+        verdict = (f"No clear GO, but the models <strong>split</strong> on {days_txt}: our primary reads light while "
+                   f"GFS runs foilable over open water. {b['spot']} is the one to watch &mdash; go only if the stronger "
+                   f"model firms up closer in. Coast spots parked until you're foil-stable.")
+        bestday = "none clean (watch " + b["spot"] + ")"
+    else:
+        headline = "No foil window this week."
+        verdict = ("Nothing rideable in range. Light all week at your spots, and no model shows a steady in-band "
+                   "window in your hours. The daily scan keeps watching.")
+        bestday = "none"
+
+    conf = "models split (GFS hotter than HARMONIE)" if maybes and not gos else "high near-term, lower late-week"
+    airs = [r["air"] for r in grid if r.get("air") is not None]
+    waters = [r["water"] for r in grid if r.get("water") is not None]
+    tline = ""
+    if airs and waters:
+        tline = f"air {min(airs):.0f}-{max(airs):.0f}C · water ~{max(set(waters), key=waters.count):.0f}C"
+    meta = [["Setup", "5m · 95L · 78kg · beginner"],
+            ["Best day", bestday],
+            ["Spots", f"{len(spots)} checked"],
+            ["Confidence", conf]]
+    if tline: meta.insert(2, ["Temp", tline])
+    weeklabel = datetime.fromisoformat(dates[0]+"T00:00").strftime("week of %-d %b %Y")
+    return {"days": days, "spots": spots, "grid": matrix, "best": best, "headline": headline,
+            "verdict": verdict, "meta": meta, "weeklabel": weeklabel}
+
+def main():
+    src, dest = sys.argv[1], sys.argv[2]
+    txt = open(src, encoding="utf-8").read()
+    m = re.search(r"<!--GRID_START-->(.*?)<!--GRID_END-->", txt, re.S)
+    if not m:
+        sys.stderr.write("no GRID block in "+src+"\n"); sys.exit(1)
+    grid = json.loads(m.group(1))
+    data = build_data(grid)
+    html = TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(data) + ";")
+    open(dest, "w", encoding="utf-8").write(html)
+    print(f"wrote {dest} ({len(data['days'])} days, {len(data['spots'])} spots)")
+
+TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -130,7 +245,7 @@
   <a href="https://www.windguru.cz/113">Wijk aan Zee</a>
 </footer>
 <script>
-const DATA = {"days": ["Sat 4", "Sun 5", "Mon 6", "Tue 7", "Wed 8", "Thu 9", "Fri 10"], "spots": [{"name": "Muiderberg", "sub": "IJmeer \u00b7 inland \u00b7 ~20min"}, {"name": "Schellinkhout", "sub": "Markermeer \u00b7 inland \u00b7 ~45min"}, {"name": "Almere Muiderzand", "sub": "IJmeer \u00b7 inland \u00b7 ~25min"}, {"name": "Wijk aan Zee", "sub": "North Sea \u00b7 coast \u00b7 ~40min"}], "grid": {"Muiderberg": [["skip", "11kt", 0.3], ["skip", "10kt", 0.3], ["skip", "11kt", 0.24], ["skip", "13 g30", 0.2], ["skip", "8kt", 0.09], ["skip", "7kt", 0.09], ["skip", "6kt", 0.11]], "Schellinkhout": [["maybe", "18kt", 0.55], ["maybe", "18kt", 0.55], ["maybe", "15kt", 0.55], ["skip", "15 g31", 0.2], ["skip", "10kt", 0.23], ["skip", "8kt", 0.31], ["skip", "9kt", 0.23]], "Almere Muiderzand": [["skip", "12kt", 0.3], ["skip", "9kt", 0.3], ["skip", "11kt", 0.24], ["skip", "13 g30", 0.2], ["skip", "8kt", 0.09], ["skip", "7kt", 0.09], ["skip", "6kt", 0.11]], "Wijk aan Zee": [["skip", "0.8m", 0.08], ["skip", "0.8m", 0.08], ["skip", "0.7m", 0.08], ["skip", "0.5m", 0.08], ["skip", "\u2014", 0.08], ["skip", "\u2014", 0.08], ["skip", "\u2014", 0.08]]}, "best": {"spot": "Schellinkhout", "day": 0}, "headline": "Models split \u2014 one to watch.", "verdict": "No clear GO, but the models <strong>split</strong> on Mon 6, Sat 4, Sun 5: our primary reads light while GFS runs foilable over open water. Schellinkhout is the one to watch &mdash; go only if the stronger model firms up closer in. Coast spots parked until you're foil-stable.", "meta": [["Setup", "5m \u00b7 95L \u00b7 78kg \u00b7 beginner"], ["Best day", "none clean (watch Schellinkhout)"], ["Temp", "air 19-29C \u00b7 water ~21C"], ["Spots", "4 checked"], ["Confidence", "models split (GFS hotter than HARMONIE)"]], "weeklabel": "week of 4 Jul 2026"};
+/*DATA*/
 document.getElementById("eyebrow").textContent = "Wendy Foils · " + DATA.weeklabel;
 document.getElementById("h1").textContent = DATA.headline;
 document.getElementById("verdict").innerHTML = DATA.verdict;
@@ -178,3 +293,7 @@ document.querySelector(".matrix").innerHTML = html;
 </script>
 </body>
 </html>
+"""
+
+if __name__ == "__main__":
+    main()

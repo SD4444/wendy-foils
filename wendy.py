@@ -77,29 +77,44 @@ def in_go_hours(ts, is_day):
         return bool(is_day)
     return (6 <= h <= 9) or (17 <= h <= 21)
 
+def suit_for(temp):
+    # wetsuit thickness by water temp (C)
+    if temp is None: return "check water temp"
+    if temp >= 20: return "shorty / 2mm or boardies"
+    if temp >= 17: return "3/2 wetsuit"
+    if temp >= 13: return "4/3 wetsuit"
+    if temp >= 10: return "5/4 + boots"
+    return "5/4 + boots + gloves + hood"
+
 def wetsuit(sst):
     if sst is None: return "wetsuit: check water temp"
-    if sst >= 20: return f"water {sst:.0f}C: shorty / 3-2 or boardies"
-    if sst >= 15: return f"water {sst:.0f}C: 3/2 wetsuit"
-    if sst >= 11: return f"water {sst:.0f}C: 4/3 wetsuit"
-    return f"water {sst:.0f}C: 5/4 + boots + gloves"
+    return f"water {sst:.0f}C: {suit_for(sst)}"
+
+# Typical monthly IJsselmeer/Markermeer surface temp (C). No free lake-temp API, and the
+# North Sea marine model doesn't cover the enclosed lakes, so use this seasonal estimate
+# for inland spots. Approx, shallow lakes swing warmer than the sea in summer.
+LAKE_TEMP_BY_MONTH = {1:4,2:4,3:6,4:10,5:15,6:19,7:21,8:21,9:18,10:14,11:9,12:6}
+def lake_temp(date):
+    return LAKE_TEMP_BY_MONTH[int(date[5:7])]
 
 # ---- fetch everything for a spot over `days` ----
 def fetch_spot(spot, days, primary_model):
     lat, lon = spot["lat"], spot["lon"]
     common = f"latitude={lat}&longitude={lon}&wind_speed_unit=kn&timezone=Europe/Amsterdam&forecast_days={days}"
-    # primary wind + daylight + sun
-    purl = (f"{FORECAST}?{common}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day"
+    # primary wind + air temp + daylight + sun
+    purl = (f"{FORECAST}?{common}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,is_day"
             f"&daily=sunrise,sunset&models={primary_model}")
     prim = try_json(purl)
     if not prim or "hourly" not in prim:
         # fallback to best_match if primary model has no data at this range
-        purl = (f"{FORECAST}?{common}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day"
+        purl = (f"{FORECAST}?{common}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,is_day"
                 f"&daily=sunrise,sunset")
         prim = try_json(purl)
-    # consensus models (wind speed only), aligned by time
+    # consensus models (wind speed only), aligned by time. GFS included: it reads
+    # highest over open IJsselmeer water and is what Windguru's IJsselmeer page shows,
+    # so keeping it stops the verdict from hiding behind the low HARMONIE member.
     consensus = {}
-    for m in ("icon_eu","ecmwf_ifs025"):
+    for m in ("icon_eu","ecmwf_ifs025","gfs_seamless"):
         u = f"{FORECAST}?{common}&hourly=wind_speed_10m&models={m}"
         j = try_json(u)
         if j and "hourly" in j:
@@ -132,10 +147,11 @@ def fetch_spot(spot, days, primary_model):
     return prim, consensus, ens, marine
 
 # ---- classify hours into windows per day ----
-def analyse(spot, prim, consensus, ens, marine):
+def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
     H = prim["hourly"]
     times = H["time"]
     ws = H["wind_speed_10m"]; gu = H["wind_gusts_10m"]; wd = H["wind_direction_10m"]
+    air = H.get("temperature_2m", [None]*len(times))
     isday = H.get("is_day", [1]*len(times))
     # group qualifying hours by date
     by_day = {}
@@ -147,10 +163,12 @@ def analyse(spot, prim, consensus, ens, marine):
         dname = dir16(d)
         blocked = dname in spot["blocked"]
         spread = (g - s) if g is not None else 0
+        ingo = in_go_hours(t, isday[i])
         qual = (not blocked and WIND_MIN <= s <= WIND_MAX and (g is None or g <= GUST_MAX)
-                and spread <= SPREAD_OK + 1 and in_go_hours(t, isday[i]))
+                and spread <= SPREAD_OK + 1 and ingo)
         by_day[date].append({"t":t,"h":int(t[11:13]),"s":s,"g":g,"dir":dname,"deg":d,
-                             "spread":spread,"blocked":blocked,"qual":qual})
+                             "spread":spread,"blocked":blocked,"qual":qual,"ingo":ingo,
+                             "air":air[i] if i < len(air) else None})
     # build best window per day
     results = []
     for date in sorted(by_day):
@@ -172,15 +190,63 @@ def analyse(spot, prim, consensus, ens, marine):
                 flush(run); run = []
         flush(run)
 
-        verdict, score, why = classify_day(spot, date, hours, best, consensus, ens, marine)
+        verdict, score, why = classify_day(spot, date, hours, best, consensus, ens, marine, primary_label)
+        # raw numbers for the dashboard grid (presentation is done in the generator)
+        peaks = model_gohr_peaks(hours, consensus, primary_label)
+        allpeak = max((x["s"] for x in hours), default=0)
+        gustmax = max((x["g"] for x in hours if x["g"] is not None), default=0)
+        air_go = [x["air"] for x in hours if x["ingo"] and x["air"] is not None]
+        wave = water = None
+        if spot["type"] == "coast" and marine:
+            dp = [v for t,v in marine.items() if t[:10]==date]
+            wave = max((p["wave"] for p in dp if p["wave"] is not None), default=None)
+            water = next((p["sst"] for p in dp if p["sst"] is not None), None)
+        if water is None: water = lake_temp(date)
         results.append({"date":date,"spot":spot["name"],"type":spot["type"],
-                        "verdict":verdict,"score":score,"why":why,"best":best})
+                        "verdict":verdict,"score":score,"why":why,"best":best,
+                        "avg": round(best["avg"],1) if best else None,
+                        "peak": round(allpeak,1), "gust": round(gustmax,1),
+                        "hotpeak": round(max(peaks.values(), default=allpeak),1),
+                        "wave": round(wave,1) if wave is not None else None,
+                        "air": round(max(air_go),1) if air_go else None,
+                        "water": water, "wetsuit": suit_for(water)})
     return results
 
 def weekday_name(date):
     return datetime.fromisoformat(date+"T00:00").strftime("%a %d %b")
 
-def classify_day(spot, date, hours, best, consensus, ens, marine):
+MODEL_NAMES = {"icon_eu":"ICON","ecmwf_ifs025":"ECMWF","gfs_seamless":"GFS"}
+
+def model_gohr_peaks(hours, consensus, primary_label):
+    # peak wind during your go-hours, per model (primary + every consensus model).
+    gohrs = [x for x in hours if x["ingo"]]
+    go_ts = [x["t"] for x in gohrs]
+    peaks = {}
+    if gohrs:
+        peaks[primary_label] = max(x["s"] for x in gohrs)
+    for m, series in consensus.items():
+        vals = [series[t] for t in go_ts if series.get(t) is not None]
+        if vals: peaks[MODEL_NAMES.get(m, m)] = max(vals)
+    return peaks
+
+def temp_line(spot, date, hours):
+    # air temp (peak of go-hours, else day) + water temp + wetsuit call
+    air_go = [x["air"] for x in hours if x["ingo"] and x["air"] is not None]
+    air_all = [x["air"] for x in hours if x["air"] is not None]
+    airt = max(air_go) if air_go else (max(air_all) if air_all else None)
+    water = lake_temp(date)  # inland; coast overrides with real sea temp elsewhere
+    bits = []
+    if airt is not None: bits.append(f"air {airt:.0f}C")
+    bits.append(f"water ~{water}C ({suit_for(water)})")
+    return ", ".join(bits)
+
+def range_line(peaks, primary_label):
+    if len(peaks) < 2: return ""
+    order = [primary_label] + [n for n in ("GFS","ICON","ECMWF") if n in peaks and n != primary_label]
+    order += [n for n in peaks if n not in order]
+    return "go-hrs peak by model: " + ", ".join(f"{n} {peaks[n]:.0f}" for n in order if n in peaks) + "kt"
+
+def classify_day(spot, date, hours, best, consensus, ens, marine, primary_label="HARMONIE"):
     # coast is parked in the learning phase regardless
     if spot["type"] == "coast":
         sst = None; wave = None
@@ -191,29 +257,43 @@ def classify_day(spot, date, hours, best, consensus, ens, marine):
                 wave = max((p["wave"] for p in day_pts if p["wave"] is not None), default=None)
         w = f"coast/wave spot - parked until you're foil-stable on flat water"
         if wave is not None: w += f"; ~{wave:.1f}m sea"
-        if sst is not None: w += f"; {wetsuit(sst)}"
+        air_go = [x["air"] for x in hours if x["ingo"] and x["air"] is not None]
+        if air_go: w += f"; air {max(air_go):.0f}C"
+        w += f"; {wetsuit(sst) if sst is not None else 'water ~'+str(lake_temp(date))+'C: '+suit_for(lake_temp(date))}"
         return "SKIP", 0, w
+
+    peaks = model_gohr_peaks(hours, consensus, primary_label)
+    rng = range_line(peaks, primary_label)
+    tline = temp_line(spot, date, hours)
+    tail = (f" | {rng} | {tline}" if rng else f" | {tline}")
+
     # peak wind of day for context
     peak = max((x["s"] for x in hours), default=0)
     domdir = None
     if hours:
-        # dominant direction among windier hours
         windy = [x for x in hours if x["s"] >= max(6, peak*0.7)]
         if windy:
             domdir = max(set(x["dir"] for x in windy), key=lambda d:sum(1 for x in windy if x["dir"]==d))
-    # any blocked offshore during windy hours?
     offshore = domdir in spot["blocked"] if domdir else False
 
     if best is None:
         if offshore and peak >= WIND_MIN:
-            return "SKIP", 0, f"peak {peak:.0f}kt but {domdir} is offshore here - no-go direction"
+            return "SKIP", 0, f"peak {peak:.0f}kt but {domdir} is offshore here - no-go direction{tail}"
+        # MULTI-MODEL: primary shows no window, but if a stronger model (often GFS on open
+        # water) reads foilable in your hours, surface it as MAYBE so we never miss a GFS-right
+        # day. This is the fix for HARMONIE running low over the IJsselmeer.
+        hot_name, hot_peak = max(peaks.items(), key=lambda kv: kv[1], default=(None, 0))
+        prim_peak = peaks.get(primary_label, peak)
+        if not offshore and hot_name and hot_name != primary_label and hot_peak >= WIND_MIN and hot_peak - prim_peak >= 3:
+            return "MAYBE", 1.5, (f"models split - {primary_label} only ~{prim_peak:.0f}kt in your hours "
+                                  f"but {hot_name} shows ~{hot_peak:.0f}kt; foilable if the stronger model "
+                                  f"verifies, worth watching{tail}")
         if peak < WIND_MIN:
-            return "SKIP", 0, f"too light, peaks only ~{peak:.0f}kt (need {WIND_MIN}kt+ to foil)"
-        # wind exists but too gusty / out of go-hours
+            return "SKIP", 0, f"too light, peaks only ~{peak:.0f}kt (need {WIND_MIN}kt+ to foil){tail}"
         gpk = max((x["g"] for x in hours if x["g"] is not None), default=0)
         if gpk > GUST_MAX:
-            return "SKIP", 0, f"windy (peak {peak:.0f}kt) but gusting {gpk:.0f}kt - too unstable/overpowered on a 5m"
-        return "SKIP", 1, f"peaks ~{peak:.0f}kt but no steady 2h+ window in your hours"
+            return "SKIP", 0, f"windy (peak {peak:.0f}kt) but gusting {gpk:.0f}kt - too unstable/overpowered on a 5m{tail}"
+        return "SKIP", 1, f"peaks ~{peak:.0f}kt but no steady 2h+ window in your hours{tail}"
 
     avg = best["avg"]; gmax = best["gmax"]; run = best["run"]
     t0 = run[0]["h"]; t1 = run[-1]["h"]+1
@@ -230,9 +310,7 @@ def classify_day(spot, date, hours, best, consensus, ens, marine):
     if good_dir: score += 1
     score = min(5, round(score*2)/2)
 
-    # confidence via model consensus over the window
     conf = model_confidence(run, consensus)
-    # ensemble probability over window
     prob = None
     if ens:
         ps = [ens[x["t"]] for x in run if x["t"] in ens]
@@ -243,7 +321,7 @@ def classify_day(spot, date, hours, best, consensus, ens, marine):
            f"{'steady' if spread<=5 else 'gusty'}; "
            f"{'good side-onshore dir' if good_dir else 'usable but not ideal dir'}")
     if prob is not None: why += f"; {prob*100:.0f}% ensemble chance of foilable wind"
-    why += f"; confidence {conf}"
+    why += f"; confidence {conf}{tail}"
     return verdict, score, why
 
 def model_confidence(run, consensus):
@@ -333,16 +411,16 @@ def build_subject(mode, all_results):
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "weekly"
     if mode == "weekly":
-        days, primary = 7, "best_match"
+        days, primary, primary_label = 7, "best_match", "blend"
     else:
-        days, primary = 3, "knmi_harmonie_arome_netherlands"
+        days, primary, primary_label = 3, "knmi_harmonie_arome_netherlands", "HARMONIE"
 
     all_results = []
     for spot in SPOTS:
         prim, cons, ens, marine = fetch_spot(spot, days, primary)
         if not prim or "hourly" not in prim:
             sys.stderr.write(f"no data for {spot['name']}\n"); continue
-        all_results += analyse(spot, prim, cons, ens, marine)
+        all_results += analyse(spot, prim, cons, ens, marine, primary_label)
 
     now = datetime.fromisoformat(SPOTS and all_results[0]["date"]+"T00:00") if all_results else None
     generated = weekday_name(sorted({r["date"] for r in all_results})[0]) if all_results else ""
@@ -357,8 +435,11 @@ def main():
     print(f"=== {mode.upper()} ===")
     for r in sorted(all_results, key=lambda r:(r["date"], r["spot"])):
         print(f"{weekday_name(r['date'])}  {r['spot']:<18} {r['verdict']:<5} {stars(r['score']) if r['verdict']!='SKIP' else '':<7} {r['why']}")
+    grid_keys = ("date","spot","type","verdict","score","avg","peak","gust","hotpeak","wave","air","water","wetsuit","why")
+    grid = [{k: r.get(k) for k in grid_keys} for r in all_results]
     print(f"\n<!--SUBJECT_START-->{subject}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged)}<!--JSON_END-->")
+    print(f"<!--GRID_START-->{json.dumps(grid)}<!--GRID_END-->")
     print(f"<!--EMAIL_HTML_START-->\n{html}\n<!--EMAIL_HTML_END-->")
 
 if __name__ == "__main__":

@@ -53,13 +53,19 @@ jobs:
           # Stamp when this data was produced so the routine can detect staleness.
           date -u +"%Y-%m-%dT%H:%M:%SZ" > "data/$MODE.fetched_at.txt"
           echo "=== head of output ==="; head -5 "data/$MODE.out.txt" || true
+          # Always refresh the 7-day dashboard so the hosted page stays current on every run.
+          if [ "$MODE" != "weekly" ]; then
+            python3 wendy.py weekly > "data/weekly.out.txt" 2>"data/weekly.err.txt" || true
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > "data/weekly.fetched_at.txt"
+          fi
+          python3 gen_dashboard.py "data/weekly.out.txt" docs/index.html || echo "dashboard gen failed"
 
       - name: Commit output
         run: |
           MODE="${{ steps.mode.outputs.mode }}"
           git config user.name "wendy-bot"
           git config user.email "actions@github.com"
-          git add data/
+          git add data/ docs/index.html
           if git diff --cached --quiet; then
             echo "No changes to commit"; exit 0
           fi
