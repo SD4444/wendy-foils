@@ -207,7 +207,7 @@ TEMPLATE = r"""<!doctype html>
       radial-gradient(90% 80% at 10% 0%, rgba(28,154,162,.12), transparent 60%),
       linear-gradient(180deg,#071820,var(--bg));}
   #wind{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;opacity:.9}
-  .hero-in{position:relative;z-index:2;padding:clamp(40px,7vw,68px) 0 clamp(30px,5vw,44px)}
+  .hero-in{position:relative;z-index:2;padding-block:clamp(40px,7vw,68px) clamp(30px,5vw,44px)}
   .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;
     color:var(--accent);margin:0 0 22px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
   .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;
@@ -264,7 +264,7 @@ TEMPLATE = r"""<!doctype html>
   .tile .s{font-family:var(--mono);font-size:11.5px;color:var(--soft)}
 
   /* sections */
-  section{padding:clamp(38px,6vw,60px) 0}
+  section{padding-block:clamp(38px,6vw,60px)}
   .shead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
   .shead h2{font-family:var(--disp);font-size:clamp(22px,3vw,30px);font-weight:600;letter-spacing:-.01em}
   .shead .legend{font-family:var(--mono);font-size:11.5px;color:var(--faint);display:flex;align-items:center;gap:8px}
