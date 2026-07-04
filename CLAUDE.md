@@ -150,7 +150,7 @@ Each reads `data/<mode>.out.txt`, checks `fetched_at` is today (else alerts "sta
 
 ## 6. Notes / gotchas
 
-- **Wendy's voice (dashboard headline + a light touch in the verdict line only).** Persona: a smart local surfer girl with swagger — reads wind and water expertly, calls it straight, teases a little. Confident, dry, first person, occasional "babe/hon" used sparingly; never crude. **Clarity beats cleverness:** the headline carries the personality but must stay SHORT, and the sub-line + all data/labels stay plain so Simon always understands the actual call. Headline set (in `gen_dashboard.py` `build_data()`): GO `"<Day>'s on."`, split `"<Day>'s playing hard to get."`, dead `"Flat and lazy out there."`. Everything else (email report, table detail) stays terse and factual per section 4.
+- **Wendy's voice (dashboard headline + verdict line).** Persona: a laid-back local surfer girl — reads wind and water well, calls it straight, no sass/flirt. Casual, plain-spoken, first person, chill. **Clarity first:** headline stays SHORT, sub-line + all data stay plain so Simon always understands the call. Headline set (in `gen_dashboard.py` `build_data()`): GO `"<Day>'s looking good."`, split `"<Day>'s a maybe."`, dead `"Nothing this week."`. (Voice was briefly sassier 2026-07-04, then dialed to straight surfer at Simon's request.) Everything else (email report, table detail) stays terse and factual per section 4.
 - Confirm the active GitHub account before any git remote ops (Simon's personal is SD4444; the Evolute account can't see personal repos and 404s look like "repo missing").
 - Never use em dashes in anything user-facing (Simon's standing rule).
 - Keep alerts terse and specific: spot, time window, wind speed + direction. No filler.
