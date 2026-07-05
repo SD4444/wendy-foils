@@ -7,8 +7,11 @@ name: Wendy forecast fetch
 
 on:
   schedule:
-    - cron: "50 4 * * *"    # daily  04:50 UTC (06:50 Amsterdam) - 10 min before the daily routine
-    - cron: "50 15 * * 0"   # Sunday 15:50 UTC (17:50 Amsterdam) - 10 min before the weekly routine
+    # Big buffer before the alert routines: GitHub scheduled runs drift by hours,
+    # so a 10-min lead let the alert win the race and point at stale data. The
+    # routines also self-trigger + poll this workflow if data is still stale.
+    - cron: "0 3 * * *"     # daily  03:00 UTC (05:00 Amsterdam) - 2h before the daily routine (05:00 UTC)
+    - cron: "0 14 * * 0"    # Sunday 14:00 UTC (16:00 Amsterdam) - 2h before the weekly routine (16:00 UTC)
   workflow_dispatch:
     inputs:
       mode:
