@@ -1,2 +1,7 @@
 .DS_Store
 logs/*.log
+
+# Impeccable design skill (local tool, reinstall with `npx impeccable install`)
+.claude/
+.github/hooks/
+.github/skills/
