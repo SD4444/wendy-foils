@@ -14,7 +14,8 @@ Outputs to stdout:
 
 Data: Open-Meteo (KNMI HARMONIE-AROME primary, ICON-EU + ECMWF for consensus,
 ICON-EU ensemble for probability, Marine/EWAM for waves + sea temp). No API key.
-Attribution: Open-Meteo CC BY 4.0.
+Live nowcast obs pooled from Buienradar + weather2kite.nl (on-water NKV/KNMI/RWS
+stations); nearest station per spot. Attribution: Open-Meteo CC BY 4.0.
 """
 
 import sys, os, json, math, urllib.request, urllib.error
@@ -101,6 +102,44 @@ def fetch_obs():
                     "kt": ws*MS_TO_KT,
                     "gust": (s.get("windgusts") or ws)*MS_TO_KT,
                     "deg": s.get("winddirectiondegrees")})
+    return out
+
+# weather2kite.nl / Soarcast: NKV + KNMI + RWS wind stations, keyless JSON. Adds genuine
+# ON-WATER points the KNMI/Buienradar network lacks near the IJmeer (esp. Pampus, mid-lake,
+# ~5km off Muiderberg/Almere, which otherwise fall back to a 24-27km inland land station).
+# Requires an X-Requested-With header or the server returns an empty 200 body (scrape guard).
+WEATHER2KITE = ("https://www.weather2kite.nl/sc/scapi.php"
+                "?table=mv_measurement_location_markers&has_harmonie=true")
+W2K_MAX_AGE_S = 2 * 3600   # skip stations whose latest reading is older than 2h (offline)
+
+def fetch_w2k():
+    """Live station wind from weather2kite.nl in KNOTS. Same dict shape as fetch_obs().
+    Returns [] on any failure so it can be concatenated with the Buienradar pool safely."""
+    req = urllib.request.Request(WEATHER2KITE, headers={
+        "User-Agent": "wendy-foils/1.0",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": "https://www.weather2kite.nl/web/"})
+    try:
+        with urllib.request.urlopen(req, timeout=40) as r:
+            j = json.load(r)
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
+        sys.stderr.write(f"WARN weather2kite fetch failed: {e}\n")
+        return []
+    now = datetime.now(timezone.utc).timestamp()
+    out = []
+    for s in (j or []):
+        ws, gs, wd = s.get("windsnelheid"), s.get("windstoot"), s.get("windrichting")
+        if ws is None: continue
+        t = s.get("oldest_measurement_time")
+        if t is not None and now - t > W2K_MAX_AGE_S: continue   # stale/offline station
+        if ws == 0 and (gs or 0) == 0 and (wd or 0) == 0: continue  # 0/0/0 offline signature
+        lat, lon = s.get("n"), s.get("e")
+        if lat is None or lon is None: continue
+        out.append({"name": (s.get("location_name") or "").strip(),
+                    "lat": lat, "lon": lon,
+                    "kt": ws * MS_TO_KT,
+                    "gust": (gs if gs is not None else ws) * MS_TO_KT,
+                    "deg": wd})
     return out
 
 def nearest_obs(spot, obs):
@@ -481,8 +520,12 @@ def main():
     else:
         days, primary, primary_label = 3, "knmi_harmonie_arome_netherlands", "HARMONIE"
 
-    # live station wind for a nowcast reality-check (most useful in the daily scan)
-    obs = fetch_obs()
+    # live station wind for a nowcast reality-check (most useful in the daily scan).
+    # Pool both networks: weather2kite adds on-water IJmeer/Markermeer points (Pampus,
+    # NKV kite stations) the KNMI/Buienradar network lacks; nearest_obs then picks the
+    # closest station across both, so lake spots get an on-water read instead of a
+    # 24km inland land station. Buienradar alone still works if weather2kite is down.
+    obs = fetch_obs() + fetch_w2k()
 
     all_results = []
     for spot in SPOTS:
