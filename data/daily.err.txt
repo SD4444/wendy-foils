@@ -1,2 +1,1 @@
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=52.339&longitude=5.174&wind_speed_unit=kn&
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=52.196&longitude=5.065&wind_speed_unit=kn&
