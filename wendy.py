@@ -244,7 +244,7 @@ def analyse(spot, prim, consensus, ens, marine, primary_label="HARMONIE"):
         by_day.setdefault(date, [])
         s, g, d = ws[i], gu[i], wd[i]
         if s is None: continue
-        dname = dir16(d)
+        dname = dir16(d) if d is not None else None
         blocked = dname in spot["blocked"]
         spread = (g - s) if g is not None else 0
         ingo = in_go_hours(t, isday[i])
