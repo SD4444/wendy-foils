@@ -1,1 +1,13 @@
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=52.339&longitude=5.174&wind_speed_unit=kn&
+Traceback (most recent call last):
+  File "/home/runner/work/wendy-foils/wendy-foils/wendy.py", line 563, in <module>
+    main()
+  File "/home/runner/work/wendy-foils/wendy-foils/wendy.py", line 535, in main
+    rs = analyse(spot, prim, cons, ens, marine, primary_label)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/wendy-foils/wendy-foils/wendy.py", line 247, in analyse
+    dname = dir16(d)
+            ^^^^^^^^
+  File "/home/runner/work/wendy-foils/wendy-foils/wendy.py", line 43, in dir16
+    return DIRS16[round((deg % 360) / 22.5) % 16]
+                         ~~~~^~~~~
+TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'
