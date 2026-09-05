@@ -10,16 +10,19 @@ on:
     # Big buffer before the alert routines: GitHub scheduled runs drift by hours,
     # so a 10-min lead let the alert win the race and point at stale data. The
     # routines also self-trigger + poll this workflow if data is still stale.
-    - cron: "0 3 * * *"     # daily  03:00 UTC (05:00 Amsterdam) - 2h before the daily routine (05:00 UTC)
+    - cron: "0 3 * * *"     # daily  03:00 UTC (05:00 Amsterdam) - 2h before the daily routine (05:00 UTC). Also refreshes the surf side.
     - cron: "0 14 * * 0"    # Sunday 14:00 UTC (16:00 Amsterdam) - 2h before the weekly routine (16:00 UTC)
+    # Surf trip (France, 14 Sep - 4 Oct 2026): midday refresh of the surf side, 10:00 UTC = 12:00 Paris.
+    - cron: "0 10 14-30 9 *"
+    - cron: "0 10 1-4 10 *"
   workflow_dispatch:
     inputs:
       mode:
-        description: "weekly or daily"
+        description: "weekly, daily or surf"
         required: true
         default: daily
         type: choice
-        options: [daily, weekly]
+        options: [daily, weekly, surf]
 
 permissions:
   contents: write
@@ -38,8 +41,11 @@ jobs:
         id: mode
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "50 15 * * 0" ]; then echo "mode=weekly" >> "$GITHUB_OUTPUT";
-            else echo "mode=daily" >> "$GITHUB_OUTPUT"; fi
+            case "${{ github.event.schedule }}" in
+              "0 14 * * 0") echo "mode=weekly" >> "$GITHUB_OUTPUT";;
+              "0 10 "*)     echo "mode=surf"   >> "$GITHUB_OUTPUT";;
+              *)            echo "mode=daily"  >> "$GITHUB_OUTPUT";;
+            esac
           else
             echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
           fi
@@ -49,6 +55,13 @@ jobs:
           mkdir -p data
           MODE="${{ steps.mode.outputs.mode }}"
           echo "Running wendy.py $MODE"
+          if [ "$MODE" = "surf" ]; then
+            # Surf side only (midday trip refresh): rerun surf.py and rebuild docs/surf.html.
+            python3 surf.py > data/surf.out.txt 2>data/surf.err.txt || { echo "surf engine non-zero:"; cat data/surf.err.txt; }
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf.fetched_at.txt
+            python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html || echo "surf dashboard gen failed"
+            exit 0
+          fi
           # Capture the full engine output (human summary + SUBJECT/EMAIL_HTML/JSON blocks).
           python3 wendy.py "$MODE" > "data/$MODE.out.txt" 2>"data/$MODE.err.txt" || {
             echo "engine exited non-zero; err:"; cat "data/$MODE.err.txt";
@@ -62,13 +75,19 @@ jobs:
             date -u +"%Y-%m-%dT%H:%M:%SZ" > "data/weekly.fetched_at.txt"
           fi
           python3 gen_dashboard.py "data/weekly.out.txt" docs/index.html || echo "dashboard gen failed"
+          # Surf side (France trip): refresh on the daily run too so the morning ping has fresh data.
+          if [ "$MODE" = "daily" ]; then
+            python3 surf.py > data/surf.out.txt 2>data/surf.err.txt || { echo "surf engine non-zero:"; cat data/surf.err.txt; }
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf.fetched_at.txt
+            python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html || echo "surf dashboard gen failed"
+          fi
 
       - name: Commit output
         run: |
           MODE="${{ steps.mode.outputs.mode }}"
           git config user.name "wendy-bot"
           git config user.email "actions@github.com"
-          git add data/ docs/index.html
+          git add data/ docs/index.html docs/surf.html
           if git diff --cached --quiet; then
             echo "No changes to commit"; exit 0
           fi

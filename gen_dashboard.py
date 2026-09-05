@@ -206,12 +206,19 @@ TEMPLATE = r"""<!doctype html>
       radial-gradient(90% 80% at 10% 0%, rgba(28,154,162,.12), transparent 60%),
       linear-gradient(180deg,#071820,var(--bg));}
   #wind{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;opacity:.9}
-  .hero-in{position:relative;z-index:2;padding-block:clamp(40px,7vw,68px) clamp(30px,5vw,44px)}
+  .hero-in{position:relative;z-index:2;padding-block:clamp(28px,5vw,44px) clamp(30px,5vw,44px)}
   .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;
     color:var(--accent);margin:0 0 22px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
   .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;
     box-shadow:0 0 0 4px rgba(57,215,223,.18),0 0 14px 2px rgba(57,215,223,.6)}
   .eyebrow .sep{color:var(--faint)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .topbar .eyebrow{margin:0}
+  .switch{display:inline-flex;border:1px solid var(--hair2);border-radius:999px;padding:3px;background:rgba(0,0,0,.25);
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .switch a{color:var(--soft);text-decoration:none;padding:6px 14px;border-radius:999px;line-height:1;display:flex;align-items:center;gap:7px}
+  .switch a.on{background:var(--accent);color:#04191c;font-weight:600}
+  .switch a:not(.on):hover{color:var(--ink)}
   h1{font-family:var(--disp);font-size:clamp(38px,7.5vw,76px);line-height:.98;margin:0 0 20px;
     font-weight:700;letter-spacing:-.015em;text-wrap:balance;max-width:16ch;color:#fff}
   .verdict{font-size:clamp(15px,2.3vw,18px);color:var(--soft);max-width:60ch;margin:0}
@@ -380,7 +387,10 @@ TEMPLATE = r"""<!doctype html>
 <header class="hero">
   <canvas id="wind"></canvas>
   <div class="wrap hero-in">
-    <p class="eyebrow"><span class="dot"></span> <span id="eyebrow">Wendy Foils</span></p>
+    <div class="topbar">
+      <p class="eyebrow"><span class="dot"></span> <span id="eyebrow">Wendy Foils</span></p>
+      <nav class="switch" aria-label="Mode"><a class="on" href="index.html" aria-current="page">&#127788; Foil</a><a href="surf.html">&#127940; Surf</a></nav>
+    </div>
     <h1 id="h1"></h1>
     <p class="verdict" id="verdict"></p>
     <div class="herogrid">

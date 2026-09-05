@@ -154,3 +154,38 @@ Each routine's step 1 is a **self-healing freshness gate** (updated 2026-07-05):
 - Confirm the active GitHub account before any git remote ops (Simon's personal is SD4444; the Evolute account can't see personal repos and 404s look like "repo missing").
 - Never use em dashes in anything user-facing (Simon's standing rule).
 - Keep alerts terse and specific: spot, time window, wind speed + direction. No filler.
+
+---
+
+## 7. Surf side (France trip, 14 Sep - 4 Oct 2026)
+
+Added 2026-09-05. The app has **two sides toggled by the Foil / Surf switch** at the top of every dashboard page. The foil side (sections 1-6) is unchanged. The surf side is a separate engine + page for Simon's surf trip along the French Atlantic coast, Soulac-sur-Mer to Biarritz (Gironde, Landes, Pays Basque).
+
+**What Simon asked for (2026-09-05):** whole coast, no fixed base, "anything above waist high and relatively clean". Dashboard only, refreshed twice a day (05:00 and 12:00 local), plus ONE morning inbox ping with the five standouts. No dedupe: the ping goes out every trip morning even when the call is "nothing clean".
+
+**Files**
+- `surf.py` - surf engine. `python3 surf.py` (no args) does all 36 spots, 7 days. Same delimiter convention as wendy.py plus a `<!--SPOTS_START-->` block (spot metadata: cams, links, notes). Pure stdlib.
+- `gen_surf_dashboard.py` - builds `docs/surf.html` from `data/surf.out.txt`. Usage: `python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html`. Do not hand-edit `docs/surf.html`.
+- `docs/surf.html` - hosted at **https://sd4444.github.io/wendy-foils/surf.html**. Sections: headline in Wendy's voice, today's call card (size, swell, wind, tide, water/air, cam/report/forecast buttons), tiles, **Today's five** (ranked cards with cam links), 7-day matrix of all 36 spots grouped by department (click a near day for hourly size + tide curve + wind arrows), rules cards.
+- `data/surf.out.txt`, `data/surf.err.txt`, `data/surf.fetched_at.txt` - committed engine output the routine reads.
+
+**Spots.** The 36 spots, their cam / local report / detailed forecast URLs, reliability rating and notes come from Simon's sheet "Atlantic_France_Surf_Cams_and_Forecasts (1).xlsm" (personal Drive, file id `12vkaQlQENlXob1EyDgvhkc51Qt9ZeLsI`, last checked 2026-09-02). The sheet has no coordinates: the lat/lon in `surf.py` were placed by hand on the beach itself and geocoding-checked against the town, so treat them as approximate (the marine grid is ~5 km anyway). Each spot has `face` (bearing from sand to open sea, ~275 for Gironde/Landes, 295-325 for Anglet/Biarritz) and `shelter` (0 open beach break; 0.4-0.6 for Le Prevent, Chambre d'Amour, Grande Plage, Cote des Basques). Sheltered spots read smaller (`eff = hs * (1 - 0.45*shelter)`) and hold when the open beaches close out.
+
+**Good-day rule (surf).** Hourly score 0-10, then the best 3-hour daylight window per spot per day:
+- Size (significant wave height at the beach): < 0.7 m SKIP (knee-high). 0.7-1.0 rideable, 1.0-2.0 prime (peak ~1.4 m), 2.0-2.6 still good, > 2.6 heavy on open beaches (sheltered spots score up), > 3.3 big.
+- Period: < 6.5 s windswell junk (-2), 8-10 neutral, 10 s+ groundswell (+1), 13 s+ (+1.5).
+- Wind relative to `face`: < 6 kt glassy (+1.5); offshore (E sector) +1.5 up to 12 kt, +0.7 to 18, then negative; cross-shore mild penalty; onshore penalty, and **onshore >= 14 kt = blown out, hour thrown away**.
+- Tide: hours in the middle 40% of the day's range get +0.5. Lows/highs are listed in every row (hourly resolution, so "low 04:00" means about then).
+- Verdict: GO >= 5.5, MAYBE >= 3.5, else SKIP. Size floor overrides everything.
+- Confidence: ECMWF-WAM 0.25 is fetched as a second opinion; > 0.3 m disagreement = "low". Days 4-7 are marked "far out".
+
+**Data.** Open-Meteo marine `best_match` (MFWAM near / ECMWF-WAM far): wave_height, wave_period, wave_direction, swell components, `sea_level_height_msl` (tide, m) and sea_surface_temperature all work for this coast (verified 2026-09-05; note `models=meteofrance_wave` alone returns NO tide or SST, so keep best_match). Wind: one call with `models=meteofrance_arome_france_hd,meteofrance_seamless,best_match`, merged per hour AROME HD (1.5 km, ~57 h) > ARPEGE (~4.5 d) > blend. Sunrise/sunset from the same call. ~108 calls per run, ~25 s.
+
+**Schedule.** `forecast.yml` gained mode `surf`: the daily 03:00 UTC run also refreshes the surf side, and extra crons `0 10 14-30 9 *` + `0 10 1-4 10 *` (12:00 Paris) do the midday refresh during the trip. Manual: `gh workflow run forecast.yml -f mode=surf` (as SD4444). Morning ping routines (RemoteTrigger, same self-healing freshness gate as the foil routines, reading `data/surf.fetched_at.txt`, calendar invite to simon.demarmels@gmail.com at 07:00 Paris, dashboard link to surf.html, logs `surf` lines to `logs/runs.md`):
+- `trig_011UZB6qkSrVY9XF7nN3J3wo` - cron `30 4 14-30 9 *` (06:30 Paris, 14-30 Sep).
+- `trig_01TJmtxJVGEdt7FvttCddP7H` - cron `30 4 1-4 10 *` (06:30 Paris, 1-4 Oct).
+Both have a date guard and do nothing outside 14 Sep - 4 Oct. After the trip they simply never fire again; delete them at https://claude.ai/code/routines if you want the list clean.
+
+**Voice.** Same as the foil side: headline short and straight (`"<Spot>'s the call today."`, `"Today's a maybe."`, `"Nothing clean today."`), everything else plain data. No em dashes.
+
+**Gotcha (fixed 2026-09-05):** the workflow's "Pick mode" step compared the schedule against `50 15 * * 0`, a cron that no longer existed, so the Sunday 14:00 UTC run was being treated as `daily`. It now matches `0 14 * * 0` for weekly and `0 10 *` for surf.
