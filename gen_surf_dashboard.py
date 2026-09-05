@@ -90,16 +90,21 @@ def heads_up(r):
     bits = []
     br = (o or {}).get("bias_rolling") or (o or {}).get("bias")
     if o and br and br >= 1.15:
-        bits.append(f"The {o['name']} buoy reads {o['hs']:.1f} m right now and the models have been running high. "
-                    f"Sizes are trimmed; only go if the cam shows it filling in.")
+        bits.append(f"The {o['name']} buoy shows {o['hs']:.1f} m right now, less than the forecast. Heights here are reduced to match. Check the cam before you go.")
     elif o and br and br <= 0.85:
-        bits.append(f"The {o['name']} buoy reads {o['hs']:.1f} m, more than the models. Could be bigger than shown.")
+        bits.append(f"The {o['name']} buoy shows {o['hs']:.1f} m, more than the forecast. It may be bigger than shown.")
     conf = r.get("conf") or ""
-    if conf.startswith("low"): bits.append("Wave models disagree on size.")
+    if conf.startswith("low"): bits.append("The wave models disagree on size today.")
     return " ".join(bits)
 
 def plain_call(r):
     return f"{(r.get('size') or '').capitalize()}, {wind_plain(r)}, {fmt_h(r['win'][0])} to {fmt_h(r['win'][1])}." if r.get("win") else (r.get("size") or "")
+
+SECTIONS = [("Médoc", 1, 7), ("Cap Ferret & Arcachon", 8, 15), ("North Landes", 16, 22), ("South Landes", 23, 31), ("Basque coast", 32, 36)]
+def section_of(n):
+    for name, a, b in SECTIONS:
+        if a <= n <= b: return name
+    return ""
 
 TIDE_LABEL = {"any": "works on all tides", "low": "best low to mid", "mid": "best mid tide",
               "incoming": "best mid tide, pushing", "mid-high": "best mid to high", "high": "best around high"}
@@ -159,27 +164,53 @@ def build_data(grid, spots_meta, flagged):
                 "date": r["date"], "day": dlong(r["date"])}
 
     todays = sorted([r for r in grid if r["date"] == today], key=lambda r: (-(r.get("score") or 0), r["n"]))
-    five = [card(r) for r in todays if r["verdict"] != "SKIP"][:5]
+    five = []
+    for name, a, b in SECTIONS:
+        sec = [r for r in todays if a <= r["n"] <= b]
+        if sec:
+            c = card(sec[0]); c["section"] = name; five.append(c)
     feature = card(todays[0]) if todays else None
+    # why this spot, relative to the rest of the coast
+    if feature and todays:
+        b = todays[0]
+        others = [r for r in todays[1:] if r.get("face") is not None]
+        bigger = sum(1 for r in others if r["face"] >= (b.get("face") or 0) + 0.2)
+        similar = [r for r in others if abs(r["face"] - (b.get("face") or 0)) < 0.2]
+        worse_wind = sum(1 for r in similar if r.get("rel") in ("cross", "onshore", "blown") and b.get("rel") in ("glassy", "offshore"))
+        if b["verdict"] == "SKIP":
+            why = "Nothing clean and waist-high anywhere today. This is the least bad option."
+        elif bigger == 0 and worse_wind > 0:
+            why = ("Biggest waves on the coast today, and cleaner wind than the other spot of similar size." if worse_wind == 1 else
+                   f"Biggest waves on the coast today, and cleaner wind than the {worse_wind} spots of similar size.")
+        elif bigger == 0:
+            why = "Biggest waves on the coast today with clean wind."
+        elif worse_wind > 0:
+            why = ("Not the biggest, but the cleanest wind: the other similar-sized spot has side or onshore wind." if worse_wind == 1 else
+                   f"Not the biggest, but the cleanest wind: {worse_wind} similar-sized spots have side or onshore wind.")
+        else:
+            why = "Best mix of size, wind and tide on the coast today. Several spots are close."
+        feature["why_best"] = why
+    else:
+        if feature: feature["why_best"] = ""
 
     # headline in Wendy's voice: short, straight
     if five and five[0]["verdict"] == "GO":
         b = five[0]
-        headline = f"{b['short']}'s the call today."
+        headline = f"Best today: {b['short']}."
         verdict = (f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. "
                    f"{b['tide_plain'].capitalize()}. Water {b['water']:.0f}°." if b.get('water') is not None else
                    f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. {b['tide_plain'].capitalize()}.")
     elif five:
         b = five[0]
-        headline = "Today's a maybe."
+        headline = "Marginal today."
         verdict = (f"<strong>{b['spot']}</strong>: {b['size']}, {b['wind_plain']}, {b['window'].replace('–',' to ')}. "
                    f"{b['tide_plain'].capitalize()}. Rideable, not clean.")
     else:
         # why is nothing working
-        small = all((r.get("eff") or 0) < 0.7 for r in todays) if todays else True
-        headline = "Nothing clean today."
-        verdict = ("Too small everywhere, knee-high at best. " if small else "Size is there but the wind's on it. ") + \
-                  "Tomorrow's read is in the grid below."
+        small = all((r.get("face") or 0) < 1.0 for r in todays) if todays else True
+        headline = "No good surf today."
+        verdict = ("Too small everywhere, under waist-high. " if small else "There is size but the wind is onshore everywhere. ") + \
+                  "Tomorrow is in the table below."
     if not (date.fromisoformat("2026-09-14") <= date.fromisoformat(today) <= date.fromisoformat("2026-10-04")):
         pass
 
@@ -198,8 +229,7 @@ def build_data(grid, spots_meta, flagged):
         w = f"{sum(waters)/len(waters):.0f}°" if waters else "–"
         a = f"{max(airs):.0f}°" if airs else "–"
         tiles.append(["Water / air", f"{w} / {a}", "boardies or a 3/2" if waters and sum(waters)/len(waters) >= 20 else "3/2 wetsuit"])
-    days_ok = sorted({r["date"] for r in grid if r["verdict"] == "GO" and r["date"] != today})
-    tiles.append(["Coming up", (", ".join(daylabel(d) for d in days_ok[:4]) if days_ok else "nothing yet"), "days with a clean, waist-high+ spot"])
+
 
     hourly = {}
     for r in grid:
@@ -304,6 +334,8 @@ TEMPLATE = r"""<!doctype html>
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
   .plain{font-size:clamp(17px,2.4vw,21px);color:var(--ink);margin:16px 0 0;line-height:1.45;max-width:34ch}
   .plain.small{font-size:15px;margin:6px 0 0}
+  .whybest{font-size:14px;color:var(--soft);margin:8px 0 0;line-height:1.5;max-width:44ch}
+  .pick .sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
   .facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair)}
   .fact{display:flex;flex-direction:column;gap:2px}
   .fact .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
@@ -446,24 +478,23 @@ TEMPLATE = r"""<!doctype html>
 
 <main>
 <section class="wrap">
-  <div class="shead"><h2>Today's five</h2><span class="legend" id="fivelegend"></span></div>
-  <p class="snote">Best five spots today, Soulac to Biarritz. Size, wind and tide, checked against the live buoys.</p>
+  <div class="shead"><h2>Best spot in each area today</h2></div>
+  <p class="snote">North to south: Médoc, Cap Ferret and Arcachon, North Landes, South Landes, Basque coast.</p>
   <div class="five reveal" id="five"></div>
 </section>
 
 <section class="wrap">
-  <div class="shead"><h2>7-day outlook</h2><span class="legend"><span class="swatch"></span> session quality &middot; fuller = better</span></div>
-  <p class="snote">Wave face height in metres for each spot's best 3 hours. Tap a near day for the hourly picture.</p>
+  <div class="shead"><h2>7-day outlook</h2></div>
   <div class="matrix reveal" id="matrix"></div>
 </section>
 
 <section class="wrap">
-  <div class="shead"><h2>How the call is made</h2></div>
+  <div class="shead"><h2>How spots are scored</h2></div>
   <div class="cards">
-    <div class="card reveal"><div class="ic">&#8767;</div><h3>Size</h3><p>Face height <span class="big">1.0 m+</span>, waist-high and up. Sweet spot 1.4&ndash;2.4 m (chest to a bit overhead). Above ~3.2 m the open beaches get heavy; sheltered spots hold. Same-day size is corrected against the live buoys.</p></div>
-    <div class="card reveal"><div class="ic">&#8776;</div><h3>Period</h3><p>Under <span class="big">6.5 s</span> is windswell mush and gets marked down. 10 s+ is proper groundswell and scores up.</p></div>
-    <div class="card reveal"><div class="ic">&#10138;</div><h3>Wind</h3><p>Glassy or <span class="big">offshore (E)</span> is best. Onshore 14 kt+ is blown out and the hour is thrown away.</p></div>
-    <div class="card reveal"><div class="ic">&#9788;</div><h3>Tide &amp; light</h3><p>Daylight only. Each spot has its own tide preference (C&ocirc;te des Basques low, Gravi&egrave;re incoming, beach breaks mid). Times are model-interpolated; SHOM has the official ones.</p></div>
+    <div class="card reveal"><div class="ic">&#8767;</div><h3>Size</h3><p>Wave face at least <span class="big">1.0 m</span> (waist-high). Best between 1.4 and 2.4 m. Above 3.2 m the open beaches close out and the sheltered spots score higher. Today's heights are adjusted to the live buoys.</p></div>
+    <div class="card reveal"><div class="ic">&#8776;</div><h3>Period</h3><p>Under <span class="big">6.5 s</span> is short, weak windswell and scores lower. 10 s or more is groundswell and scores higher.</p></div>
+    <div class="card reveal"><div class="ic">&#10138;</div><h3>Wind</h3><p>Glassy or <span class="big">offshore (east)</span> is best. Onshore at 14 kt or more counts as unsurfable.</p></div>
+    <div class="card reveal"><div class="ic">&#9788;</div><h3>Tide and daylight</h3><p>Daylight hours only. Each spot has a preferred tide (C&ocirc;te des Basques low, Gravi&egrave;re incoming, most beach breaks mid). Tide times come from a model and can be up to an hour off; the SHOM link has the official table.</p></div>
   </div>
 </section>
 </main>
@@ -500,6 +531,7 @@ if (DATA.feature){
        <div class="when">${esc(f.day)} &middot; ${esc(f.sector)} &middot; best window <b>${esc(f.window)}</b></div>
      </div>
      <p class="plain">${esc(f.plain)}</p>
+     ${f.why_best?`<p class="whybest">${esc(f.why_best)}</p>`:""}
      <div class="facts">
        <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
        <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">${esc(f.wind_from)}</span></div>
@@ -512,18 +544,18 @@ if (DATA.feature){
 
 $("#tiles").innerHTML = DATA.tiles.map(t=>`<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
 $("#sources").innerHTML = DATA.sources.map(s=>`<span class="s">${esc(s)}</span>`).join("");
-$("#fmeta").innerHTML = `Waves, tide and wind via <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0), refreshed 05:00 and 12:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam, report and forecast links come from your spot sheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
+$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00 and 12:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam, report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
 
 // today's five
-$("#fivelegend").textContent = DATA.five.length ? `${DATA.five.length} rideable today` : "";
 $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
-  `<article class="pick"><span class="rank">${i+1}</span>
+  `<article class="pick">
+     <div class="sec">${esc(f.section||"")}</div>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <p class="plain small">${esc(f.plain)}</p>
      <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></span></div>
      <div class="row"><span>${esc(f.tide_label)} at this break</span></div>
      ${linkrow(f)}</article>`).join("")
-  : `<div class="empty">No spot clears the bar today: nothing waist-high and clean at the same time. Cams still work; the grid below has tomorrow.</div>`;
+  : `<div class="empty">No data today.</div>`;
 
 // matrix
 $(".matrix").style.setProperty("--ndays", DATA.days.length);
@@ -595,7 +627,7 @@ function buildSheet(key){
        <div class="sd">${esc(DATA.daylong[date]||date)} <span class="pill ${call}">${call.toUpperCase()}</span></div></div>
      <button class="xbtn" id="xbtn" aria-label="Close">&#10005;</button></div>
      <div class="chartwrap">${chart(hrs)}</div>
-     <div class="chlegend"><span><i style="background:var(--go)"></i>clean &amp; rideable</span><span><i style="background:var(--maybe)"></i>so-so</span><span><i style="background:var(--faint)"></i>small / messy</span><span><i style="background:var(--sea)"></i>tide</span><span>arrows = wind, green = offshore</span></div>
+     <div class="chlegend"><span><i style="background:var(--go)"></i>good</span><span><i style="background:var(--maybe)"></i>average</span><span><i style="background:var(--faint)"></i>small or messy</span><span><i style="background:var(--sea)"></i>tide</span><span>arrows show wind direction, green = offshore</span></div>
      ${title?`<div class="sheet-note">${esc(title)}</div>`:""}`;
   $("#xbtn").onclick=closeModal;
 }

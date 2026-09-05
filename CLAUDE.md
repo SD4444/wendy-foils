@@ -196,6 +196,6 @@ Added 2026-09-05. The app has **two sides toggled by the Foil / Surf switch** at
 - `trig_01TJmtxJVGEdt7FvttCddP7H` - cron `30 4 1-4 10 *` (06:30 Paris, 1-4 Oct).
 Both have a date guard and do nothing outside 14 Sep - 4 Oct. After the trip they simply never fire again; delete them at https://claude.ai/code/routines if you want the list clean.
 
-**Voice.** Same as the foil side: headline short and straight (`"<Spot>'s the call today."`, `"Today's a maybe."`, `"Nothing clean today."`), everything else plain data. No em dashes.
+**Voice (changed 2026-09-05 at Simon's request): plain, literal English. No surfer persona, no metaphors, no clever phrasing.** Headlines: `"Best today: <Spot>."`, `"Marginal today."`, `"No good surf today."`. Under it, one sentence of conditions and one sentence saying why this spot beat the others. "Best spot in each area today" shows the top spot per coast section, north to south (Médoc, Cap Ferret & Arcachon, North Landes, South Landes, Basque coast), not the top five overall. Simon removed: the "N rideable today" counter, the 7-day note, the "Coming up" tile. No em dashes.
 
 **Gotcha (fixed 2026-09-05):** the workflow's "Pick mode" step compared the schedule against `50 15 * * 0`, a cron that no longer existed, so the Sunday 14:00 UTC run was being treated as `daily`. It now matches `0 14 * * 0` for weekly and `0 10 *` for surf.
