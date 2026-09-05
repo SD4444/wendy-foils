@@ -1,3 +1,3 @@
-buoy Cap Ferret 0.7m @ 5.7s age 157min model 1.06 bias 1.51
-buoy Anglet 0.7m @ 7.6s age 37min model 0.92 bias 1.31
-buoy Saint-Jean-de-Luz 0.6m @ 7.5s age 37min model 0.86 bias 1.43
+buoy Cap Ferret 0.7m @ 5.7s age 163min model 1.06 bias 1.51
+buoy Anglet 0.7m @ 7.4s age 13min model 0.96 bias 1.37
+buoy Saint-Jean-de-Luz 0.6m @ 6.9s age 13min model 0.92 bias 1.53

@@ -211,6 +211,27 @@ def try_json(url):
         return None
 
 # ---- live buoys ----
+BIAS_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "buoy_bias.json")
+
+def roll_bias(buoys):
+    """Append today's model/buoy ratios to data/buoy_bias.json and set bias_rolling = median of the
+    last 3 days per buoy. A single reading can be a fluke; three days is a real tendency."""
+    import statistics
+    try: log = json.load(open(BIAS_LOG))
+    except (OSError, ValueError): log = {}
+    today = datetime.now().strftime("%Y-%m-%d")
+    for k, b in buoys.items():
+        if b.get("bias"): log.setdefault(k, {})[today] = b["bias"]
+    for k, b in buoys.items():
+        recent = [v for d, v in sorted(log.get(k, {}).items())[-3:]]
+        b["bias_rolling"] = round(statistics.median(recent), 2) if recent else None
+    try:
+        os.makedirs(os.path.dirname(BIAS_LOG), exist_ok=True)
+        json.dump(log, open(BIAS_LOG, "w"), indent=1)
+    except OSError as e:
+        sys.stderr.write(f"WARN cannot write bias log: {e}\n")
+    return buoys
+
 def fetch_buoys():
     """Latest reading per buoy + the model's Hs at the buoy for the same hour -> bias ratio.
     Returns {key: {..reading.., "model_hs", "bias"}} ; missing/stale buoys are dropped."""
@@ -250,8 +271,12 @@ def fetch_spot(spot, days=7):
             "&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,"
             "swell_wave_direction,wind_wave_height,sea_level_height_msl,sea_surface_temperature")
     marine = try_json(murl)
-    alt = try_json(f"{MARINE}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}"
-                   "&hourly=wave_height,swell_wave_period&models=ecmwf_wam025")
+    alt = {}
+    for mdl in ("ecmwf_wam025", "ncep_gfswave025"):
+        j = try_json(f"{MARINE}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}"
+                     f"&hourly=wave_height&models={mdl}")
+        if j and "hourly" in j:
+            alt[mdl] = dict(zip(j["hourly"]["time"], j["hourly"]["wave_height"]))
     wurl = (f"{FORECAST}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}&wind_speed_unit=kn"
             "&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m"
             "&daily=sunrise,sunset&models=meteofrance_arome_france_hd,meteofrance_seamless,best_match")
@@ -391,21 +416,31 @@ def tide_state(h, tides, rng_lo, rng):
 def analyse(spot, marine, alt, wind, buoys=None):
     M = marine["hourly"]; W = merge_wind(wind) if wind and "hourly" in wind else {}
     ob = (buoys or {}).get(spot["buoy"])
-    corr_today = 1.0
-    if ob and ob.get("bias"):
-        corr_today = max(BIAS_CLAMP[0], min(BIAS_CLAMP[1], 1.0 / ob["bias"]))
+    corr_today = corr_tomorrow = 1.0
+    if ob and ob.get("bias_rolling"):
+        corr_today = max(BIAS_CLAMP[0], min(BIAS_CLAMP[1], 1.0 / ob["bias_rolling"]))
+        corr_tomorrow = corr_today ** 0.5
     today_str = M["time"][0][:10]
+    tomorrow_str = M["time"][24][:10] if len(M["time"]) > 24 else ""
     suns = sun_times(wind) if wind else {}
-    A = {}
-    if alt and "hourly" in alt:
-        A = dict(zip(alt["hourly"]["time"], alt["hourly"]["wave_height"]))
+    A = alt or {}
+    def consensus(t, hs):
+        vals = [hs] + [A[m][t] for m in A if A[m].get(t) is not None]
+        vals = [v for v in vals if v is not None]
+        if not vals: return hs, None
+        return sum(vals) / len(vals), (max(vals) - min(vals))
     by_day = {}
     for i, t in enumerate(M["time"]):
         d = t[:10]; h = int(t[11:13])
         w = W.get(t)
         hs, per = M["wave_height"][i], M["swell_wave_period"][i] or M["wave_period"][i]
-        corr = corr_today if d == today_str else 1.0
-        face = face_height(spot, hs, M["wave_period"][i], M["swell_wave_height"][i], M["swell_wave_period"][i], corr)
+        corr = corr_today if d == today_str else (corr_tomorrow if d == tomorrow_str else 1.0)
+        hs_c, spread = consensus(t, hs)
+        # scale the swell partition with the consensus so the period-based breaker uses the agreed size
+        scale = (hs_c / hs) if (hs and hs_c) else 1.0
+        swh_c = M["swell_wave_height"][i] * scale if M["swell_wave_height"][i] is not None else None
+        face = face_height(spot, hs_c, M["wave_period"][i], swh_c, M["swell_wave_period"][i], corr)
+        hs = hs_c
         sc, rel = hour_score(spot, face, per, w)
         by_day.setdefault(d, []).append({
             "t":t, "h":h, "hs":hs, "face":face, "swh":M["swell_wave_height"][i], "per":per, "wper":M["wave_period"][i],
@@ -413,7 +448,7 @@ def analyse(spot, marine, alt, wind, buoys=None):
             "wwh":M["wind_wave_height"][i], "tide":M["sea_level_height_msl"][i], "sst":M["sea_surface_temperature"][i],
             "kt":w["kt"] if w else None, "gust":w["gust"] if w else None, "wdeg":w["deg"] if w else None,
             "air":w["air"] if w else None, "wmodel":w["model"] if w else None,
-            "rel":rel, "score":sc, "alt":A.get(t)})
+            "rel":rel, "score":sc, "spread":spread})
     rows = []
     for di, d in enumerate(sorted(by_day)):
         hrs = by_day[d]
@@ -471,18 +506,20 @@ def analyse(spot, marine, alt, wind, buoys=None):
         elif score >= MAYBE_SCORE: verdict = "MAYBE"
         else: verdict = "SKIP"
         if eff is not None and eff < FACE_MIN: verdict = "SKIP"
-        # alt-model spread on wave height across the window
-        alts = [x["alt"] for x in win if x["alt"] is not None]
-        alt_hs = sum(alts)/len(alts) if alts else None
+        # model spread on wave height across the window (MFWAM vs ECMWF-WAM vs GFS-Wave)
+        sps = [x["spread"] for x in win if x.get("spread") is not None]
+        alt_hs = None
         conf = "single-model"
-        if alt_hs is not None and hs is not None:
-            conf = "high (wave models agree)" if abs(alt_hs - hs) <= 0.3 else f"low (ECMWF-WAM reads {alt_hs:.1f}m)"
+        if sps:
+            sp = sum(sps) / len(sps)
+            conf = "high (3 wave models agree)" if sp <= 0.3 else f"low (wave models differ by {sp:.1f}m)"
         if di >= 3: conf = conf.replace("high", "medium") + ", far out"
         obs_note = ""
         if ob and d == today_str:
             obs_note = (f"; live buoy {ob['name']} {ob['hs']:.1f}m @ {ob['tp']:.0f}s" if ob.get("tp") else f"; live buoy {ob['name']} {ob['hs']:.1f}m")
-            if ob.get("bias") and abs(ob["bias"] - 1) >= 0.15:
-                obs_note += f", models read {'high' if ob['bias'] > 1 else 'low'} x{ob['bias']:.2f}, sized {'down' if ob['bias'] > 1 else 'up'} today"
+            br = ob.get("bias_rolling")
+            if br and abs(br - 1) >= 0.15:
+                obs_note += f", models read {'high' if br > 1 else 'low'} x{br:.2f} lately, sized {'down' if br > 1 else 'up'}"
         why = build_why(spot, d, win, hs, eff, per, sdeg, kt, wdeg, rel, tides, blown_hrs, verdict, conf) + obs_note
         sst = next((x["sst"] for x in hrs if x["sst"] is not None), None)
         airs = [x["air"] for x in day_hrs if x["air"] is not None]
@@ -626,7 +663,7 @@ def build_subject(rows, today):
             f"{fmt_h(b['win'][0])}-{fmt_h(b['win'][1])}, {len(top)} spots rideable")
 
 def main():
-    buoys = fetch_buoys()
+    buoys = roll_bias(fetch_buoys())
     for b in buoys.values():
         sys.stderr.write(f"buoy {b['name']} {b['hs']}m @ {b['tp']}s age {b['age_min']}min model {b['model_hs']} bias {b['bias']}\n")
     all_rows = []

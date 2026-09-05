@@ -57,8 +57,9 @@ def obs_txt(r):
     if o.get("deg") is not None: t += f" {['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][round(o['deg']/22.5)%16]}"
     if o.get("sst") is not None: t += f", water {o['sst']:.0f}°"
     t += f", {o['age_min']} min ago"
-    if o.get("bias") and abs(o["bias"] - 1) >= 0.15:
-        t += f". Models read {'high' if o['bias'] > 1 else 'low'} x{o['bias']:.2f}, today sized {'down' if o['bias'] > 1 else 'up'}"
+    br = o.get("bias_rolling") or o.get("bias")
+    if br and abs(br - 1) >= 0.15:
+        t += f". Models read {'high' if br > 1 else 'low'} x{br:.2f} lately, sized {'down' if br > 1 else 'up'}"
     return t
 
 def wind_plain(r):
@@ -87,10 +88,11 @@ def tide_plain(r):
 def heads_up(r):
     o = r.get("obs")
     bits = []
-    if o and o.get("bias") and o["bias"] >= 1.15:
-        bits.append(f"The {o['name']} buoy reads only {o['hs']:.1f} m right now, well under the models. "
+    br = (o or {}).get("bias_rolling") or (o or {}).get("bias")
+    if o and br and br >= 1.15:
+        bits.append(f"The {o['name']} buoy reads {o['hs']:.1f} m right now and the models have been running high. "
                     f"Sizes are trimmed; only go if the cam shows it filling in.")
-    elif o and o.get("bias") and o["bias"] <= 0.85:
+    elif o and br and br <= 0.85:
         bits.append(f"The {o['name']} buoy reads {o['hs']:.1f} m, more than the models. Could be bigger than shown.")
     conf = r.get("conf") or ""
     if conf.startswith("low"): bits.append("Wave models disagree on size.")
