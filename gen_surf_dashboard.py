@@ -151,13 +151,14 @@ def build_data(grid, spots_meta, flagged):
     if five and five[0]["verdict"] == "GO":
         b = five[0]
         headline = f"{b['short']}'s the call today."
-        verdict = (f"<strong>{b['size'].capitalize()} and {b['wind_plain']}</strong> from {b['window'].split('–')[0]}. "
-                   f"{len(five)-1} more picks below. Check the cam before you drive.")
+        verdict = (f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. "
+                   f"{b['tide_plain'].capitalize()}. Water {b['water']:.0f}°." if b.get('water') is not None else
+                   f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. {b['tide_plain'].capitalize()}.")
     elif five:
         b = five[0]
         headline = "Today's a maybe."
-        verdict = (f"Best of it is <strong>{b['spot']}</strong>, {b['size']} and {b['wind_plain']} from {b['window'].split('–')[0]}. "
-                   f"Rideable, not clean. Look at the cam first.")
+        verdict = (f"<strong>{b['spot']}</strong>: {b['size']}, {b['wind_plain']}, {b['window'].replace('–',' to ')}. "
+                   f"{b['tide_plain'].capitalize()}. Rideable, not clean.")
     else:
         # why is nothing working
         small = all((r.get("eff") or 0) < 0.7 for r in todays) if todays else True
@@ -165,7 +166,7 @@ def build_data(grid, spots_meta, flagged):
         verdict = ("Too small everywhere, knee-high at best. " if small else "Size is there but the wind's on it. ") + \
                   "Tomorrow's read is in the grid below."
     if not (date.fromisoformat("2026-09-14") <= date.fromisoformat(today) <= date.fromisoformat("2026-10-04")):
-        verdict += " Trip starts 14 Sep."
+        pass
 
     # tiles
     hs_all = [r["face"] if r.get("face") is not None else r["hs"] for r in grid if r.get("hs") is not None]
