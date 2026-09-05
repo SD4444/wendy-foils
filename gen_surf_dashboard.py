@@ -194,14 +194,15 @@ def build_data(grid, spots_meta, flagged):
         if feature: feature["why_best"] = ""
 
     # headline in Wendy's voice: short, straight
-    if five and five[0]["verdict"] == "GO":
-        b = five[0]
+    top = feature
+    if top and top["verdict"] == "GO":
+        b = top
         headline = f"Best today: {b['short']}."
         verdict = (f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. "
                    f"{b['tide_plain'].capitalize()}. Water {b['water']:.0f}°." if b.get('water') is not None else
                    f"<strong>{b['size'].capitalize()}, {b['wind_plain']}</strong>, {b['window'].replace('–',' to ')}. {b['tide_plain'].capitalize()}.")
-    elif five:
-        b = five[0]
+    elif top and top["verdict"] == "MAYBE":
+        b = top
         headline = "Marginal today."
         verdict = (f"<strong>{b['spot']}</strong>: {b['size']}, {b['wind_plain']}, {b['window'].replace('–',' to ')}. "
                    f"{b['tide_plain'].capitalize()}. Rideable, not clean.")
@@ -237,7 +238,7 @@ def build_data(grid, spots_meta, flagged):
             hourly[f"{r['spot']}|{r['date']}"] = r["hourly"]
     daylong = {d: dlong(d) for d in dates}
     weeklabel = datetime.fromisoformat(today+"T00:00").strftime("%-d %b %Y")
-    best = {"spot": five[0]["spot"], "day": 0} if five else None
+    best = {"spot": feature["spot"], "day": 0} if feature and feature["verdict"] != "SKIP" else None
     return {"days": days, "dates": dates, "daylong": daylong, "groups": groups, "grid": matrix,
             "best": best, "feature": feature, "five": five, "headline": headline, "verdict": verdict,
             "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel, "hourly": hourly,
