@@ -11,8 +11,10 @@ from datetime import datetime, date
 SOURCES = [
     "MFWAM / ECMWF-WAM · waves, swell, tide, sea temp",
     "ECMWF-WAM 0.25 · second opinion on size",
+    "Candhis buoys · Cap Ferret, Anglet, St-Jean-de-Luz · live",
+    "Komar-Gaughan · offshore swell to breaking face",
     "Meteo-France AROME HD 1.5 km · wind (~2 days)",
-    "Meteo-France ARPEGE · best_match · wind beyond",
+    "SHOM · official tide times (linked)",
     "Cams + reports · your spot sheet (2 Sep 2026)",
 ]
 DEPT_SHORT = {"Gironde":"Gironde", "Landes":"Landes", "Pyrénées-Atlantiques":"Pays Basque"}
@@ -20,7 +22,10 @@ DEPT_SHORT = {"Gironde":"Gironde", "Landes":"Landes", "Pyrénées-Atlantiques":"
 def daylabel(d): return datetime.fromisoformat(d+"T00:00").strftime("%a %-d")
 def dlong(d):    return datetime.fromisoformat(d+"T00:00").strftime("%A %-d %b")
 def dayname(d):  return datetime.fromisoformat(d+"T00:00").strftime("%A")
-def fmt_h(h):    return f"{int(h):02d}:00"
+def fmt_h(h):
+    m = int(round((h - int(h)) * 60))
+    if m == 60: h, m = int(h) + 1, 0
+    return f"{int(h):02d}:{m:02d}"
 
 def short(name):
     return name.split(" – ")[0] if " – " in name else name
@@ -29,7 +34,7 @@ def tide_txt(tides):
     bits = []
     for h, v in tides.get("low", []):  bits.append((h, f"low {fmt_h(h)}"))
     for h, v in tides.get("high", []): bits.append((h, f"high {fmt_h(h)}"))
-    return " · ".join(b for _, b in sorted(bits)) if bits else "tide n/a"
+    return ("~" + " · ".join(b for _, b in sorted(bits))) if bits else "tide n/a"
 
 def wind_txt(r):
     if r.get("kt") is None: return "wind n/a"
@@ -43,6 +48,18 @@ def swell_txt(r):
     if r.get("per") is not None: s += f" @ {r['per']:.0f} s"
     if r.get("sdir"): s += f" {r['sdir']}"
     return s
+
+def obs_txt(r):
+    o = r.get("obs")
+    if not o: return None
+    t = f"{o['name']} buoy {o['hs']:.1f} m"
+    if o.get("tp"): t += f" @ {o['tp']:.0f} s"
+    if o.get("deg") is not None: t += f" {['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][round(o['deg']/22.5)%16]}"
+    if o.get("sst") is not None: t += f", water {o['sst']:.0f}°"
+    t += f", {o['age_min']} min ago"
+    if o.get("bias") and abs(o["bias"] - 1) >= 0.15:
+        t += f". Models read {'high' if o['bias'] > 1 else 'low'} x{o['bias']:.2f}, today sized {'down' if o['bias'] > 1 else 'up'}"
+    return t
 
 def build_data(grid, spots_meta, flagged):
     dates = sorted({r["date"] for r in grid})
@@ -59,7 +76,7 @@ def build_data(grid, spots_meta, flagged):
         for d in dates:
             r = by.get((s, d))
             if r is None: row.append(["skip", "–", 0, "", ""]); continue
-            val = f"{r['hs']:.1f}" if r.get("hs") is not None else "–"
+            val = f"{r['face']:.1f}" if r.get("face") is not None else (f"{r['hs']:.1f}" if r.get("hs") is not None else "–")
             q = round(min(1.0, max(0.04, (r.get("score") or 0) / 10)), 2)
             title = (r.get("why") or "").split(";")[0]
             row.append([r["verdict"].lower(), val, q, title, r.get("size") or ""])
@@ -71,12 +88,15 @@ def build_data(grid, spots_meta, flagged):
         if not groups or groups[-1]["dept"] != g:
             groups.append({"dept": g, "spots": []})
         groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"],
-                                    "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"]})
+                                    "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"],
+                                    "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid")})
 
     def card(r):
         m = meta[r["spot"]]
         return {"spot": r["spot"], "short": short(r["spot"]), "sector": m["sector"], "verdict": r["verdict"],
-                "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "swell": swell_txt(r),
+                "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
+                "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
+                "tide_pref": m.get("tide_pref", "mid"),
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
                 "why": (r.get("why") or ""), "conf": r.get("conf") or "", "cam": m["cam"], "report": m["report"],
@@ -108,7 +128,7 @@ def build_data(grid, spots_meta, flagged):
         verdict += " (Trip runs 14 Sep to 4 Oct; this is the preview.)"
 
     # tiles
-    hs_all = [r["hs"] for r in grid if r.get("hs") is not None]
+    hs_all = [r["face"] if r.get("face") is not None else r["hs"] for r in grid if r.get("hs") is not None]
     waters = [r["water"] for r in grid if r["date"] == today and r.get("water") is not None]
     airs = [r["air"] for r in grid if r["date"] == today and r.get("air") is not None]
     gm = sorted([r for r in grid if r["verdict"] != "SKIP"], key=lambda r: (-(r.get("score") or 0), r["date"], r["n"]))
@@ -117,7 +137,7 @@ def build_data(grid, spots_meta, flagged):
         b = gm[0]
         tiles.append(["Best of the week", f"{daylabel(b['date'])} {short(b['spot'])}", f"{b.get('size','')} · {wind_txt(b)}"])
     if hs_all:
-        tiles.append(["Swell range", f"{min(hs_all):.1f}–{max(hs_all):.1f} m", "significant height, 7 days"])
+        tiles.append(["Face range", f"{min(hs_all):.1f}–{max(hs_all):.1f} m", "breaking height, 7 days"])
     if waters or airs:
         w = f"{sum(waters)/len(waters):.0f}°" if waters else "–"
         a = f"{max(airs):.0f}°" if airs else "–"
@@ -226,6 +246,12 @@ TEMPLATE = r"""<!doctype html>
   .links a:hover{border-color:var(--accent);color:var(--accent)}
   .links a.cam{border-color:rgba(255,159,74,.5)}
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
+  .live{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
+  .live .lt{flex:1;line-height:1.5}
+  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px;box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  a.shom{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--sea);text-decoration:none;border:1px solid rgba(79,179,201,.4);border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+  a.shom:hover{background:rgba(79,179,201,.12)}
   .compass{flex:none}
 
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
@@ -352,23 +378,23 @@ TEMPLATE = r"""<!doctype html>
 <main>
 <section class="wrap">
   <div class="shead"><h2>Today's five</h2><span class="legend" id="fivelegend"></span></div>
-  <p class="snote">Ranked across the whole coast, Soulac to Biarritz. Size at the beach, swell period, wind on the water and the tide. Open the cam before you drive; no model knows which bank is working.</p>
+  <p class="snote">Ranked across the whole coast, Soulac to Biarritz. Breaking face height (from offshore swell height and period), wind on the water and the tide. Today's sizes are checked against the live Candhis buoys. Open the cam before you drive; no model knows which bank is working.</p>
   <div class="five reveal" id="five"></div>
 </section>
 
 <section class="wrap">
   <div class="shead"><h2>7-day outlook</h2><span class="legend"><span class="swatch"></span> session quality &middot; fuller = better</span></div>
-  <p class="snote">Number is significant wave height in metres during the best 3-hour daylight window. Tap a near day for the hourly picture: size, wind and tide. Days further out lean on the global wave models and can shift.</p>
+  <p class="snote">Number is the breaking face height in metres during the best 3-hour daylight window (a 1.2 m swell at 10 s breaks about 1.8 m). Tap a near day for the hourly picture: size, wind and tide. Tide times marked ~ are model-interpolated and run 30 to 60 min early here, so use the SHOM link for the exact time.</p>
   <div class="matrix reveal" id="matrix"></div>
 </section>
 
 <section class="wrap">
   <div class="shead"><h2>How the call is made</h2></div>
   <div class="cards">
-    <div class="card reveal"><div class="ic">&#8767;</div><h3>Size</h3><p><span class="big">0.7 m+</span> at the beach, waist-high and up. Sweet spot 1&ndash;2 m. Above ~2.6 m the open beaches get heavy; sheltered spots hold.</p></div>
+    <div class="card reveal"><div class="ic">&#8767;</div><h3>Size</h3><p>Face height <span class="big">1.0 m+</span>, waist-high and up. Sweet spot 1.4&ndash;2.4 m (chest to a bit overhead). Above ~3.2 m the open beaches get heavy; sheltered spots hold. Same-day size is corrected against the live buoys.</p></div>
     <div class="card reveal"><div class="ic">&#8776;</div><h3>Period</h3><p>Under <span class="big">6.5 s</span> is windswell mush and gets marked down. 10 s+ is proper groundswell and scores up.</p></div>
     <div class="card reveal"><div class="ic">&#10138;</div><h3>Wind</h3><p>Glassy or <span class="big">offshore (E)</span> is best. Onshore 14 kt+ is blown out and the hour is thrown away.</p></div>
-    <div class="card reveal"><div class="ic">&#9788;</div><h3>Tide &amp; light</h3><p>Daylight only. Mid-tide hours get a small nudge; lows and highs are listed so you can time the banks.</p></div>
+    <div class="card reveal"><div class="ic">&#9788;</div><h3>Tide &amp; light</h3><p>Daylight only. Each spot has its own tide preference (C&ocirc;te des Basques low, Gravi&egrave;re incoming, beach breaks mid). Times are model-interpolated; SHOM has the official ones.</p></div>
   </div>
 </section>
 </main>
@@ -401,7 +427,7 @@ if (DATA.feature){
   $("#feature").innerHTML =
     `<div class="flabel">${f.verdict==="SKIP"?"CLOSEST TODAY":"TODAY'S CALL"} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <div class="feat-main">
-       <div class="bigwave"><span class="n">${f.hs!=null?esc(f.hs.toFixed(1)):"–"}<span style="font-size:.4em;color:var(--soft)"> m</span></span><span class="u">${esc(f.size)} &middot; ${esc(f.swell)}</span></div>
+       <div class="bigwave"><span class="n">${f.face!=null?esc(f.face.toFixed(1)):(f.hs!=null?esc(f.hs.toFixed(1)):"–")}<span style="font-size:.4em;color:var(--soft)"> m</span></span><span class="u">${esc(f.size)} faces &middot; swell ${esc(f.swell)}</span></div>
        <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="session quality ${Math.round(q*100)} of 100">
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/>
          <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 42 42)"/>
@@ -413,9 +439,10 @@ if (DATA.feature){
        <div class="when">${esc(f.day)} &middot; ${esc(f.window)} &middot; ${esc(f.sector)}</div>
      </div>
      <div class="feat-row">
-       <span>wind <b>${esc(f.wind)}</b></span><span>tide <b>${esc(f.tide)}</b></span>
+       <span>wind <b>${esc(f.wind)}</b></span><span>tide <b>${esc(f.tide)}</b> <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span>
        <span>water <b>${f.water!=null?f.water.toFixed(0)+"°":"–"}</b></span><span>air <b>${f.air!=null?f.air.toFixed(0)+"°":"–"}</b></span>
      </div>
+     ${f.obs?`<div class="live"><span class="ld"></span><span class="lt">Live: ${esc(f.obs)}</span></div>`:""}
      ${linkrow(f)}
      <div class="feat-note">${esc(f.note)}${f.conf?(" &middot; confidence "+esc(f.conf)):""}</div>`;
 } else { $("#feature").style.display="none"; }
@@ -431,7 +458,8 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <div class="sz">${esc(f.size)} &middot; ${esc(f.swell)}</div>
      <div class="row"><span>when <b>${esc(f.window)}</b></span><span>wind <b>${esc(f.wind)}</b></span></div>
-     <div class="row"><span>tide <b>${esc(f.tide)}</b></span></div>
+     <div class="row"><span>tide <b>${esc(f.tide)}</b> <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span></div>
+     ${f.obs?`<div class="row"><span>live <b>${esc(f.obs)}</b></span></div>`:""}
      <div class="why">${esc(f.note)}</div>
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No spot clears the bar today: nothing waist-high and clean at the same time. Cams still work; the grid below has tomorrow.</div>`;
@@ -454,7 +482,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a></span></div>${cells}</div>`;
+    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide</a></span></div>${cells}</div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;
@@ -463,7 +491,8 @@ $(".matrix").innerHTML = html;
 const modal = $("#modal"), sheet = $("#sheet");
 function chart(hrs){
   const W=680,H=320,L=36,R=40,T=16,Bt=56, pw=W-L-R, ph=H-T-Bt, n=hrs.length||1, bw=pw/n, barw=Math.min(18,bw*0.6);
-  const maxHs=Math.max(1.5, ...hrs.map(h=>h.hs||0)); const maxY=Math.ceil((maxHs+0.3)*2)/2;
+  const HV=h=>(h.face!=null?h.face:h.hs);
+  const maxHs=Math.max(1.5, ...hrs.map(h=>HV(h)||0)); const maxY=Math.ceil((maxHs+0.3)*2)/2;
   const y=v=>T+ph*(1-v/maxY), base=T+ph;
   const tides=hrs.map(h=>h.tide).filter(v=>v!=null); const tmin=Math.min(...tides,0), tmax=Math.max(...tides,0.1);
   const ty=v=>T+ph*(1-(v-tmin)/((tmax-tmin)||1));
@@ -471,15 +500,15 @@ function chart(hrs){
   // daylight band
   const dayIdx=hrs.map((h,i)=>h.day?i:-1).filter(i=>i>=0);
   if(dayIdx.length){ const x0=L+dayIdx[0]*bw, x1=L+(dayIdx[dayIdx.length-1]+1)*bw; p.push(`<rect x="${x0.toFixed(1)}" y="${T}" width="${(x1-x0).toFixed(1)}" height="${ph}" fill="var(--accent)" opacity="0.06"/>`); }
-  // rideable band 0.7-2.6
-  p.push(`<rect x="${L}" y="${y(Math.min(maxY,2.6)).toFixed(1)}" width="${pw}" height="${(y(0.7)-y(Math.min(maxY,2.6))).toFixed(1)}" fill="var(--go)" opacity="0.06"/>`);
+  // rideable band: 1.0-3.2 m faces
+  p.push(`<rect x="${L}" y="${y(Math.min(maxY,3.2)).toFixed(1)}" width="${pw}" height="${(y(1.0)-y(Math.min(maxY,3.2))).toFixed(1)}" fill="var(--go)" opacity="0.06"/>`);
   for(let v=0.5; v<maxY; v+=0.5){ p.push(`<line x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--hair)" stroke-width="1"/>`);
     p.push(`<text x="${L-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--faint)">${v.toFixed(1)}</text>`); }
   hrs.forEach((h,i)=>{
     const cx=L+i*bw+bw/2;
-    if(h.hs!=null){
+    if(HV(h)!=null){
       const col = h.rel==="blown" ? "var(--skip)" : (h.sc>=5.5?"var(--go)":(h.sc>=3.5?"var(--maybe)":"var(--faint)"));
-      p.push(`<rect x="${(cx-barw/2).toFixed(1)}" y="${y(h.hs).toFixed(1)}" width="${barw.toFixed(1)}" height="${Math.max(0,base-y(h.hs)).toFixed(1)}" rx="2" fill="${col}" opacity="${h.day?0.92:0.35}"/>`);
+      p.push(`<rect x="${(cx-barw/2).toFixed(1)}" y="${y(HV(h)).toFixed(1)}" width="${barw.toFixed(1)}" height="${Math.max(0,base-y(HV(h))).toFixed(1)}" rx="2" fill="${col}" opacity="${h.day?0.92:0.35}"/>`);
     }
     if(i%3===0){
       p.push(`<text x="${cx.toFixed(1)}" y="${(base+16).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--faint)">${h.h}h</text>`);
@@ -493,7 +522,7 @@ function chart(hrs){
   p.push(`<text x="${W-R+6}" y="${(ty(tmax)+4).toFixed(1)}" font-family="var(--mono)" font-size="9" fill="var(--sea)">high</text>`);
   p.push(`<text x="${W-R+6}" y="${(ty(tmin)+4).toFixed(1)}" font-family="var(--mono)" font-size="9" fill="var(--sea)">low</text>`);
   p.push(`<line x1="${L}" x2="${W-R}" y1="${base.toFixed(1)}" y2="${base.toFixed(1)}" stroke="var(--hair2)" stroke-width="1"/>`);
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="hourly wave height, tide and wind">${p.join("")}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="hourly face height, tide and wind">${p.join("")}</svg>`;
 }
 function buildSheet(key){
   const hrs=DATA.hourly[key]; if(!hrs) return;
@@ -501,7 +530,7 @@ function buildSheet(key){
   const di=DATA.dates.indexOf(date), cell=(DATA.grid[spot]||[])[di]||[];
   const call=(cell[0]||"skip"), title=cell[3]||"";
   sheet.innerHTML =
-    `<div class="sheet-head"><div><div class="sk">Hourly &middot; wave height m, tide, wind kt</div><h3 id="sheet-h">${esc(spot)}</h3>
+    `<div class="sheet-head"><div><div class="sk">Hourly &middot; face height m, tide, wind kt</div><h3 id="sheet-h">${esc(spot)}</h3>
        <div class="sd">${esc(DATA.daylong[date]||date)} <span class="pill ${call}">${call.toUpperCase()}</span></div></div>
      <button class="xbtn" id="xbtn" aria-label="Close">&#10005;</button></div>
      <div class="chartwrap">${chart(hrs)}</div>
