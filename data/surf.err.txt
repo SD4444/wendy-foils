@@ -1,0 +1,16 @@
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&f
+no marine data for Le Pin Sec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.885&longitude=-1.222&timezone=Europe/Paris&f
+no marine data for Le Porge-Océan
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.67&longitude=-1.253&timezone=Europe/Paris&fo
+no marine data for La Garonne / Le Petit Train
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.212&longitude=-1.298&timezone=Europe/Paris&f
+no marine data for Mimizan
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.85&longitude=-1.385&timezone=Europe/Paris&fo
+no marine data for Moliets
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.69&longitude=-1.442&timezone=Europe/Paris&fo
+no marine data for Seignosse – Bourdaines / Estagnots
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.595&longitude=-1.47&timezone=Europe/Paris&fo
+no marine data for Labenne-Océan
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.505&longitude=-1.54&timezone=Europe/Paris&fo
+no marine data for Anglet – Madrague / Marinella / Sables d'Or
