@@ -125,7 +125,7 @@
   .sname{padding:12px 12px 12px 2px;border-bottom:1px solid var(--hair);align-self:stretch;display:flex;flex-direction:column;justify-content:center}
   .sname .nm{font-family:var(--disp);font-weight:600;font-size:15.5px;color:var(--ink);line-height:1.2}
   .sname .sub{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
-  .sname .sub a{color:var(--faint);text-decoration:none} .sname .sub a:hover{color:var(--accent)}
+  .sname .sub a{color:var(--faint);text-decoration:none} .sname .sub em{font-style:normal;color:var(--soft)} .sname .sub a:hover{color:var(--accent)}
   .cell{position:relative;border:1px solid var(--hair);border-radius:10px;padding:10px 10px 9px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;
     background:rgba(255,255,255,.012);transition:transform .15s,border-color .15s}
   .cell:hover{transform:translateY(-2px);border-color:var(--hair2)}
@@ -184,7 +184,6 @@
     .gname{padding:22px 0 10px}
     .srow{display:block;border-bottom:1px solid var(--hair);padding:12px 0 12px}
     .sname{border:none;padding:0 0 8px}
-    .sname .sub br{display:none}
     .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
     .cell{border:none;border-radius:8px;padding:6px 2px 6px;gap:3px;align-items:center;text-align:center;background:var(--skip-bg)}
     .cell.go{background:var(--go-bg)} .cell.maybe{background:var(--maybe-bg)}
@@ -316,7 +315,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a><br>${esc(s.tide_label)}</span></div><div class="cells">${cells}</div></div>`;
+    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a> &middot; <em>${esc(s.tide_label)}</em></span></div><div class="cells">${cells}</div></div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;
