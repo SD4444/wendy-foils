@@ -102,6 +102,15 @@ def plain_call(r):
 TIDE_LABEL = {"any": "works on all tides", "low": "best low to mid", "mid": "best mid tide",
               "incoming": "best mid tide, pushing", "mid-high": "best mid to high", "high": "best around high"}
 
+DIR_WORDS = {"N":"north","NNE":"north-north-east","NE":"north-east","ENE":"east-north-east","E":"east","ESE":"east-south-east",
+             "SE":"south-east","SSE":"south-south-east","S":"south","SSW":"south-south-west","SW":"south-west","WSW":"west-south-west",
+             "W":"west","WNW":"west-north-west","NW":"north-west","NNW":"north-north-west"}
+def wind_from(r):
+    wd = r.get("wdir"); rel = r.get("rel") or ""
+    if not wd: return "direction unknown"
+    lab = {"glassy":"too light to matter","offshore":"offshore","cross":"side-shore","onshore":"onshore","blown":"onshore, blown out"}.get(rel, "")
+    return f"from the {DIR_WORDS.get(wd, wd)}" + (f", {lab}" if lab else "")
+
 def build_data(grid, spots_meta, flagged):
     dates = sorted({r["date"] for r in grid})
     today = dates[0]
@@ -139,7 +148,7 @@ def build_data(grid, spots_meta, flagged):
                 "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
                 "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
                 "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r),
-                "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide"),
+                "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide"), "wind_from": wind_from(r),
                 "tide_pref": m.get("tide_pref", "mid"),
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
@@ -302,7 +311,7 @@ TEMPLATE = r"""<!doctype html>
   .live .lt{flex:1;line-height:1.5}
   .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px;box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  a.shom{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--sea);text-decoration:none;border:1px solid rgba(79,179,201,.4);border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+  a.shom{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--sea);text-decoration:none;border:1px solid rgba(79,179,201,.4);border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:1px;white-space:nowrap;display:inline-block;line-height:1.5}
   a.shom:hover{background:rgba(79,179,201,.12)}
   .compass{flex:none}
 
@@ -491,8 +500,8 @@ if (DATA.feature){
      <p class="plain">${esc(f.plain)}</p>
      <div class="facts">
        <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
-       <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">on the water</span></div>
-       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here &middot; <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official tide table</a></span></div>
+       <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">${esc(f.wind_from)}</span></div>
+       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here &middot; <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM tide table</a></span></div>
        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
