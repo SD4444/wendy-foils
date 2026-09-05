@@ -79,11 +79,10 @@ def tide_plain(r):
     before = [e for e in ev if e[0] <= mid]; after = [e for e in ev if e[0] > mid]
     if before and after:
         b, a = before[-1], after[0]
-        state = "rising" if b[1] == "low" else "dropping"
-        return f"{state} tide, {b[1]} {fmt_h(b[0])} to {a[1]} {fmt_h(a[0])}"
+        return f"{b[1]} tide {fmt_h(b[0])}, {'coming in' if b[1]=='low' else 'going out'} until {a[1]} {fmt_h(a[0])}"
     if before:
-        b = before[-1]; return f"{'rising' if b[1]=='low' else 'dropping'} after {b[1]} {fmt_h(b[0])}"
-    a = after[0]; return f"{'dropping' if a[1]=='low' else 'rising'} towards {a[1]} {fmt_h(a[0])}"
+        b = before[-1]; return f"{b[1]} tide {fmt_h(b[0])}, {'coming in' if b[1]=='low' else 'going out'} during the session"
+    a = after[0]; return f"{'going out' if a[1]=='low' else 'coming in'} towards {a[1]} tide {fmt_h(a[0])}"
 
 def heads_up(r):
     o = r.get("obs")
@@ -188,8 +187,8 @@ def build_data(grid, spots_meta, flagged):
         w = f"{sum(waters)/len(waters):.0f}°" if waters else "–"
         a = f"{max(airs):.0f}°" if airs else "–"
         tiles.append(["Water / air", f"{w} / {a}", "boardies or a 3/2" if waters and sum(waters)/len(waters) >= 20 else "3/2 wetsuit"])
-    go_days = sorted({r["date"] for r in grid if r["verdict"] == "GO"})
-    tiles.append(["GO days ahead", f"{len(go_days)} of {len(dates)}", ", ".join(daylabel(d) for d in go_days) if go_days else "none yet"])
+    nxt = next((r for r in gm if r["date"] != today), None)
+    if nxt: tiles.append(["Next best day", f"{daylabel(nxt['date'])} {short(nxt['spot'])}", f"{nxt.get('size','')} · {wind_plain(nxt)}"])
 
     hourly = {}
     for r in grid:
@@ -283,7 +282,7 @@ TEMPLATE = r"""<!doctype html>
   .gauge{flex:none}
   .feat-where{margin-top:18px}
   .feat-where .spot{font-family:var(--disp);font-size:23px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .feat-where .when{color:var(--soft);font-size:14px;margin-top:2px}
+  .feat-where .when{color:var(--soft);font-size:14px;margin-top:2px} .feat-where .when b{color:var(--ink);font-weight:600}
   .feat-row{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair);font-family:var(--mono);font-size:12.5px;color:var(--soft)}
   .feat-row b{color:var(--ink);font-weight:600}
   .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -336,7 +335,7 @@ TEMPLATE = r"""<!doctype html>
 
   /* matrix */
   .matrix{display:grid;grid-template-columns:220px repeat(var(--ndays,7),minmax(0,1fr));gap:6px}
-  .mhead,.srow,.ghead{display:contents}
+  .mhead,.srow,.ghead,.cells{display:contents}
   .corner{border-bottom:1px solid var(--hair)}
   .dh{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:2px 6px 12px;border-bottom:1px solid var(--hair)}
   .gname{grid-column:1/-1;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:26px 0 8px}
@@ -400,11 +399,18 @@ TEMPLATE = r"""<!doctype html>
   @media (max-width:760px){
     .matrix{display:block} .mhead{display:none}
     .gname{padding:22px 0 10px}
-    .srow{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:9px;border:1px solid var(--hair);border-radius:16px;padding:14px;margin-bottom:12px;background:var(--panel)}
-    .sname{grid-column:1/-1;border-bottom:1px solid var(--hair);padding:0 0 10px;margin-bottom:2px}
-    .cell{border:none;background:none;padding:2px 0;gap:5px} .cell:hover{transform:none}
-    .cell.best{box-shadow:none;border:none} .cell.best::after{display:none}
-    .dlabel{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+    .srow{display:block;border-bottom:1px solid var(--hair);padding:12px 0 12px}
+    .sname{border:none;padding:0 0 8px}
+    .sname .sub br{display:none}
+    .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .cell{border:none;border-radius:8px;padding:6px 2px 6px;gap:3px;align-items:center;text-align:center;background:var(--skip-bg)}
+    .cell.go{background:var(--go-bg)} .cell.maybe{background:var(--maybe-bg)}
+    .cell:hover{transform:none}
+    .cell .tag{display:none} .cell .sz{display:none} .qbar{display:none} .cell .exp{display:none}
+    .cell .val{font-size:15px} .cell .val .kt{display:none}
+    .go .val{color:var(--go)} .maybe .val{color:var(--maybe)} .skip .val{color:var(--soft)}
+    .cell.best{box-shadow:inset 0 0 0 1px var(--accent)} .cell.best::after{display:none}
+    .dlabel{display:block;font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:0}
     .tiles{grid-template-columns:1fr 1fr}
     .modal{padding:18px} .sheet{max-height:88vh;border-radius:18px}
   }
@@ -481,13 +487,13 @@ if (DATA.feature){
     `<div class="flabel">${f.verdict==="SKIP"?"CLOSEST TODAY":"TODAY'S CALL"} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <div class="feat-where" style="margin-top:0">
        <div class="spot" style="font-size:clamp(26px,4vw,34px)">${esc(f.spot)}</div>
-       <div class="when">${esc(f.day)} &middot; ${esc(f.sector)}</div>
+       <div class="when">${esc(f.day)} &middot; ${esc(f.sector)} &middot; best window <b>${esc(f.window)}</b></div>
      </div>
      <p class="plain">${esc(f.plain)}</p>
      <div class="facts">
        <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
        <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">on the water</span></div>
-       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here &middot; <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official times</a></span></div>
+       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here &middot; <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official tide table</a></span></div>
        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
@@ -504,7 +510,7 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
   `<article class="pick"><span class="rank">${i+1}</span>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <p class="plain small">${esc(f.plain)}</p>
-     <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span></div>
+     <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></span></div>
      <div class="row"><span>${esc(f.tide_label)} at this break</span></div>
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No spot clears the bar today: nothing waist-high and clean at the same time. Cams still work; the grid below has tomorrow.</div>`;
@@ -527,7 +533,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide</a><br>${esc(s.tide_label)}</span></div>${cells}</div>`;
+    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a><br>${esc(s.tide_label)}</span></div><div class="cells">${cells}</div></div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;

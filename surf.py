@@ -312,13 +312,15 @@ def face_height(spot, hs, per, swh, swp, corr=1.0):
     shelter, times the same-day buoy correction. Swell partition is used when it carries the
     energy, otherwise the total sea with its mean period."""
     if hs is None: return None
-    if swh is not None and swp is not None and swh >= 0.6 * hs:
+    hb = None
+    if swh is not None and swp and swh >= 0.6 * hs:
         hb = breaker(swh, swp)
         # add the wind-sea on top in quadrature so a 1 m windswell over a 0.4 m swell still counts
         rest = max(0.0, hs * hs - swh * swh) ** 0.5
-        if rest > 0.2 and per: hb = (hb * hb + breaker(rest, min(per, 7)) ** 2) ** 0.5
-    else:
-        hb = breaker(hs, per) if per else hs * 1.3
+        if hb is not None and rest > 0.2 and per: hb = (hb * hb + breaker(rest, min(per, 7)) ** 2) ** 0.5
+    if hb is None:
+        t = per or swp
+        hb = breaker(hs, t) if t else hs * 1.3
     if hb is None: return None
     return hb * (1 - 0.45 * spot["shelter"]) * corr
 
