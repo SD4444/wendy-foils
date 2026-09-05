@@ -61,6 +61,45 @@ def obs_txt(r):
         t += f". Models read {'high' if o['bias'] > 1 else 'low'} x{o['bias']:.2f}, today sized {'down' if o['bias'] > 1 else 'up'}"
     return t
 
+def wind_plain(r):
+    if r.get("kt") is None: return "wind unknown"
+    kt = r["kt"]; rel = r.get("rel") or ""; wd = r.get("wdir") or ""
+    if rel == "glassy": return "glassy"
+    if rel == "offshore": return f"light offshore {wd}" if kt <= 12 else f"offshore {wd} {kt:.0f} kt"
+    if rel == "cross": return f"side wind {wd} {kt:.0f} kt"
+    if rel in ("onshore", "blown"): return f"onshore {wd} {kt:.0f} kt"
+    return f"{wd} {kt:.0f} kt"
+
+def tide_plain(r):
+    """One sentence relating the session window to the tide."""
+    t = r.get("tides") or {}; win = r.get("win")
+    ev = sorted([(h, "low") for h, v in t.get("low", [])] + [(h, "high") for h, v in t.get("high", [])])
+    if not ev or not win: return "tide unknown"
+    mid = (win[0] + win[1]) / 2
+    before = [e for e in ev if e[0] <= mid]; after = [e for e in ev if e[0] > mid]
+    if before and after:
+        b, a = before[-1], after[0]
+        state = "rising" if b[1] == "low" else "dropping"
+        return f"{state} tide, {b[1]} {fmt_h(b[0])} to {a[1]} {fmt_h(a[0])}"
+    if before:
+        b = before[-1]; return f"{'rising' if b[1]=='low' else 'dropping'} after {b[1]} {fmt_h(b[0])}"
+    a = after[0]; return f"{'dropping' if a[1]=='low' else 'rising'} towards {a[1]} {fmt_h(a[0])}"
+
+def heads_up(r):
+    o = r.get("obs")
+    bits = []
+    if o and o.get("bias") and o["bias"] >= 1.15:
+        bits.append(f"The {o['name']} buoy reads only {o['hs']:.1f} m right now, well under the models. "
+                    f"Sizes are trimmed; only go if the cam shows it filling in.")
+    elif o and o.get("bias") and o["bias"] <= 0.85:
+        bits.append(f"The {o['name']} buoy reads {o['hs']:.1f} m, more than the models. Could be bigger than shown.")
+    conf = r.get("conf") or ""
+    if conf.startswith("low"): bits.append("Wave models disagree on size.")
+    return " ".join(bits)
+
+def plain_call(r):
+    return f"{(r.get('size') or '').capitalize()}, {wind_plain(r)}, {fmt_h(r['win'][0])} to {fmt_h(r['win'][1])}." if r.get("win") else (r.get("size") or "")
+
 def build_data(grid, spots_meta, flagged):
     dates = sorted({r["date"] for r in grid})
     today = dates[0]
@@ -96,6 +135,7 @@ def build_data(grid, spots_meta, flagged):
         return {"spot": r["spot"], "short": short(r["spot"]), "sector": m["sector"], "verdict": r["verdict"],
                 "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
                 "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
+                "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r),
                 "tide_pref": m.get("tide_pref", "mid"),
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
@@ -111,13 +151,13 @@ def build_data(grid, spots_meta, flagged):
     if five and five[0]["verdict"] == "GO":
         b = five[0]
         headline = f"{b['short']}'s the call today."
-        verdict = (f"<strong>{b['window']} at {b['spot']}</strong>: {b['size']}, {b['swell']}, {b['wind']}. "
-                   f"{'Four' if len(five)>=5 else 'The'} other picks are ranked below, cams linked so you can check the banks before driving.")
+        verdict = (f"<strong>{b['size'].capitalize()} and {b['wind_plain']}</strong> from {b['window'].split('–')[0]}. "
+                   f"{len(five)-1} more picks below. Check the cam before you drive.")
     elif five:
         b = five[0]
         headline = "Today's a maybe."
-        verdict = (f"Best of it is <strong>{b['spot']}</strong>, {b['window']}: {b['size']}, {b['swell']}, {b['wind']}. "
-                   f"Rideable but not clean. Look at the cam first.")
+        verdict = (f"Best of it is <strong>{b['spot']}</strong>, {b['size']} and {b['wind_plain']} from {b['window'].split('–')[0]}. "
+                   f"Rideable, not clean. Look at the cam first.")
     else:
         # why is nothing working
         small = all((r.get("eff") or 0) < 0.7 for r in todays) if todays else True
@@ -125,7 +165,7 @@ def build_data(grid, spots_meta, flagged):
         verdict = ("Too small everywhere, knee-high at best. " if small else "Size is there but the wind's on it. ") + \
                   "Tomorrow's read is in the grid below."
     if not (date.fromisoformat("2026-09-14") <= date.fromisoformat(today) <= date.fromisoformat("2026-10-04")):
-        verdict += " (Trip runs 14 Sep to 4 Oct; this is the preview.)"
+        verdict += " Trip starts 14 Sep."
 
     # tiles
     hs_all = [r["face"] if r.get("face") is not None else r["hs"] for r in grid if r.get("hs") is not None]
@@ -246,6 +286,13 @@ TEMPLATE = r"""<!doctype html>
   .links a:hover{border-color:var(--accent);color:var(--accent)}
   .links a.cam{border-color:rgba(255,159,74,.5)}
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
+  .plain{font-size:clamp(17px,2.4vw,21px);color:var(--ink);margin:16px 0 0;line-height:1.45;max-width:34ch}
+  .plain.small{font-size:15px;margin:6px 0 0}
+  .facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair)}
+  .fact{display:flex;flex-direction:column;gap:2px}
+  .fact .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .fact .v{font-family:var(--disp);font-size:18px;font-weight:600;color:var(--ink);line-height:1.2}
+  .fact .s{font-family:var(--mono);font-size:11px;color:var(--soft)}
   .live{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
   .live .lt{flex:1;line-height:1.5}
   .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px;box-shadow:0 0 9px var(--accent);animation:pulse 2.4s ease-in-out infinite}
@@ -378,13 +425,13 @@ TEMPLATE = r"""<!doctype html>
 <main>
 <section class="wrap">
   <div class="shead"><h2>Today's five</h2><span class="legend" id="fivelegend"></span></div>
-  <p class="snote">Ranked across the whole coast, Soulac to Biarritz. Breaking face height (from offshore swell height and period), wind on the water and the tide. Today's sizes are checked against the live Candhis buoys. Open the cam before you drive; no model knows which bank is working.</p>
+  <p class="snote">Best five spots today, Soulac to Biarritz. Size, wind and tide, checked against the live buoys.</p>
   <div class="five reveal" id="five"></div>
 </section>
 
 <section class="wrap">
   <div class="shead"><h2>7-day outlook</h2><span class="legend"><span class="swatch"></span> session quality &middot; fuller = better</span></div>
-  <p class="snote">Number is the breaking face height in metres during the best 3-hour daylight window (a 1.2 m swell at 10 s breaks about 1.8 m). Tap a near day for the hourly picture: size, wind and tide. Tide times marked ~ are model-interpolated and run 30 to 60 min early here, so use the SHOM link for the exact time.</p>
+  <p class="snote">Wave face height in metres for each spot's best 3 hours. Tap a near day for the hourly picture.</p>
   <div class="matrix reveal" id="matrix"></div>
 </section>
 
@@ -426,25 +473,19 @@ if (DATA.feature){
   const f = DATA.feature, r = 34, C = 2*Math.PI*r, q = Math.max(.05, (f.score||0)/10), off = C*(1-q);
   $("#feature").innerHTML =
     `<div class="flabel">${f.verdict==="SKIP"?"CLOSEST TODAY":"TODAY'S CALL"} <span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
-     <div class="feat-main">
-       <div class="bigwave"><span class="n">${f.face!=null?esc(f.face.toFixed(1)):(f.hs!=null?esc(f.hs.toFixed(1)):"–")}<span style="font-size:.4em;color:var(--soft)"> m</span></span><span class="u">${esc(f.size)} faces &middot; swell ${esc(f.swell)}</span></div>
-       <svg class="gauge" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="session quality ${Math.round(q*100)} of 100">
-         <circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/>
-         <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 42 42)"/>
-         <text x="42" y="47" text-anchor="middle" font-family="var(--mono)" font-size="15" fill="var(--accent)">${Math.round(q*100)}</text>
-       </svg>
+     <div class="feat-where" style="margin-top:0">
+       <div class="spot" style="font-size:clamp(26px,4vw,34px)">${esc(f.spot)}</div>
+       <div class="when">${esc(f.day)} &middot; ${esc(f.sector)}</div>
      </div>
-     <div class="feat-where">
-       <div class="spot">${esc(f.spot)} ${arrow(f.sdeg,"swell from "+(f.swell||""),"var(--sea)")} ${arrow(f.wdeg,"wind","var(--accent)")}</div>
-       <div class="when">${esc(f.day)} &middot; ${esc(f.window)} &middot; ${esc(f.sector)}</div>
+     <p class="plain">${esc(f.plain)}</p>
+     <div class="facts">
+       <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
+       <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">on the water</span></div>
+       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s"><a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official times</a></span></div>
+       <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
-     <div class="feat-row">
-       <span>wind <b>${esc(f.wind)}</b></span><span>tide <b>${esc(f.tide)}</b> <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span>
-       <span>water <b>${f.water!=null?f.water.toFixed(0)+"°":"–"}</b></span><span>air <b>${f.air!=null?f.air.toFixed(0)+"°":"–"}</b></span>
-     </div>
-     ${f.obs?`<div class="live"><span class="ld"></span><span class="lt">Live: ${esc(f.obs)}</span></div>`:""}
-     ${linkrow(f)}
-     <div class="feat-note">${esc(f.note)}${f.conf?(" &middot; confidence "+esc(f.conf)):""}</div>`;
+     ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
+     ${linkrow(f)}`;
 } else { $("#feature").style.display="none"; }
 
 $("#tiles").innerHTML = DATA.tiles.map(t=>`<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
@@ -456,11 +497,8 @@ $("#fivelegend").textContent = DATA.five.length ? `${DATA.five.length} rideable 
 $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
   `<article class="pick"><span class="rank">${i+1}</span>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
-     <div class="sz">${esc(f.size)} &middot; ${esc(f.swell)}</div>
-     <div class="row"><span>when <b>${esc(f.window)}</b></span><span>wind <b>${esc(f.wind)}</b></span></div>
-     <div class="row"><span>tide <b>${esc(f.tide)}</b> <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span></div>
-     ${f.obs?`<div class="row"><span>live <b>${esc(f.obs)}</b></span></div>`:""}
-     <div class="why">${esc(f.note)}</div>
+     <p class="plain small">${esc(f.plain)}</p>
+     <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span></div>
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No spot clears the bar today: nothing waist-high and clean at the same time. Cams still work; the grid below has tomorrow.</div>`;
 
