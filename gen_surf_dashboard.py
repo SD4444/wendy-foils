@@ -64,9 +64,9 @@ def obs_txt(r):
 def wind_plain(r):
     if r.get("kt") is None: return "wind unknown"
     kt = r["kt"]; rel = r.get("rel") or ""; wd = r.get("wdir") or ""
-    if rel == "glassy": return "glassy"
-    if rel == "offshore": return f"light offshore {wd}" if kt <= 12 else f"offshore {wd} {kt:.0f} kt"
-    if rel == "cross": return f"side wind {wd} {kt:.0f} kt"
+    if rel == "glassy": return f"glassy, {wd} {kt:.0f} kt"
+    if rel == "offshore": return f"offshore {wd} {kt:.0f} kt"
+    if rel == "cross": return f"side-shore {wd} {kt:.0f} kt"
     if rel in ("onshore", "blown"): return f"onshore {wd} {kt:.0f} kt"
     return f"{wd} {kt:.0f} kt"
 
@@ -100,6 +100,9 @@ def heads_up(r):
 def plain_call(r):
     return f"{(r.get('size') or '').capitalize()}, {wind_plain(r)}, {fmt_h(r['win'][0])} to {fmt_h(r['win'][1])}." if r.get("win") else (r.get("size") or "")
 
+TIDE_LABEL = {"any": "works on all tides", "low": "best low to mid", "mid": "best mid tide",
+              "incoming": "best mid tide, pushing", "mid-high": "best mid to high", "high": "best around high"}
+
 def build_data(grid, spots_meta, flagged):
     dates = sorted({r["date"] for r in grid})
     today = dates[0]
@@ -128,7 +131,8 @@ def build_data(grid, spots_meta, flagged):
             groups.append({"dept": g, "spots": []})
         groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"],
                                     "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"],
-                                    "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid")})
+                                    "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"),
+                                    "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide")})
 
     def card(r):
         m = meta[r["spot"]]
@@ -136,6 +140,7 @@ def build_data(grid, spots_meta, flagged):
                 "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
                 "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
                 "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r),
+                "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide"),
                 "tide_pref": m.get("tide_pref", "mid"),
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
@@ -482,7 +487,7 @@ if (DATA.feature){
      <div class="facts">
        <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
        <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">on the water</span></div>
-       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s"><a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official times</a></span></div>
+       <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here &middot; <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">official times</a></span></div>
        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
@@ -500,6 +505,7 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
      <p class="plain small">${esc(f.plain)}</p>
      <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">SHOM</a></span></div>
+     <div class="row"><span>${esc(f.tide_label)} at this break</span></div>
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No spot clears the bar today: nothing waist-high and clean at the same time. Cams still work; the grid below has tomorrow.</div>`;
 
@@ -521,7 +527,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide</a></span></div>${cells}</div>`;
+    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide</a><br>${esc(s.tide_label)}</span></div>${cells}</div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;
