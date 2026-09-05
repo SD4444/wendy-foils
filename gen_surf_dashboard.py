@@ -187,8 +187,8 @@ def build_data(grid, spots_meta, flagged):
         w = f"{sum(waters)/len(waters):.0f}°" if waters else "–"
         a = f"{max(airs):.0f}°" if airs else "–"
         tiles.append(["Water / air", f"{w} / {a}", "boardies or a 3/2" if waters and sum(waters)/len(waters) >= 20 else "3/2 wetsuit"])
-    nxt = next((r for r in gm if r["date"] != today), None)
-    if nxt: tiles.append(["Next best day", f"{daylabel(nxt['date'])} {short(nxt['spot'])}", f"{nxt.get('size','')} · {wind_plain(nxt)}"])
+    days_ok = sorted({r["date"] for r in grid if r["verdict"] == "GO" and r["date"] != today})
+    tiles.append(["Coming up", (", ".join(daylabel(d) for d in days_ok[:4]) if days_ok else "nothing yet"), "days with a clean, waist-high+ spot"])
 
     hourly = {}
     for r in grid:
