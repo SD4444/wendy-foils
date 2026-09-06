@@ -5,3 +5,7 @@ logs/*.log
 .claude/
 .github/hooks/
 .github/skills/
+
+# local secrets, never commit
+.dev.vars
+__pycache__/

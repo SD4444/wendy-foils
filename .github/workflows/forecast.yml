@@ -50,6 +50,18 @@ jobs:
             echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Copernicus IBI wave forecast (surf side)
+        # Free Copernicus Marine account; credentials are repo secrets. Writes data/copernicus.json,
+        # which surf.py adds as a 4th wave model. If this step fails surf.py just runs on the 3 Open-Meteo models.
+        if: steps.mode.outputs.mode != 'weekly'
+        continue-on-error: true
+        env:
+          COPERNICUS_USERNAME: ${{ secrets.COPERNICUS_USERNAME }}
+          COPERNICUS_PASSWORD: ${{ secrets.COPERNICUS_PASSWORD }}
+        run: |
+          pip install -q copernicusmarine
+          python3 fetch_copernicus.py data/copernicus.json
+
       - name: Run forecast engine
         run: |
           mkdir -p data

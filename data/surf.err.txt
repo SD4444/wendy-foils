@@ -1,16 +1,3 @@
-buoy Anglet 1.5m @ 11.0s age 29min model 1.46 bias 0.97
-buoy Saint-Jean-de-Luz 1.5m @ 11.5s age 29min model 1.38 bias 0.92
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.512&longitude=-1.135&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&f
-no marine data for Hourtin-Plage
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.835&longitude=-1.23&timezone=Europe/Paris&fo
-no marine data for La Jenny
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.64&longitude=-1.255&timezone=Europe/Paris&fo
-no marine data for L'Horizon / Les Dunes / La Pointe
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.092&longitude=-1.325&timezone=Europe/Paris&f
-no marine data for Contis
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.818&longitude=-1.395&timezone=Europe/Paris&f
-no marine data for Messanges
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.672&longitude=-1.445&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.565&longitude=-1.485&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.493&longitude=-1.548&timezone=Europe/Paris&foreca
+buoy Anglet 1.7m @ 11.1s age 10min consensus 1.45 bias 0.85 per model {'best_match': 0.86, 'ecmwf_wam025': 0.93, 'copernicus_ibi': 0.77}
+buoy Saint-Jean-de-Luz 1.5m @ 11.3s age 10min consensus 1.44 bias 0.96 per model {'best_match': 0.92, 'ecmwf_wam025': 1.05, 'ncep_gfswave025': 0.97, 'copernicus_ibi': 0.89}
+copernicus IBI loaded for 36 spots (0.0h old)

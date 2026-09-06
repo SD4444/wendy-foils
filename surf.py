@@ -38,7 +38,7 @@ Spot list + cam/report/forecast links come from Simon's sheet
 """
 
 import sys, os, json, math, urllib.request, urllib.error
-from datetime import datetime, date as ddate
+from datetime import datetime, date as ddate, timezone
 
 TZ = "Europe/Paris"
 FORECAST = "https://api.open-meteo.com/v1/forecast"
@@ -214,16 +214,17 @@ def try_json(url):
 BIAS_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "buoy_bias.json")
 
 def roll_bias(buoys):
-    """Append today's model/buoy ratios to data/buoy_bias.json and set bias_rolling = median of the
-    last 3 days per buoy. A single reading can be a fluke; three days is a real tendency."""
+    """Append today's consensus/buoy ratio (plus the per-model ratios) to data/buoy_bias.json and set
+    bias_rolling = median of the last 3 days per buoy. A single reading can be a fluke; three days is
+    a real tendency. The per-model ratios are the evidence for weighting the models later."""
     import statistics
     try: log = json.load(open(BIAS_LOG))
     except (OSError, ValueError): log = {}
     today = datetime.now().strftime("%Y-%m-%d")
     for k, b in buoys.items():
-        if b.get("bias"): log.setdefault(k, {})[today] = b["bias"]
+        if b.get("bias"): log.setdefault(k, {})[today] = {"bias": b["bias"], "models": b.get("model_bias", {})}
     for k, b in buoys.items():
-        recent = [v for d, v in sorted(log.get(k, {}).items())[-3:]]
+        recent = [(v["bias"] if isinstance(v, dict) else v) for d, v in sorted(log.get(k, {}).items())[-3:]]
         b["bias_rolling"] = round(statistics.median(recent), 2) if recent else None
     try:
         os.makedirs(os.path.dirname(BIAS_LOG), exist_ok=True)
@@ -232,11 +233,15 @@ def roll_bias(buoys):
         sys.stderr.write(f"WARN cannot write bias log: {e}\n")
     return buoys
 
+WAVE_MODELS = ("best_match", "ecmwf_wam025", "ncep_gfswave025")
+
 def fetch_buoys():
-    """Latest reading per buoy + the model's Hs at the buoy for the same hour -> bias ratio.
-    Returns {key: {..reading.., "model_hs", "bias"}} ; missing/stale buoys are dropped."""
-    from datetime import timezone, timedelta
+    """Latest reading per buoy + every wave model's Hs at the buoy for the same hour.
+    bias = consensus mean / buoy, i.e. the same quantity the spots are sized with.
+    Returns {key: {..reading.., "models", "model_hs", "bias", "model_bias"}}; missing/stale buoys are dropped."""
+    from zoneinfo import ZoneInfo
     now = datetime.now(timezone.utc)
+    cop = load_copernicus_raw()
     out = {}
     for key, b in BUOYS.items():
         j = try_json(SURFKIT.format(lat=b["lat"], lon=b["lon"]))
@@ -250,22 +255,56 @@ def fetch_buoys():
         except (TypeError, KeyError, ValueError):
             continue
         rec = {"key":key, "id":b["id"], "name":b["name"], "hs":hs, "tp":lr.get("period"), "deg":lr.get("direction"),
-               "sst":lr.get("water_temperature"), "age_min":round(age), "time":lr["time"], "model_hs":None, "bias":None}
-        # model Hs at the buoy, same hour (Paris local time series)
-        m = try_json(f"{MARINE}?latitude={b['lat']}&longitude={b['lon']}&timezone={TZ}&forecast_days=2&hourly=wave_height")
-        if m and "hourly" in m:
-            local = ts.astimezone(timezone(timedelta(hours=2)))  # CEST during the trip
-            key_t = local.strftime("%Y-%m-%dT%H:00")
-            H = m["hourly"]
-            if key_t in H["time"]:
+               "sst":lr.get("water_temperature"), "age_min":round(age), "time":lr["time"],
+               "models":{}, "model_hs":None, "bias":None, "model_bias":{}}
+        key_t = ts.astimezone(ZoneInfo(TZ)).strftime("%Y-%m-%dT%H:00")
+        for mdl in WAVE_MODELS:
+            m = try_json(f"{MARINE}?latitude={b['lat']}&longitude={b['lon']}&timezone={TZ}&forecast_days=2"
+                         f"&hourly=wave_height&models={mdl}")
+            H = (m or {}).get("hourly", {})
+            if key_t in H.get("time", []):
                 mh = H["wave_height"][H["time"].index(key_t)]
-                if mh is not None and hs >= 0.3:
-                    rec["model_hs"] = mh; rec["bias"] = round(mh / hs, 2)
+                if mh is not None and mh > 0.05: rec["models"][mdl] = mh   # 0.0 = coarse grid on land
+        ib = (cop.get("buoys", {}).get(key) or {}).get("hs")
+        if ib and key_t in cop.get("time", []):
+            v = ib[cop["time"].index(key_t)]
+            if v: rec["models"]["copernicus_ibi"] = v
+        if rec["models"] and hs >= 0.3:
+            rec["model_hs"] = round(sum(rec["models"].values()) / len(rec["models"]), 2)
+            rec["bias"] = round(rec["model_hs"] / hs, 2)
+            rec["model_bias"] = {k: round(v / hs, 2) for k, v in rec["models"].items()}
         out[key] = rec
     return out
 
 # ---- fetch ----
+COPERNICUS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "copernicus.json")
+COPERNICUS_MAX_AGE_H = 18
+
+def load_copernicus_raw():
+    """data/copernicus.json as written by fetch_copernicus.py, or {} if missing/stale."""
+    try:
+        d = json.load(open(COPERNICUS_FILE))
+        age_h = (datetime.now(timezone.utc) - datetime.strptime(d["fetched_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)).total_seconds() / 3600
+        if age_h > COPERNICUS_MAX_AGE_H:
+            sys.stderr.write(f"copernicus.json is {age_h:.0f}h old, ignoring\n"); return {}
+        d["_age_h"] = age_h
+        return d
+    except Exception as e:
+        sys.stderr.write(f"no copernicus data ({e})\n"); return {}
+
+def load_copernicus():
+    """Per-spot hourly Hs from the Copernicus IBI (MFWAM 1/36 deg) forecast: {spot name: {local time: hs}}."""
+    d = load_copernicus_raw()
+    if not d: return {}
+    out = {name: {t: h for t, h in zip(d["time"], v["hs"]) if h is not None} for name, v in d["spots"].items()}
+    sys.stderr.write(f"copernicus IBI loaded for {len(out)} spots ({d['_age_h']:.1f}h old)\n")
+    return out
+
+COPERNICUS = None
+
 def fetch_spot(spot, days=7):
+    global COPERNICUS
+    if COPERNICUS is None: COPERNICUS = load_copernicus()
     lat, lon = spot["lat"], spot["lon"]
     murl = (f"{MARINE}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}"
             "&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,"
@@ -276,7 +315,11 @@ def fetch_spot(spot, days=7):
         j = try_json(f"{MARINE}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}"
                      f"&hourly=wave_height&models={mdl}")
         if j and "hourly" in j:
-            alt[mdl] = dict(zip(j["hourly"]["time"], j["hourly"]["wave_height"]))
+            # a coarse grid can put the beach on land and return 0.0 all week: treat as missing
+            alt[mdl] = {t: (h if h is not None and h > 0.05 else None)
+                        for t, h in zip(j["hourly"]["time"], j["hourly"]["wave_height"])}
+    if COPERNICUS.get(spot["name"]):
+        alt["copernicus_ibi"] = COPERNICUS[spot["name"]]
     wurl = (f"{FORECAST}?latitude={lat}&longitude={lon}&timezone={TZ}&forecast_days={days}&wind_speed_unit=kn"
             "&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m"
             "&daily=sunrise,sunset&models=meteofrance_arome_france_hd,meteofrance_seamless,best_match")
@@ -427,15 +470,15 @@ def analyse(spot, marine, alt, wind, buoys=None):
     def consensus(t, hs):
         vals = [hs] + [A[m][t] for m in A if A[m].get(t) is not None]
         vals = [v for v in vals if v is not None]
-        if not vals: return hs, None
-        return sum(vals) / len(vals), (max(vals) - min(vals))
+        if not vals: return hs, None, 0
+        return sum(vals) / len(vals), (max(vals) - min(vals)), len(vals)
     by_day = {}
     for i, t in enumerate(M["time"]):
         d = t[:10]; h = int(t[11:13])
         w = W.get(t)
         hs, per = M["wave_height"][i], M["swell_wave_period"][i] or M["wave_period"][i]
         corr = corr_today if d == today_str else (corr_tomorrow if d == tomorrow_str else 1.0)
-        hs_c, spread = consensus(t, hs)
+        hs_c, spread, nmod = consensus(t, hs)
         # scale the swell partition with the consensus so the period-based breaker uses the agreed size
         scale = (hs_c / hs) if (hs and hs_c) else 1.0
         swh_c = M["swell_wave_height"][i] * scale if M["swell_wave_height"][i] is not None else None
@@ -448,7 +491,8 @@ def analyse(spot, marine, alt, wind, buoys=None):
             "wwh":M["wind_wave_height"][i], "tide":M["sea_level_height_msl"][i], "sst":M["sea_surface_temperature"][i],
             "kt":w["kt"] if w else None, "gust":w["gust"] if w else None, "wdeg":w["deg"] if w else None,
             "air":w["air"] if w else None, "wmodel":w["model"] if w else None,
-            "rel":rel, "score":sc, "spread":spread})
+            "rel":rel, "score":sc, "spread":spread, "nmod":nmod,
+            "ibi":A.get("copernicus_ibi", {}).get(t)})
     rows = []
     for di, d in enumerate(sorted(by_day)):
         hrs = by_day[d]
@@ -506,13 +550,15 @@ def analyse(spot, marine, alt, wind, buoys=None):
         elif score >= MAYBE_SCORE: verdict = "MAYBE"
         else: verdict = "SKIP"
         if eff is not None and eff < FACE_MIN: verdict = "SKIP"
-        # model spread on wave height across the window (MFWAM vs ECMWF-WAM vs GFS-Wave)
+        # model spread on wave height across the window (MFWAM, ECMWF-WAM, GFS-Wave, Copernicus IBI)
         sps = [x["spread"] for x in win if x.get("spread") is not None]
+        nmods = [x["nmod"] for x in win if x.get("nmod")]
+        nm = max(nmods) if nmods else 1
         alt_hs = None
         conf = "single-model"
         if sps:
             sp = sum(sps) / len(sps)
-            conf = "high (3 wave models agree)" if sp <= 0.3 else f"low (wave models differ by {sp:.1f}m)"
+            conf = f"high ({nm} wave models agree)" if sp <= 0.3 else f"low (wave models differ by {sp:.1f}m)"
         if di >= 3: conf = conf.replace("high", "medium") + ", far out"
         obs_note = ""
         if ob and d == today_str:
@@ -538,7 +584,7 @@ def analyse(spot, marine, alt, wind, buoys=None):
                      "wdir":dir16(wdeg) if wdeg is not None else None, "rel":rel,
                      "win":[win[0]["h"], win[-1]["h"] + 1], "tides":tides,
                      "water":r1(sst), "air":r1(max(airs)) if airs else None,
-                     "size":size_words(eff), "conf":conf, "alt":r1(alt_hs),
+                     "size":size_words(eff), "conf":conf, "alt":r1(alt_hs), "ibi":r1(mean("ibi")),
                      "wmodel":win[0]["wmodel"], "sun":[round(sr,2), round(ss,2)],
                      "why":why, "hourly":hourly, "daymax":r1(max((x["hs"] for x in hrs if x["hs"] is not None), default=None))})
     return rows
@@ -649,8 +695,8 @@ def build_html(rows, dates, today, spot_by_name):
         p.append('<div style="font-size:13px;color:#555;margin-bottom:14px">' +
                  (f'Water {min(w):.0f}-{max(w):.0f}C' if w else '') + (', ' if w and a else '') +
                  (f'air up to {max(a):.0f}C' if a else '') + '.</div>')
-    p.append('<div style="margin-top:16px;font-size:12px;color:#777">Source: Open-Meteo marine best_match (MFWAM / ECMWF-WAM) + '
-             'Meteo-France AROME HD wind (CC BY 4.0); live Candhis buoys (Cerema) via thesurfkit.com; face height per Komar-Gaughan. '
+    p.append('<div style="margin-top:16px;font-size:12px;color:#777">Source: Copernicus Marine IBI wave forecast (MFWAM 3km, hourly) + '
+             'Open-Meteo marine best_match / ECMWF-WAM / GFS-Wave (CC BY 4.0) + Meteo-France AROME HD wind; live Candhis buoys (Cerema) via thesurfkit.com; face height per Komar-Gaughan. '
              'Tide times are model-interpolated (~), check SHOM. Cams and reports from your spot sheet. Rules: waist-high+ faces (1.0m+), '
              'period 8s+ preferred, offshore or glassy best, onshore 14kt+ = blown out.</div></div>')
     return "\n".join(p)
@@ -665,7 +711,7 @@ def build_subject(rows, today):
 def main():
     buoys = roll_bias(fetch_buoys())
     for b in buoys.values():
-        sys.stderr.write(f"buoy {b['name']} {b['hs']}m @ {b['tp']}s age {b['age_min']}min model {b['model_hs']} bias {b['bias']}\n")
+        sys.stderr.write(f"buoy {b['name']} {b['hs']}m @ {b['tp']}s age {b['age_min']}min consensus {b['model_hs']} bias {b['bias']} per model {b['model_bias']}\n")
     all_rows = []
     for spot in SPOTS:
         marine, alt, wind = fetch_spot(spot)
