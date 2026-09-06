@@ -45,6 +45,7 @@ FORECAST = "https://api.open-meteo.com/v1/forecast"
 MARINE   = "https://marine-api.open-meteo.com/v1/marine"
 
 TRIP_START, TRIP_END = "2026-09-14", "2026-10-04"
+MAP_URL = "https://sd4444.github.io/wendy-foils/map.html"
 
 # ---- thresholds on BREAKING FACE HEIGHT (m, trough to crest, see breaker()) ----
 FACE_MIN      = 1.0    # waist-high. Below this, SKIP.
@@ -80,112 +81,112 @@ def dir16(deg):
 SPOTS = [
  {"n":1,"name":"Soulac-sur-Mer","dept":"Gironde","sector":"Médoc / Soulac","lat":45.512,"lon":-1.135,"face":275,"shelter":0,
   "cam":"https://www.mairie-soulac.fr/en-un-clic/webcam/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/soulac/584204204e65fad6a770902e",
-  "rel":"High","note":"Official town beach camera. Good northern Médoc visual reference.","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
+  "rel":"High","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
  {"n":2,"name":"L'Amélie","dept":"Gironde","sector":"Médoc / Soulac","lat":45.483,"lon":-1.150,"face":275,"shelter":0,
   "cam":"https://viewsurf.com/univers/surf/vue/15744-france-aquitaine-soulac-sur-mer-la-plage","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/l-amelie/584204204e65fad6a770902d",
-  "rel":"Medium","note":"Use the Soulac camera as the closest dependable visual check.","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
+  "rel":"Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
  {"n":3,"name":"Le Gurp","dept":"Gironde","sector":"Médoc / Soulac","lat":45.435,"lon":-1.155,"face":275,"shelter":0,
   "cam":"https://www.vendays-montalivet.fr/pratique/webcam/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/le-gurp/584204204e65fad6a770902f",
-  "rel":"Medium","note":"No dependable dedicated camera; compare Soulac and Montalivet.","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
+  "rel":"Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"POINTE_DE_GRAVE"},
  {"n":4,"name":"Montalivet","dept":"Gironde","sector":"Médoc / Montalivet","lat":45.378,"lon":-1.152,"face":275,"shelter":0,
   "cam":"https://www.vendays-montalivet.fr/pratique/webcam/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/montalivet/584204204e65fad6a7709030",
-  "rel":"High","note":"Official beach stream; GoSurf also carries Plage Centrale.","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"High","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":5,"name":"Le Pin Sec","dept":"Gironde","sector":"Médoc / Hourtin","lat":45.302,"lon":-1.162,"face":275,"shelter":0,
   "cam":"https://viewsurf.com/univers/ville/vue/11106-france-aquitaine-hourtin-plage","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/le-pin-sec/584204204e65fad6a7709031",
-  "rel":"Medium","note":"Remote beach without a dependable dedicated feed; Hourtin is the nearest camera.","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":6,"name":"Hourtin-Plage","dept":"Gironde","sector":"Médoc / Hourtin","lat":45.223,"lon":-1.172,"face":275,"shelter":0,
   "cam":"https://viewsurf.com/univers/ville/vue/11106-france-aquitaine-hourtin-plage","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/hourtin-plage/584204204e65fad6a7709032",
-  "rel":"Medium","note":"Beach camera is useful; do not confuse it with the lake camera.","tide_pref":"low","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"low","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":7,"name":"Carcans-Plage","dept":"Gironde","sector":"Médoc / Carcans","lat":45.085,"lon":-1.190,"face":275,"shelter":0,
   "cam":"https://m.viewsurf.com/univers/surf/vue/1255-1202898780-france-aquitaine-carcans-la-plage","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/carcans/584204204e65fad6a7709034",
-  "rel":"Medium","note":"If the feed is stale, use Lacanau only 9 km south as a regional check.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":8,"name":"Lacanau-Océan","dept":"Gironde","sector":"Lacanau","lat":45.001,"lon":-1.203,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/9/Lacanau-Plage-de-Lacanau-Ocean","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/lacanau/5842041f4e65fad6a7708c8d",
-  "rel":"High","note":"Excellent coverage: Surf Club, Centrale, Nord and Supersud angles.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"High","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":9,"name":"Le Porge-Océan","dept":"Gironde","sector":"Le Porge","lat":44.885,"lon":-1.222,"face":275,"shelter":0,
   "cam":"https://www.medocpleinsud.com/organiser/webcam-le-porge-ocean/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/le-porge/584204204e65fad6a7708fe2",
-  "rel":"High","note":"Official 4K panoramic camera at Plage du Gressier.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"High","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":10,"name":"La Jenny","dept":"Gironde","sector":"Le Porge","lat":44.835,"lon":-1.230,"face":275,"shelter":0,
   "cam":"https://www.medocpleinsud.com/organiser/webcam-le-porge-ocean/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/la-jenny/584204204e65fad6a7708fe3",
-  "rel":"Medium","note":"No dedicated camera; Le Porge is the best nearby visual reference.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":11,"name":"Grand Crohot","dept":"Gironde","sector":"Cap Ferret","lat":44.740,"lon":-1.245,"face":275,"shelter":0,
   "cam":"https://barrelsurfing.fr/grand-crohot/","report":"https://barrelsurfing.fr/grand-crohot/","forecast":"https://www.surfline.com/surf-report/cap-ferret/584204204e65fad6a7708fe7",
-  "rel":"High","note":"Local cam page includes wind, a 10-day forecast and Cap Ferret context.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"High","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":12,"name":"Le Truc Vert","dept":"Gironde","sector":"Cap Ferret","lat":44.705,"lon":-1.250,"face":275,"shelter":0,
   "cam":"https://tvcapferret.com/les-webcams-du-cap-ferret/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/le-truc-vert/584204204e65fad6a7708fe5",
-  "rel":"Medium","note":"TV Cap Ferret routes to the local Truc Vert and Grand Crohot feeds.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":13,"name":"La Garonne / Le Petit Train","dept":"Gironde","sector":"Cap Ferret","lat":44.670,"lon":-1.253,"face":275,"shelter":0,
   "cam":"https://tvcapferret.com/les-webcams-du-cap-ferret/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/cap-ferret/584204204e65fad6a7708fe7",
-  "rel":"Medium","note":"Use Truc Vert as the closest camera; banks can differ significantly.","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":14,"name":"L'Horizon / Les Dunes / La Pointe","dept":"Gironde","sector":"Cap Ferret","lat":44.640,"lon":-1.255,"face":280,"shelter":0.1,
   "cam":"https://www.surf-forecast.com/breaks/Cap-Ferret/webcams/latest","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/cap-ferret/584204204e65fad6a7708fe7",
-  "rel":"Low–Medium","note":"No consistently dependable dedicated ocean cam for every south-peninsula beach.","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Low–Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":15,"name":"La Salie Nord / Sud","dept":"Gironde","sector":"Arcachon / La Salie","lat":44.585,"lon":-1.240,"face":275,"shelter":0,
   "cam":"https://viewsurf.com/univers/surf/vue/18468-france-aquitaine-la-teste-de-buch-plage-de-la-salie","report":"https://www.surf-forecast.com/breaks/La-Salie/webcams/latest","forecast":"https://www.surfline.com/surf-report/la-salie/6418e0f89702724989875c99",
-  "rel":"Low–Medium","note":"Viewsurf feed showed maintenance on 2026-09-02; check the Surf-Forecast page.","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
+  "rel":"Low–Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":16,"name":"Biscarrosse","dept":"Landes","sector":"North Landes","lat":44.448,"lon":-1.255,"face":275,"shelter":0,
   "cam":"https://www.biscagrandslacs.co.uk/discover/all-our-webcams","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surf-forecast.com/breaks/Biscarosse-Plage/forecasts/latest/six_day",
-  "rel":"High","note":"Five useful angles including Sud, Centrale, Nord and Le Vivier.","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":17,"name":"Mimizan","dept":"Landes","sector":"North Landes","lat":44.212,"lon":-1.298,"face":275,"shelter":0,
   "cam":"https://www.mimizan-tourisme.com/en/webcams/","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surf-forecast.com/breaks/Mimizan/forecasts/latest/six_day",
-  "rel":"High","note":"Official panoramic, north, west and south views refresh every few minutes.","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":18,"name":"Contis","dept":"Landes","sector":"Central Landes","lat":44.092,"lon":-1.325,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/163/Contis-Plage-de-Contis","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"Medium","note":"Useful regional reference for the isolated central Landes beaches.","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":19,"name":"Cap de l'Homy","dept":"Landes","sector":"Central Landes","lat":44.040,"lon":-1.335,"face":275,"shelter":0,
   "cam":"https://www.surf-forecast.com/breaks/Cap-de-l-Homy/webcams/latest","report":"https://www.surf-sentinel.com/surf-report/france/landes/lit-et-mixe/cap-de-lhomy","forecast":"https://www.surfline.com/surf-report/cap-de-l-homy-plage/584204204e65fad6a7708fdb",
-  "rel":"Low","note":"Surf Sentinel reports the dedicated camera as missing; compare Contis.","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"Low","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":20,"name":"Saint-Girons / La Lette Blanche","dept":"Landes","sector":"Central Landes","lat":43.955,"lon":-1.355,"face":275,"shelter":0,
   "cam":"https://fr.surf-forecast.com/breaks/Saint-Girons/webcams/latest","report":"https://www.surf-sentinel.com/surf-report/france/landes/vielle-saint-girons/saint-girons-plage","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"Low","note":"Use Contis or Moliets for a broad visual read, then inspect on arrival.","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"Low","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":21,"name":"Moliets","dept":"Landes","sector":"Central Landes","lat":43.850,"lon":-1.385,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/186/Moliets-Plage-Nord","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"Medium","note":"GoSurf also carries Centrale and Sud angles when those feeds are up.","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"Medium","tide_pref":"mid","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":22,"name":"Messanges","dept":"Landes","sector":"Central Landes","lat":43.818,"lon":-1.395,"face":275,"shelter":0,
   "cam":"https://www.landesatlantiquesud.com/webcams/messanges/","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://fr.surf-forecast.com/breaks/Messanges/forecasts/latest/six_day",
-  "rel":"Medium","note":"Camera availability varies; Vieux-Boucau is the most dependable neighbour.","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
+  "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"CAPBRETON"},
  {"n":23,"name":"Vieux-Boucau / Soustons","dept":"Landes","sector":"South Landes","lat":43.788,"lon":-1.415,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/85/Vieux-Boucau-Plage-de-Vieux-Boucau","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"High","note":"Very useful around the Courant de Soustons, where banks change fast.","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
  {"n":24,"name":"Seignosse – Le Penon","dept":"Landes","sector":"South Landes","lat":43.712,"lon":-1.435,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/49/Seignosse-Plage-du-Penon","report":"https://seignosse.info/","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"High","note":"Seignosse.info adds tides and skill-level ratings in one screen.","tide_pref":"any","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"any","buoy":"anglet","shom":"CAPBRETON"},
  {"n":25,"name":"Seignosse – Bourdaines / Estagnots","dept":"Landes","sector":"South Landes","lat":43.690,"lon":-1.442,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/79/Seignosse-Plage-des-Bourdaines-Plage-des-Estagnots","report":"https://www.yadusurf.com/","forecast":"https://www.surfline.com/surf-report/les-estagnots/5842041f4e65fad6a7708c8f",
-  "rel":"High","note":"YaDuSurf gives exceptionally clear written daily summaries for Estagnots.","tide_pref":"any","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"any","buoy":"anglet","shom":"CAPBRETON"},
  {"n":26,"name":"Hossegor – Centrale / Gravière / Nord","dept":"Landes","sector":"South Landes","lat":43.672,"lon":-1.445,"face":275,"shelter":0,
   "cam":"https://gosurf.fr/webcam/fr/21/Hossegor-La-Centrale","report":"https://www.plages-landes.info/en/hossegor-en/surf-report-hossegor/","forecast":"https://www.surfline.com/surf-report/la-graviere/5842041f4e65fad6a7708c8e",
-  "rel":"High","note":"Use the camera heavily: models cannot tell which bank is working. Heavy when big.","tide_pref":"incoming","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"incoming","buoy":"anglet","shom":"CAPBRETON"},
  {"n":27,"name":"Capbreton – Santocha / La Piste","dept":"Landes","sector":"South Landes","lat":43.655,"lon":-1.448,"face":275,"shelter":0.2,
   "cam":"https://gosurf.fr/webcam/fr/83/Capbreton-Plage-du-Santosha-de-La-Piste","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surfline.com/surf-report/capbreton/584204204e65fad6a7708ff0",
-  "rel":"High","note":"Often useful when Hossegor is too heavy or closing out.","tide_pref":"mid-high","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"mid-high","buoy":"anglet","shom":"CAPBRETON"},
  {"n":28,"name":"Capbreton – Le Prévent","dept":"Landes","sector":"South Landes","lat":43.642,"lon":-1.447,"face":280,"shelter":0.6,
   "cam":"https://gosurf.fr/webcam/fr/19/Capbreton-Plage-du-Prevent","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surfline.com/surf-report/capbreton/584204204e65fad6a7708ff0",
-  "rel":"High","note":"A different and often more sheltered view than Santocha. Holds bigger swell.","tide_pref":"mid-high","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"mid-high","buoy":"anglet","shom":"CAPBRETON"},
  {"n":29,"name":"Labenne-Océan","dept":"Landes","sector":"South Landes","lat":43.595,"lon":-1.470,"face":275,"shelter":0,
   "cam":"https://www.landesatlantiquesud.com/en/webcams/labenne/","report":"https://www.plages-landes.info/en/labenne-en/","forecast":"https://www.surfline.com/surf-report/labenne-ocean/584204204e65fad6a7708ff2",
-  "rel":"Medium","note":"Official local feed; the Sud Landes aggregator is a useful backup.","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"Medium","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
  {"n":30,"name":"Ondres-Océan","dept":"Landes","sector":"South Landes","lat":43.565,"lon":-1.485,"face":275,"shelter":0,
   "cam":"https://viewsurf.com/univers/surf/vue/5892-france-aquitaine-ondres-la-plage","report":"https://www.plages-landes.info/en/ondres-en/","forecast":"https://www.surf-forecast.com/regions/Landes",
-  "rel":"High","note":"Official 4K panoramic images captured roughly every few minutes.","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"High","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
  {"n":31,"name":"Tarnos – Le Métro / La Digue","dept":"Landes","sector":"South Landes","lat":43.537,"lon":-1.512,"face":280,"shelter":0.1,
   "cam":"https://www.surf-report.com/webcams/le-metro-tarnos-s1201.html","report":"https://www.surf-report.com/meteo-surf/france/landes/","forecast":"https://www.surfline.com/surf-report/tarnos-plage/584204204e65fad6a7708ff3",
-  "rel":"Medium","note":"Transitional zone between open Landes beaches and the Adour jetties.","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
+  "rel":"Medium","tide_pref":"mid","buoy":"anglet","shom":"CAPBRETON"},
  {"n":32,"name":"Anglet – La Barre / Cavaliers / Océan","dept":"Pyrénées-Atlantiques","sector":"Anglet","lat":43.520,"lon":-1.535,"face":295,"shelter":0.1,
   "cam":"https://www.anglet-tourisme.com/en/webcams-of-anglet-beaches/","report":"https://www.surf-report.com/meteo-surf/france/pays-basque/","forecast":"https://www.surfline.com/surf-report/anglet/5842041f4e65fad6a7708bce",
-  "rel":"High","note":"The official hub covers nearly the entire Anglet beachfront.","tide_pref":"mid","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
+  "rel":"High","tide_pref":"mid","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
  {"n":33,"name":"Anglet – Madrague / Marinella / Sables d'Or","dept":"Pyrénées-Atlantiques","sector":"Anglet","lat":43.505,"lon":-1.540,"face":295,"shelter":0.1,
   "cam":"https://gosurf.fr/webcam/en/153/Anglet-Plage-de-Marinella-Sables-d-Or","report":"https://www.surf-report.com/meteo-surf/france/pays-basque/","forecast":"https://www.surfline.com/surf-report/marinella/584204204e65fad6a7708ff4",
-  "rel":"High","note":"Best Anglet sector for comparing several adjacent peaks visually.","tide_pref":"mid","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
+  "rel":"High","tide_pref":"mid","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
  {"n":34,"name":"Anglet – VVF / Le Club / Chambre d'Amour","dept":"Pyrénées-Atlantiques","sector":"Anglet","lat":43.493,"lon":-1.548,"face":300,"shelter":0.4,
   "cam":"https://www.anglet-tourisme.com/en/webcams-of-anglet-beaches/","report":"https://www.surf-report.com/meteo-surf/france/pays-basque/","forecast":"https://www.surfline.com/surf-report/anglet/5842041f4e65fad6a7708bce",
-  "rel":"High","note":"Often more shelter than northern Anglet under some wind and swell directions.","tide_pref":"mid-high","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
+  "rel":"High","tide_pref":"mid-high","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
  {"n":35,"name":"Biarritz – Grande Plage","dept":"Pyrénées-Atlantiques","sector":"Biarritz","lat":43.485,"lon":-1.559,"face":325,"shelter":0.4,
   "cam":"https://www.destination-biarritz.fr/en/pratique/webcams-biarritz/","report":"https://www.surf-report.com/meteo-surf/france/pays-basque/","forecast":"https://www.surfline.com/surf-report/biarritz/5842041f4e65fad6a7708bca",
-  "rel":"High","note":"Very tide-dependent and busy; check the live view immediately before going.","tide_pref":"mid-high","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
+  "rel":"High","tide_pref":"mid-high","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
  {"n":36,"name":"Biarritz – Côte des Basques","dept":"Pyrénées-Atlantiques","sector":"Biarritz","lat":43.477,"lon":-1.567,"face":290,"shelter":0.5,
   "cam":"https://gosurf.fr/webcam/fr/7/Biarritz-La-Cote-des-Basques","report":"https://www.surf-report.com/meteo-surf/france/pays-basque/","forecast":"https://www.surfline.com/surf-report/la-cote-des-basques/5842041f4e65fad6a7708bcf",
-  "rel":"High","note":"Often mellower, but the usable beach and access shrink at high tide.","tide_pref":"low","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
+  "rel":"High","tide_pref":"low","buoy":"anglet","shom":"BOUCAU-BAYONNE"},
 ]
 
 # Live Candhis wave buoys (Cerema), relayed keyless by thesurfkit.com's public nearest-buoy endpoint.
@@ -319,6 +320,84 @@ def fetch_buoys():
         out[key] = rec
     return out
 
+# ---- Meteo-France live wind (optional) ----
+# Free key: portail-api.meteofrance.fr -> subscribe to "Donnees d'observation" (DPObs) -> API key.
+# Locally: METEOFRANCE_API_KEY=... in .dev.vars; in the Action: repo secret of the same name.
+MF_BASE = "https://public-api.meteofrance.fr/public/DPObs/v1"
+MF_MAX_KM = 30
+MF_MAX_AGE_MIN = 90
+
+def load_dev_vars():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".dev.vars")
+    try:
+        for line in open(p):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1); os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+    except OSError:
+        pass
+
+def mf_get(path, key):
+    req = urllib.request.Request(MF_BASE + path, headers={"apikey": key, "accept": "application/json", "User-Agent": "wendy-foils/surf/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        raw = r.read().decode("utf-8", "ignore")
+    try: return json.loads(raw)
+    except ValueError:
+        # the station list may come back as CSV (semicolon separated)
+        import csv, io
+        return list(csv.DictReader(io.StringIO(raw), delimiter=";"))
+
+def fetch_mf_wind():
+    """Latest 6-minute wind at the Meteo-France station nearest each spot (within MF_MAX_KM).
+    Returns {spot name: {station, kt, gust, deg, age_min, dist_km}} or {} when no key / any failure."""
+    load_dev_vars()
+    key = os.environ.get("METEOFRANCE_API_KEY")
+    if not key: return {}
+    import math
+    try:
+        stations = mf_get("/liste-stations", key)
+    except Exception as e:
+        sys.stderr.write(f"meteo-france: station list failed ({e})\n"); return {}
+    pts = []
+    for st in stations if isinstance(stations, list) else []:
+        try:
+            sid = str(st.get("Id_station") or st.get("id_station") or st.get("id"))
+            la = float(st.get("Latitude") or st.get("latitude") or st.get("lat")); lo = float(st.get("Longitude") or st.get("longitude") or st.get("lon"))
+            pts.append((sid, st.get("Nom_usuel") or st.get("nom_usuel") or st.get("name") or sid, la, lo))
+        except (TypeError, ValueError):
+            continue
+    if not pts:
+        sys.stderr.write("meteo-france: no stations parsed\n"); return {}
+    def dist(a, b, c, d): return math.hypot((a - c) * 111.0, (b - d) * 111.0 * math.cos(math.radians(a)))
+    want = {}
+    for sp in SPOTS:
+        sid, name, la, lo = min(pts, key=lambda p: dist(sp["lat"], sp["lon"], p[2], p[3]))
+        dk = dist(sp["lat"], sp["lon"], la, lo)
+        if dk <= MF_MAX_KM: want[sp["name"]] = (sid, name, dk)
+    cache, out = {}, {}
+    now = datetime.now(timezone.utc)
+    for spot, (sid, name, dk) in want.items():
+        if sid not in cache:
+            try:
+                recs = mf_get(f"/station/infrahoraire-6m?id_station={sid}&format=json", key)
+                recs = [r for r in (recs if isinstance(recs, list) else []) if r.get("ff") is not None]
+                latest = max(recs, key=lambda r: r.get("validity_time", "")) if recs else None
+            except Exception as e:
+                sys.stderr.write(f"meteo-france: station {sid} failed ({e})\n"); latest = None
+            cache[sid] = latest
+        r = cache[sid]
+        if not r: continue
+        try:
+            ts = datetime.fromisoformat(r["validity_time"].replace("Z", "+00:00"))
+            age = (now - ts).total_seconds() / 60
+        except (KeyError, ValueError):
+            age = None
+        if age is None or age > MF_MAX_AGE_MIN: continue
+        out[spot] = {"station": name, "kt": round(r["ff"] * 1.94384, 1), "gust": (round(r["fxi10"] * 1.94384, 1) if r.get("fxi10") is not None else None),
+                     "deg": r.get("dd"), "age_min": round(age), "dist_km": round(dk, 1)}
+    if out: sys.stderr.write(f"meteo-france: live wind for {len(out)} spots from {len(cache)} stations\n")
+    return out
+
 # ---- fetch ----
 COPERNICUS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "copernicus.json")
 COPERNICUS_MAX_AGE_H = 18
@@ -344,6 +423,32 @@ def load_copernicus():
     return out
 
 COPERNICUS = None
+
+MIN_BIAS_DAYS = 5   # days of buoy comparisons a model needs before its weight moves off 1.0
+
+def model_weights():
+    """Per-buoy-region weights for the wave consensus, from data/buoy_bias.json.
+    weight = 1 / mean squared log error of that model vs the buoy over the logged days, normalised
+    so the average weight is 1. Models with fewer than MIN_BIAS_DAYS comparisons keep weight 1.
+    Returns {buoy key: {model: weight}}; empty dict -> equal weights (the pre-2026-09-06 behaviour)."""
+    import math
+    try: log = json.load(open(BIAS_LOG))
+    except (OSError, ValueError): return {}
+    out = {}
+    for buoy, days in log.items():
+        errs = {}
+        for d, v in days.items():
+            if not isinstance(v, dict): continue
+            for m, ratio in (v.get("models") or {}).items():
+                if ratio and ratio > 0: errs.setdefault(m, []).append(math.log(ratio) ** 2)
+        w = {m: (1.0 / (sum(e) / len(e) + 0.003)) for m, e in errs.items() if len(e) >= MIN_BIAS_DAYS}
+        if len(w) >= 2:
+            mean = sum(w.values()) / len(w)
+            out[buoy] = {m: round(v / mean, 2) for m, v in w.items()}
+    if out: sys.stderr.write(f"model weights from buoy record: {out}\n")
+    return out
+
+WEIGHTS = None
 
 def fetch_spot(spot, days=7):
     global COPERNICUS
@@ -499,7 +604,7 @@ def tide_state(h, tides, rng_lo, rng):
     """'low' | 'mid' | 'high' for hour h given the day's tidal range; 'incoming'/'outgoing' via slope."""
     return None
 
-def analyse(spot, marine, alt, wind, buoys=None):
+def analyse(spot, marine, alt, wind, buoys=None, obs_wind=None):
     M = marine["hourly"]; W = merge_wind(wind) if wind and "hourly" in wind else {}
     ob = (buoys or {}).get(spot["buoy"])
     corr_today = corr_tomorrow = 1.0
@@ -510,11 +615,16 @@ def analyse(spot, marine, alt, wind, buoys=None):
     tomorrow_str = M["time"][24][:10] if len(M["time"]) > 24 else ""
     suns = sun_times(wind) if wind else {}
     A = alt or {}
+    global WEIGHTS
+    if WEIGHTS is None: WEIGHTS = model_weights()
+    Wm = WEIGHTS.get(spot["buoy"], {})
     def consensus(t, hs):
-        vals = [hs] + [A[m][t] for m in A if A[m].get(t) is not None]
-        vals = [v for v in vals if v is not None]
-        if not vals: return hs, None, 0
-        return sum(vals) / len(vals), (max(vals) - min(vals)), len(vals)
+        pairs = [("best_match", hs)] + [(m, A[m].get(t)) for m in A]
+        pairs = [(m, v) for m, v in pairs if v is not None]
+        if not pairs: return hs, None, 0
+        vals = [v for _, v in pairs]
+        wsum = sum(Wm.get(m, 1.0) for m, _ in pairs)
+        return sum(Wm.get(m, 1.0) * v for m, v in pairs) / wsum, (max(vals) - min(vals)), len(vals)
     by_day = {}
     for i, t in enumerate(M["time"]):
         d = t[:10]; h = int(t[11:13])
@@ -621,6 +731,7 @@ def analyse(spot, marine, alt, wind, buoys=None):
                      "verdict":verdict, "score":score,
                      "hs":r1(hs), "face":r1(face), "eff":r1(eff), "per":r1(per),
                      "obs":(ob if d == today_str else None), "corr":(round(corr_today,2) if d == today_str else None),
+                     "obs_wind":(obs_wind if d == today_str else None),
                      "tide_pref":pref, "shom":f"https://maree.shom.fr/harbor/{spot['shom']}", "sdeg":round(sdeg) if sdeg is not None else None,
                      "sdir":dir16(sdeg) if sdeg is not None else None,
                      "kt":r1(kt), "wdeg":round(wdeg) if wdeg is not None else None,
@@ -708,7 +819,7 @@ def build_html(rows, dates, today, spot_by_name):
     p = [f'<div style="{css}max-width:640px">']
     p.append('<h2 style="margin:0 0 4px">🏄 Wendy Surf - today\'s five</h2>')
     p.append(f'<div style="color:#666;font-size:13px;margin-bottom:14px">{weekday_name(today)} · Soulac to Biarritz · '
-             f'<a href="https://sd4444.github.io/wendy-foils/surf.html">dashboard</a></div>')
+             f'<a href="https://sd4444.github.io/wendy-foils/surf.html">list</a> · <a href="https://sd4444.github.io/wendy-foils/map.html">map</a></div>')
     top = standouts(rows, today)
     if not top:
         p.append('<div style="background:#f2f2f2;border-left:4px solid #999;padding:12px 14px;border-radius:6px;margin-bottom:16px">'
@@ -721,7 +832,7 @@ def build_html(rows, dates, today, spot_by_name):
             p.append(f'<li style="margin-bottom:10px"><strong>{r["spot"]}</strong> '
                      f'<span style="background:{c};color:#fff;padding:1px 7px;border-radius:10px;font-size:12px">{r["verdict"]}</span> '
                      f'{stars(r["score"])}<br><span style="font-size:14px;color:#444">{r["why"].split(";")[0]}; {tide_words(r["tides"])}</span><br>'
-                     f'<span style="font-size:12px"><a href="{s["cam"]}">cam</a> · <a href="{s["report"]}">report</a> · <a href="{s["forecast"]}">forecast</a></span></li>')
+                     f'<span style="font-size:12px"><a href="{MAP_URL}#s={s["n"]}&amp;d=0">map</a> · <a href="{s["cam"]}">{"cam" if s.get("cam_dedicated", True) else f"nearest cam, {round(s.get('cam_km', 0))} km"}</a> · <a href="{s["report"]}">report</a> · <a href="{s["forecast"]}">forecast</a></span></li>')
         p.append('</ol>')
     # tomorrow preview
     if len(dates) > 1:
@@ -755,12 +866,13 @@ def main():
     buoys = roll_bias(fetch_buoys())
     for b in buoys.values():
         sys.stderr.write(f"buoy {b['name']} {b['hs']}m @ {b['tp']}s age {b['age_min']}min consensus {b['model_hs']} bias {b['bias']} per model {b['model_bias']}\n")
+    mf = fetch_mf_wind()
     all_rows = []
     for spot in SPOTS:
         marine, alt, wind = fetch_spot(spot)
         if not marine or "hourly" not in marine:
             sys.stderr.write(f"no marine data for {spot['name']}\n"); continue
-        all_rows += analyse(spot, marine, alt, wind, buoys)
+        all_rows += analyse(spot, marine, alt, wind, buoys, mf.get(spot["name"]))
     if not all_rows:
         sys.stderr.write("no data at all\n"); print("=== SURF ===\nno data"); return
     dates = sorted({r["date"] for r in all_rows})
@@ -773,10 +885,11 @@ def main():
         for r in sorted([r for r in all_rows if r["date"] == d], key=lambda r: (-r["score"], r["n"])):
             print(f"  {r['verdict']:<5} {r['score']:>4}  {r['spot']:<40} {r['why']}")
 
-    flagged = {"today": today, "standouts": [{k: r[k] for k in ("date","spot","verdict","score","size","face","why","win")} for r in standouts(all_rows, today)],
-               "tomorrow": [{k: r[k] for k in ("date","spot","verdict","score","size","face","why","win")} for r in standouts(all_rows, dates[1], 3)] if len(dates) > 1 else [],
+    def brief(r): return dict({k: r[k] for k in ("date","spot","verdict","score","size","face","why","win","n")}, map=f"{MAP_URL}#s={r['n']}&d={dates.index(r['date'])}")
+    flagged = {"today": today, "standouts": [brief(r) for r in standouts(all_rows, today)],
+               "tomorrow": [brief(r) for r in standouts(all_rows, dates[1], 3)] if len(dates) > 1 else [],
                "trip": [TRIP_START, TRIP_END]}
-    meta = [{k: s[k] for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","rel","note","tide_pref","buoy","shom")} for s in SPOTS]
+    meta = [{k: s[k] for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","rel","tide_pref","buoy","shom")} for s in SPOTS]
     meta_buoys = buoys
     print(f"\n<!--SUBJECT_START-->{build_subject(all_rows, today)}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged, ensure_ascii=False)}<!--JSON_END-->")

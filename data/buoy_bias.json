@@ -5,23 +5,23 @@
  "anglet": {
   "2026-09-05": 1.37,
   "2026-09-06": {
-   "bias": 0.85,
+   "bias": 1.04,
    "models": {
-    "best_match": 0.86,
-    "ecmwf_wam025": 0.93,
-    "copernicus_ibi": 0.77
+    "best_match": 1.04,
+    "ecmwf_wam025": 1.13,
+    "copernicus_ibi": 0.93
    }
   }
  },
  "sjdl": {
   "2026-09-05": 1.53,
   "2026-09-06": {
-   "bias": 0.96,
+   "bias": 0.89,
    "models": {
-    "best_match": 0.92,
-    "ecmwf_wam025": 1.05,
-    "ncep_gfswave025": 0.97,
-    "copernicus_ibi": 0.89
+    "best_match": 0.86,
+    "ecmwf_wam025": 0.99,
+    "ncep_gfswave025": 0.89,
+    "copernicus_ibi": 0.82
    }
   }
  }

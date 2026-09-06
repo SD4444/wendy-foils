@@ -85,6 +85,18 @@ def tide_plain(r):
         b = before[-1]; return f"{b[1]} tide {fmt_h(b[0])}, {'coming in' if b[1]=='low' else 'going out'} during the session"
     a = after[0]; return f"{'going out' if a[1]=='low' else 'coming in'} towards {a[1]} tide {fmt_h(a[0])}"
 
+def live_wind(r):
+    """Plain sentence for the Meteo-France station wind, when the engine had a key and a fresh reading."""
+    o = r.get("obs_wind")
+    if not o or o.get("kt") is None: return ""
+    frm = f" from the {wind_from_words(o['deg'])}" if o.get("deg") is not None else ""
+    gust = f", gusts {o['gust']:.0f}" if o.get("gust") else ""
+    return f"Live wind {o['kt']:.0f} kt{gust}{frm} at the {o['station']} station ({o['dist_km']:.0f} km away), {o['age_min']} min ago."
+
+def wind_from_words(deg):
+    names = ["north","north-east","east","south-east","south","south-west","west","north-west"]
+    return names[int(((deg % 360) + 22.5) // 45) % 8]
+
 def heads_up(r):
     o = r.get("obs")
     bits = []
@@ -145,7 +157,7 @@ def build_data(grid, spots_meta, flagged, buoys=None):
         if not groups or groups[-1]["dept"] != g:
             groups.append({"dept": g, "spots": []})
         groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"], "n": m["n"], "lat": m["lat"], "lon": m["lon"],
-                                    "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"],
+                                    "report": m["report"], "forecast": m["forecast"], "rel": m["rel"],
                                     "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                                     "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                                     "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"),
@@ -156,13 +168,13 @@ def build_data(grid, spots_meta, flagged, buoys=None):
         return {"spot": r["spot"], "short": short(r["spot"]), "sector": m["sector"], "verdict": r["verdict"],
                 "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
                 "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
-                "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r),
+                "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r), "live_wind": live_wind(r),
                 "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide"), "wind_from": wind_from(r),
                 "tide_pref": m.get("tide_pref", "mid"),
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
                 "why": (r.get("why") or ""), "conf": r.get("conf") or "", "cam": m["cam"], "report": m["report"],
-                "forecast": m["forecast"], "note": m["note"], "rel": r.get("rel"), "sdeg": r.get("sdeg"), "wdeg": r.get("wdeg"),
+                "forecast": m["forecast"], "rel": r.get("rel"), "sdeg": r.get("sdeg"), "wdeg": r.get("wdeg"),
                 "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                 "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                 "date": r["date"], "day": dlong(r["date"])}
@@ -268,11 +280,35 @@ def buoy_points(txt):
                     "hs": r.get("hs"), "tp": r.get("tp"), "age_min": r.get("age_min")})
     return out
 
+CAM_STATUS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "cam_status.json")
+
+def apply_cam_status(spots_meta):
+    """Overlay data/cam_status.json (check_cams.py, daily) on each spot's cam_status so the pages
+    say 'feed down' from today's check, not from the research day. Alternates get a state too."""
+    try:
+        st = json.load(open(CAM_STATUS))
+    except (OSError, ValueError):
+        return spots_meta
+    cams, when = st.get("cams", {}), st.get("checked_at", "")[:10]
+    for m in spots_meta:
+        r = cams.get(m.get("cam"))
+        if r and r.get("state") in ("stale", "down"):
+            age = r.get("frame_age_h")
+            m["cam_status"] = (f"STALE: last frame {age/24:.0f} days old" if age and age >= 48 else
+                               f"STALE: last frame {age:.0f} h old" if age else
+                               ("maintenance" if r.get("note") == "maintenance" else f"DOWN: HTTP {r.get('http')}")) + f" (checked {when})"
+        elif r and r.get("state") == "live":
+            m["cam_status"] = f"live (checked {when})"
+        for a in m.get("cam_alts", []):
+            ra = cams.get(a.get("url"))
+            if ra: a["state"] = ra.get("state")
+    return spots_meta
+
 def render_map(data):
     """Map view: same DATA, Leaflet page. Reuses the list page's hourly chart/modal JS and CSS verbatim."""
     tpl = open(MAP_TEMPLATE, encoding="utf-8").read()
     # per-day cards carry only what changes by day; the static spot fields (cams, links, tide pref) live once in groups
-    static = {"cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","note","shom",
+    static = {"cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","shom",
               "sector","short","spot","tide_label","tide_pref","date","day","section","why_best","swell","obs","tide","wind"}
     data = dict(data, cards={k: {kk: vv for kk, vv in v.items() if kk not in static} for k, v in data["cards"].items()})
     js_a = TEMPLATE.index("// hourly modal")
@@ -290,7 +326,7 @@ def main():
     j = re.search(r"<!--JSON_START-->(.*?)<!--JSON_END-->", txt, re.S)
     if not g or not s:
         sys.stderr.write("no GRID/SPOTS block in "+src+"\n"); sys.exit(1)
-    data = build_data(json.loads(g.group(1)), json.loads(s.group(1)), json.loads(j.group(1)) if j else None, buoy_points(txt))
+    data = build_data(json.loads(g.group(1)), apply_cam_status(json.loads(s.group(1))), json.loads(j.group(1)) if j else None, buoy_points(txt))
     list_data = {k: v for k, v in data.items() if k not in ("cards", "buoys")}   # the list page does not need the per-day cards
     open(dest, "w", encoding="utf-8").write(TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(list_data, ensure_ascii=False) + ";"))
     print(f"wrote {dest} ({len(data['days'])} days, {sum(len(g['spots']) for g in data['groups'])} spots, {len(data['five'])} standouts)")
@@ -566,8 +602,8 @@ const arrow = (deg, label, col) => (deg==null) ? "" :
      <g transform="rotate(${deg} 15 15)"><path d="M15 4 L19 16 L15 13 L11 16 Z" fill="${col}"/></g></svg>`;
 const camLabel = f => f.cam_dedicated ? "cam" : `nearest cam, ${Math.round(f.cam_km)} km`;
 const camWarn = f => /stale|maintenance/i.test(f.cam_status||"") ? " (feed down at last check)" : "";
-const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
-const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>`).join(", ")}.`:""}</p>` : "";
+const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}${camWarn(f)?" (down)":""}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
+const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>${(a.state==="stale"||a.state==="down")?" (down)":""}`).join(", ")}.`:""}</p>` : "";
 const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
 
 $("#eyebrow").innerHTML = 'Wendy Surf <span class="sep">&middot;</span> Soulac &rarr; Biarritz <span class="sep">&middot;</span> ' + esc(DATA.weeklabel);
@@ -591,6 +627,7 @@ if (DATA.feature){
        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
+     ${f.live_wind?`<div class="live"><span class="ld" style="background:var(--sea);box-shadow:0 0 9px var(--sea)"></span><span class="lt">${esc(f.live_wind)}</span></div>`:""}
      ${camline(f)}
      ${linkrow(f)}`;
 } else { $("#feature").style.display="none"; }
@@ -607,6 +644,7 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
      <p class="plain small">${esc(f.plain)}</p>
      <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></span></div>
      <div class="row"><span>${esc(f.tide_label)} at this break</span></div>
+     ${f.live_wind?`<div class="row"><span>${esc(f.live_wind)}</span></div>`:""}
      ${camline(f)}
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No data today.</div>`;

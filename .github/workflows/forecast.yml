@@ -63,12 +63,15 @@ jobs:
           python3 fetch_copernicus.py data/copernicus.json
 
       - name: Run forecast engine
+        env:
+          METEOFRANCE_API_KEY: ${{ secrets.METEOFRANCE_API_KEY }}   # optional: live station wind on the surf side
         run: |
           mkdir -p data
           MODE="${{ steps.mode.outputs.mode }}"
           echo "Running wendy.py $MODE"
           if [ "$MODE" = "surf" ]; then
             # Surf side only (midday trip refresh): rerun surf.py and rebuild docs/surf.html.
+            python3 check_cams.py data/cam_status.json 2>data/cams.err.txt || echo "cam check failed (kept previous status)"
             python3 surf.py > data/surf.out.txt 2>data/surf.err.txt || { echo "surf engine non-zero:"; cat data/surf.err.txt; }
             date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf.fetched_at.txt
             python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html || echo "surf dashboard gen failed"
@@ -89,6 +92,7 @@ jobs:
           python3 gen_dashboard.py "data/weekly.out.txt" docs/index.html || echo "dashboard gen failed"
           # Surf side (France trip): refresh on the daily run too so the morning ping has fresh data.
           if [ "$MODE" = "daily" ]; then
+            python3 check_cams.py data/cam_status.json 2>data/cams.err.txt || echo "cam check failed (kept previous status)"
             python3 surf.py > data/surf.out.txt 2>data/surf.err.txt || { echo "surf engine non-zero:"; cat data/surf.err.txt; }
             date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf.fetched_at.txt
             python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html || echo "surf dashboard gen failed"

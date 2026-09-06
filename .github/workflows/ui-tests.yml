@@ -1,0 +1,44 @@
+name: Surf dashboard browser tests
+
+# Runs the Playwright end-to-end suite (tests/map_e2e.py) whenever the surf templates, the
+# dashboard generator or the tests change. Builds docs/surf.html + docs/map.html from the
+# committed data/surf.out.txt first, so no network fetch of forecasts is needed.
+
+on:
+  push:
+    paths:
+      - "templates/**"
+      - "gen_surf_dashboard.py"
+      - "tests/**"
+      - ".github/workflows/ui-tests.yml"
+  pull_request:
+    paths:
+      - "templates/**"
+      - "gen_surf_dashboard.py"
+      - "tests/**"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: |
+          pip install -q playwright
+          python -m playwright install --with-deps chromium
+      - name: Build pages from committed data
+        run: python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html
+      - name: Run browser suite
+        run: SHOTS=tests/shots python3 tests/map_e2e.py
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surf-map-screenshots
+          path: tests/shots/
+          retention-days: 14
