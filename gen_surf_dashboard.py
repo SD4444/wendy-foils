@@ -146,6 +146,8 @@ def build_data(grid, spots_meta, flagged):
             groups.append({"dept": g, "spots": []})
         groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"],
                                     "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"],
+                                    "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
+                                    "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                                     "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"),
                                     "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide")})
 
@@ -161,6 +163,8 @@ def build_data(grid, spots_meta, flagged):
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
                 "why": (r.get("why") or ""), "conf": r.get("conf") or "", "cam": m["cam"], "report": m["report"],
                 "forecast": m["forecast"], "note": m["note"], "rel": r.get("rel"), "sdeg": r.get("sdeg"), "wdeg": r.get("wdeg"),
+                "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
+                "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                 "date": r["date"], "day": dlong(r["date"])}
 
     todays = sorted([r for r in grid if r["date"] == today], key=lambda r: (-(r.get("score") or 0), r["n"]))
@@ -332,6 +336,9 @@ TEMPLATE = r"""<!doctype html>
     border:1px solid var(--hair2);border-radius:999px;padding:6px 12px;background:rgba(255,255,255,.03)}
   .links a:hover{border-color:var(--accent);color:var(--accent)}
   .links a.cam{border-color:rgba(255,159,74,.5)}
+  .camline{font-size:12.5px;line-height:1.5;color:var(--soft);margin:12px 0 0}
+  .camline b{color:var(--ink);font-weight:600}
+  .camline a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(255,159,74,.4)}
   .feat-note{margin-top:14px;font-size:13px;color:var(--faint);line-height:1.5}
   .plain{font-size:clamp(17px,2.4vw,21px);color:var(--ink);margin:16px 0 0;line-height:1.45;max-width:34ch}
   .plain.small{font-size:15px;margin:6px 0 0}
@@ -517,7 +524,11 @@ const arrow = (deg, label, col) => (deg==null) ? "" :
   `<svg class="compass" width="26" height="26" viewBox="0 0 30 30" role="img" aria-label="${esc(label)}">
      <circle cx="15" cy="15" r="13" fill="none" stroke="var(--hair2)" stroke-width="1.5"/>
      <g transform="rotate(${deg} 15 15)"><path d="M15 4 L19 16 L15 13 L11 16 Z" fill="${col}"/></g></svg>`;
-const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener">&#128247; cam</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
+const camLabel = f => f.cam_dedicated ? "cam" : `nearest cam, ${Math.round(f.cam_km)} km`;
+const camWarn = f => /stale|maintenance/i.test(f.cam_status||"") ? " (feed down at last check)" : "";
+const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
+const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>`).join(", ")}.`:""}</p>` : "";
+const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
 
 $("#eyebrow").innerHTML = 'Wendy Surf <span class="sep">&middot;</span> Soulac &rarr; Biarritz <span class="sep">&middot;</span> ' + esc(DATA.weeklabel);
 $("#h1").textContent = DATA.headline;
@@ -540,12 +551,13 @@ if (DATA.feature){
        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
      </div>
      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
+     ${camline(f)}
      ${linkrow(f)}`;
 } else { $("#feature").style.display="none"; }
 
 $("#tiles").innerHTML = DATA.tiles.map(t=>`<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
 $("#sources").innerHTML = DATA.sources.map(s=>`<span class="s">${esc(s)}</span>`).join("");
-$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00 and 12:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam, report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
+$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00 and 12:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam links were checked one by one on 6 Sep 2026 (what each camera shows, whether it was live). Report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
 
 // today's five
 $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
@@ -555,6 +567,7 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
      <p class="plain small">${esc(f.plain)}</p>
      <div class="row"><span>${esc(f.tide_plain)} <a class="shom" href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></span></div>
      <div class="row"><span>${esc(f.tide_label)} at this break</span></div>
+     ${camline(f)}
      ${linkrow(f)}</article>`).join("")
   : `<div class="empty">No data today.</div>`;
 
@@ -576,7 +589,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener">cam</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a> &middot; <em>${esc(s.tide_label)}</em></span></div><div class="cells">${cells}</div></div>`;
+    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener" title="${esc(s.cam_shows)}">${camLabel(s)}</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a> &middot; <em>${esc(s.tide_label)}</em></span></div><div class="cells">${cells}</div></div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;
