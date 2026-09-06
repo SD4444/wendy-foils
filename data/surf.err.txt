@@ -1,3 +1,14 @@
-buoy Cap Ferret 0.7m @ 5.7s age 163min model 1.06 bias 1.51
-buoy Anglet 0.7m @ 7.4s age 13min model 0.96 bias 1.37
-buoy Saint-Jean-de-Luz 0.6m @ 6.9s age 13min model 0.92 bias 1.53
+buoy Anglet 1.6m @ 11.5s age 35min model 1.54 bias 0.96
+buoy Saint-Jean-de-Luz 1.7m @ 12.0s age 35min model 1.46 bias 0.86
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.512&longitude=-1.135&timezone=Europe/Paris&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.835&longitude=-1.23&timezone=Europe/Paris&forecas
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.64&longitude=-1.255&timezone=Europe/Paris&forecas
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.04&longitude=-1.335&timezone=Europe/Paris&fo
+no marine data for Cap de l'Homy
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.788&longitude=-1.415&timezone=Europe/Paris&f
+no marine data for Vieux-Boucau / Soustons
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.655&longitude=-1.448&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.537&longitude=-1.512&timezone=Europe/Paris&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.477&longitude=-1.567&timezone=Europe/Paris&f
+no marine data for Biarritz – Côte des Basques
