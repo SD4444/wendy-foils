@@ -99,7 +99,7 @@ jobs:
           MODE="${{ steps.mode.outputs.mode }}"
           git config user.name "wendy-bot"
           git config user.email "actions@github.com"
-          git add data/ docs/index.html docs/surf.html
+          git add data/ docs/index.html docs/surf.html docs/map.html
           if git diff --cached --quiet; then
             echo "No changes to commit"; exit 0
           fi

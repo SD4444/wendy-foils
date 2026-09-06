@@ -5,7 +5,7 @@ Usage: python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html
 The GitHub Action runs this after each surf fetch. Edit the design in TEMPLATE below;
 never hand-edit docs/surf.html (it is generated).
 """
-import sys, json, re
+import sys, os, json, re
 from datetime import datetime, date
 
 SOURCES = [
@@ -15,7 +15,7 @@ SOURCES = [
     "Komar-Gaughan · offshore swell to breaking face",
     "Meteo-France AROME HD 1.5 km · wind (~2 days)",
     "SHOM · official tide times (linked)",
-    "Cams + reports · your spot sheet (2 Sep 2026)",
+    "Cams · checked one by one, 6 Sep 2026",
 ]
 DEPT_SHORT = {"Gironde":"Gironde", "Landes":"Landes", "Pyrénées-Atlantiques":"Pays Basque"}
 
@@ -118,7 +118,7 @@ def wind_from(r):
     lab = {"glassy":"too light to matter","offshore":"offshore","cross":"side-shore","onshore":"onshore","blown":"onshore, blown out"}.get(rel, "")
     return f"from the {DIR_WORDS.get(wd, wd)}" + (f", {lab}" if lab else "")
 
-def build_data(grid, spots_meta, flagged):
+def build_data(grid, spots_meta, flagged, buoys=None):
     dates = sorted({r["date"] for r in grid})
     today = dates[0]
     days = [daylabel(d) for d in dates]
@@ -144,7 +144,7 @@ def build_data(grid, spots_meta, flagged):
         m = meta[s]; g = DEPT_SHORT.get(m["dept"], m["dept"])
         if not groups or groups[-1]["dept"] != g:
             groups.append({"dept": g, "spots": []})
-        groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"],
+        groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"], "n": m["n"], "lat": m["lat"], "lon": m["lon"],
                                     "report": m["report"], "forecast": m["forecast"], "rel": m["rel"], "note": m["note"],
                                     "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                                     "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
@@ -236,6 +236,8 @@ def build_data(grid, spots_meta, flagged):
         tiles.append(["Water / air", f"{w} / {a}", "boardies or a 3/2" if waters and sum(waters)/len(waters) >= 20 else "3/2 wetsuit"])
 
 
+    # every spot x day as a card, for the map panel
+    cards = {f"{r['spot']}|{r['date']}": card(r) for r in grid}
     hourly = {}
     for r in grid:
         if r.get("hourly"):
@@ -245,8 +247,40 @@ def build_data(grid, spots_meta, flagged):
     best = {"spot": feature["spot"], "day": 0} if feature and feature["verdict"] != "SKIP" else None
     return {"days": days, "dates": dates, "daylong": daylong, "groups": groups, "grid": matrix,
             "best": best, "feature": feature, "five": five, "headline": headline, "verdict": verdict,
-            "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel, "hourly": hourly,
+            "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel, "hourly": hourly, "cards": cards, "buoys": buoys or [],
             "trip": (flagged or {}).get("trip", ["2026-09-14", "2026-10-04"])}
+
+MAP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "surf_map.html")
+
+def buoy_points(txt):
+    """Live buoy readings (BUOYS block) joined with their positions from surf.py."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from surf import BUOYS as POS
+    except Exception:
+        return []
+    b = re.search(r"<!--BUOYS_START-->(.*?)<!--BUOYS_END-->", txt, re.S)
+    live = json.loads(b.group(1)) if b else {}
+    out = []
+    for key, pos in POS.items():
+        r = live.get(key) or {}
+        out.append({"key": key, "name": pos["name"], "lat": pos["lat"], "lon": pos["lon"],
+                    "hs": r.get("hs"), "tp": r.get("tp"), "age_min": r.get("age_min")})
+    return out
+
+def render_map(data):
+    """Map view: same DATA, Leaflet page. Reuses the list page's hourly chart/modal JS and CSS verbatim."""
+    tpl = open(MAP_TEMPLATE, encoding="utf-8").read()
+    # per-day cards carry only what changes by day; the static spot fields (cams, links, tide pref) live once in groups
+    static = {"cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","note","shom",
+              "sector","short","spot","tide_label","tide_pref","date","day","section","why_best","swell","obs","tide","wind"}
+    data = dict(data, cards={k: {kk: vv for kk, vv in v.items() if kk not in static} for k, v in data["cards"].items()})
+    js_a = TEMPLATE.index("// hourly modal")
+    js_b = TEMPLATE.index('$(".matrix").addEventListener', js_a)   # stop before the list page's own table listeners
+    css_a, css_b = TEMPLATE.index("  .modal{"), TEMPLATE.index("  .reveal{")
+    return (tpl.replace("/*DATA*/", "const DATA = " + json.dumps(data, ensure_ascii=False) + ";")
+               .replace("/*SHARED_MODAL*/", TEMPLATE[js_a:js_b])
+               .replace("/*MODAL_CSS*/", TEMPLATE[css_a:css_b]))
 
 def main():
     src, dest = sys.argv[1], sys.argv[2]
@@ -256,10 +290,13 @@ def main():
     j = re.search(r"<!--JSON_START-->(.*?)<!--JSON_END-->", txt, re.S)
     if not g or not s:
         sys.stderr.write("no GRID/SPOTS block in "+src+"\n"); sys.exit(1)
-    data = build_data(json.loads(g.group(1)), json.loads(s.group(1)), json.loads(j.group(1)) if j else None)
-    html = TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(data, ensure_ascii=False) + ";")
-    open(dest, "w", encoding="utf-8").write(html)
+    data = build_data(json.loads(g.group(1)), json.loads(s.group(1)), json.loads(j.group(1)) if j else None, buoy_points(txt))
+    list_data = {k: v for k, v in data.items() if k not in ("cards", "buoys")}   # the list page does not need the per-day cards
+    open(dest, "w", encoding="utf-8").write(TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(list_data, ensure_ascii=False) + ";"))
     print(f"wrote {dest} ({len(data['days'])} days, {sum(len(g['spots']) for g in data['groups'])} spots, {len(data['five'])} standouts)")
+    map_dest = os.path.join(os.path.dirname(dest), "map.html")
+    open(map_dest, "w", encoding="utf-8").write(render_map(data))
+    print(f"wrote {map_dest} ({len(data['cards'])} cards, {len(data['buoys'])} buoys)")
 
 TEMPLATE = r"""<!doctype html>
 <html lang="en">
@@ -473,7 +510,10 @@ TEMPLATE = r"""<!doctype html>
   <div class="wrap hero-in">
     <div class="topbar">
       <p class="eyebrow"><span class="dot"></span> <span id="eyebrow">Wendy Surf</span></p>
-      <nav class="switch" aria-label="Mode"><a href="index.html">&#127788; Foil</a><a class="on" href="surf.html" aria-current="page">&#127940; Surf</a></nav>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <nav class="switch" aria-label="View"><a class="on" href="surf.html" aria-current="page">List</a><a href="map.html">Map</a></nav>
+        <nav class="switch" aria-label="Mode"><a href="index.html">&#127788; Foil</a><a class="on" href="surf.html">&#127940; Surf</a></nav>
+      </div>
     </div>
     <h1 id="h1"></h1>
     <p class="verdict" id="verdict"></p>

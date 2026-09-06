@@ -9,3 +9,5 @@ logs/*.log
 # local secrets, never commit
 .dev.vars
 __pycache__/
+tests/shots/
+.venv/

@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120c08">
+<title>Wendy Surf map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#120c08; --bg2:#1c120b; --panel:#1f150d; --panel2:#261a10;
+    --ink:#f7efe6; --soft:#c2ad97; --faint:#8a7460; --hair:#33261a; --hair2:#453322;
+    --accent:#ff9f4a; --accent-dim:#c96f26;
+    --go:#5bd39a; --go-bg:rgba(91,211,154,.14);
+    --maybe:#f4c15a; --maybe-bg:rgba(244,193,90,.14);
+    --skip:#8a7460; --skip-bg:rgba(138,116,96,.12);
+    --sea:#4fb3c9;
+    --disp:"IBM Plex Sans Condensed",system-ui,sans-serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    --top:58px; --days:54px; --panelw:392px;
+  }
+  html,body{height:100%}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden;
+    display:grid;grid-template-rows:var(--top) var(--days) 1fr;grid-template-columns:minmax(0,1fr);height:100dvh;width:100vw;max-width:100%}
+  a{color:var(--accent)}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:0 clamp(14px,2.5vw,24px);border-bottom:1px solid var(--hair);background:linear-gradient(180deg,#1d120a,var(--bg))}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;min-width:0;flex:1 1 0}
+  .eyebrow span{overflow:hidden;text-overflow:ellipsis}
+  .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 4px rgba(255,159,74,.18),0 0 14px 2px rgba(255,159,74,.6)}
+  .eyebrow .sep{color:var(--faint)}
+  .switches{display:flex;gap:8px;flex:none}
+  .switch{display:inline-flex;border:1px solid var(--hair2);border-radius:999px;padding:3px;background:rgba(0,0,0,.25);font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
+  .switch a{color:var(--soft);text-decoration:none;padding:7px 13px;border-radius:999px;line-height:1;display:flex;align-items:center;gap:6px;min-height:30px}
+  .switch a.on{background:var(--accent);color:#1a0f06;font-weight:600}
+  .switch a:not(.on):hover{color:var(--ink)}
+
+  /* day chips */
+  .days{display:flex;align-items:center;gap:8px;min-width:0;padding:0 clamp(14px,2.5vw,24px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;border-bottom:1px solid var(--hair);background:var(--bg)}
+  .days::-webkit-scrollbar{display:none}
+  .days .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);flex:none;margin-right:2px}
+  .chip{flex:none;font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:0 14px;height:38px;border-radius:999px;border:1px solid var(--hair2);color:var(--soft);background:rgba(255,255,255,.02);display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--accent-dim);color:var(--ink)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#1a0f06;font-weight:600}
+  .chip .n{display:inline-flex;gap:2px}
+  .chip .n i{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .chip .n i.go{background:var(--go)} .chip .n i.maybe{background:var(--maybe)} .chip .n i.skip{background:var(--hair2)}
+  .chip.on .n i.skip{background:rgba(0,0,0,.25)}
+
+  /* map */
+  .stage{position:relative;min-height:0}
+  #map{position:absolute;inset:0;background:#0d1520}
+  .leaflet-container{font-family:var(--sans)}
+  .leaflet-control-zoom{border:1px solid var(--hair2)!important;border-radius:12px!important;overflow:hidden;box-shadow:0 10px 30px -12px rgba(0,0,0,.8)!important}
+  .leaflet-control-zoom a{background:var(--panel)!important;color:var(--ink)!important;border-bottom:1px solid var(--hair)!important;width:40px!important;height:40px!important;line-height:40px!important;font-size:20px!important}
+  .leaflet-control-zoom a:hover{background:var(--panel2)!important}
+  .leaflet-control-zoom a.leaflet-disabled{color:var(--faint)!important}
+  .leaflet-control-attribution{background:rgba(18,12,8,.75)!important;color:var(--faint)!important;font-family:var(--mono);font-size:9.5px!important;padding:2px 6px!important}
+  .leaflet-control-attribution a{color:var(--soft)!important}
+  .base-dark{filter:brightness(.92) saturate(.9)} .base-sat{filter:saturate(.9) brightness(.95)}
+  .leaflet-marker-icon{background:none;border:0}
+
+  /* spot pill markers */
+  .mkw{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+  .mk{pointer-events:auto;font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.01em;line-height:1;padding:6px 9px;border-radius:999px;white-space:nowrap;
+    box-shadow:0 6px 16px -6px rgba(0,0,0,.8),0 0 0 1.5px rgba(18,12,8,.7);cursor:pointer;transition:transform .12s ease}
+  .mk i{font-style:normal;font-weight:500;opacity:.75;font-size:10.5px;margin-left:1px}
+  .mk.go{background:var(--go);color:#07130d}
+  .mk.maybe{background:var(--maybe);color:#1a1206}
+  .mk.skip{background:#2b2016;color:var(--soft);box-shadow:0 6px 16px -6px rgba(0,0,0,.8),0 0 0 1px var(--hair2)}
+  .mk:hover{transform:scale(1.08)}
+  .mkw.sel .mk{transform:scale(1.12);box-shadow:0 0 0 3px var(--ink),0 8px 20px -6px rgba(0,0,0,.9)}
+  .mkw .nm{pointer-events:none;font-family:var(--mono);font-size:10.5px;color:var(--ink);text-shadow:0 1px 2px #000,0 0 8px rgba(0,0,0,.9);white-space:nowrap;display:none;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+  #map.z10 .mkw .nm{display:block}
+  .leaflet-marker-icon.leaflet-interactive:focus-visible .mk{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* cluster */
+  .cl{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;transform:translate(-50%,-50%);position:absolute;left:0;top:0;
+    box-shadow:0 8px 20px -8px rgba(0,0,0,.9),0 0 0 1.5px rgba(18,12,8,.8);cursor:pointer;transition:transform .12s}
+  .cl:hover{transform:translate(-50%,-50%) scale(1.06)}
+  .cl span{width:34px;height:34px;border-radius:50%;background:#1a110a;color:var(--ink);display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:600}
+  .cl.big{width:54px;height:54px} .cl.big span{width:40px;height:40px;font-size:14px}
+
+  /* buoy */
+  .by{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;pointer-events:auto;cursor:default}
+  .by .d{width:12px;height:12px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 3px rgba(79,179,201,.25),0 0 10px var(--sea)}
+  .by .t{font-family:var(--mono);font-size:10.5px;color:var(--sea);text-shadow:0 1px 2px #000,0 0 6px #000;white-space:nowrap}
+
+  /* legend */
+  .legend{position:absolute;left:12px;bottom:22px;z-index:600;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 80px);pointer-events:none;transition:opacity .2s}
+  .legend .base{pointer-events:auto;padding:2px;gap:0}
+  .legend .base button{font:inherit;color:var(--soft);padding:4px 9px;border-radius:999px;min-height:26px}
+  .legend .base button.on{background:var(--accent);color:#1a0f06;font-weight:600}
+  .legend .base button:not(.on):hover{color:var(--ink)}
+  .stage.has-panel .legend{opacity:0;pointer-events:none}
+  .by.nodata .t{display:none}
+  #map:not(.z9) .by .t{display:none}
+  .osm-dark .base-osm{filter:invert(1) hue-rotate(190deg) saturate(.5) brightness(.75) contrast(1.05)}
+  #map.is-sat .mkw .nm{text-shadow:0 1px 2px #000,0 0 6px #000,0 0 12px #000}
+  .legend span{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--soft);background:rgba(18,12,8,.82);border:1px solid var(--hair);border-radius:999px;padding:5px 9px;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(4px)}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .legend i.go{background:var(--go)} .legend i.maybe{background:var(--maybe)} .legend i.skip{background:#2b2016;box-shadow:0 0 0 1px var(--hair2)} .legend i.sea{background:var(--sea)}
+
+  /* hint */
+  .hint{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);z-index:600;font-family:var(--mono);font-size:11px;color:var(--soft);background:rgba(18,12,8,.85);border:1px solid var(--hair);border-radius:999px;padding:7px 12px;pointer-events:none;white-space:nowrap;transition:opacity .4s}
+  .hint.off{opacity:0}
+
+  /* spot panel */
+  .panel{position:absolute;top:14px;right:14px;bottom:14px;width:var(--panelw);max-width:calc(100% - 28px);z-index:700;overflow:auto;-webkit-overflow-scrolling:touch;
+    background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--hair2);border-radius:18px;padding:20px 22px 22px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.9);transform:translateX(calc(100% + 30px));opacity:0;transition:transform .32s cubic-bezier(.2,.7,.2,1),opacity .25s;visibility:hidden}
+  .panel.open{transform:none;opacity:1;visibility:visible}
+  .phead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .phead .sk{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .phead h2{font-family:var(--disp);font-size:clamp(21px,3vw,26px);font-weight:600;margin:3px 0 0;color:#fff;line-height:1.1}
+  .phead .sd{font-family:var(--mono);font-size:12px;color:var(--soft);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .xbtn{flex:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--hair2);background:transparent;color:var(--soft);font-size:17px;cursor:pointer;line-height:1;display:grid;place-items:center}
+  .xbtn:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:3px 9px;border-radius:20px}
+  .pill.go{background:var(--go-bg);color:var(--go);box-shadow:inset 0 0 0 1px rgba(91,211,154,.3)}
+  .pill.maybe{background:var(--maybe-bg);color:var(--maybe);box-shadow:inset 0 0 0 1px rgba(244,193,90,.3)}
+  .pill.skip{background:var(--skip-bg);color:var(--soft);box-shadow:inset 0 0 0 1px var(--hair2)}
+  .plain{font-size:16.5px;color:var(--ink);margin:14px 0 0;line-height:1.45}
+  .facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px;margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)}
+  .fact{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .fact .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .fact .v{font-family:var(--disp);font-size:17px;font-weight:600;color:var(--ink);line-height:1.2}
+  .fact .s{font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.5}
+  .fact .s a{color:var(--sea);text-decoration:none;border-bottom:1px solid rgba(79,179,201,.4)}
+  .live{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair);font-family:var(--mono);font-size:12px;color:var(--soft)}
+  .live .lt{flex:1;line-height:1.5}
+  .live .ld{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px;box-shadow:0 0 9px var(--accent)}
+  .camline{font-size:12.5px;line-height:1.5;color:var(--soft);margin:14px 0 0;padding-top:12px;border-top:1px solid var(--hair)}
+  .camline b{color:var(--ink);font-weight:600}
+  .camline a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(255,159,74,.4)}
+  .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .links a{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-decoration:none;color:var(--ink);border:1px solid var(--hair2);border-radius:999px;padding:8px 12px;min-height:38px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.02)}
+  .links a:hover{border-color:var(--accent);color:var(--accent)}
+  .links a.cam{border-color:rgba(255,159,74,.5)}
+  .strip{margin-top:18px;padding-top:14px;border-top:1px solid var(--hair)}
+  .strip .sk{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cell{border-radius:8px;padding:7px 4px 6px;text-align:center;background:rgba(255,255,255,.025);border:1px solid var(--hair);min-width:0}
+  .cell span{display:block}
+  .cell .dl{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.04em}
+  .cell .vv{font-family:var(--disp);font-size:14px;font-weight:600;margin-top:2px;color:var(--ink)}
+  .cell .vv small{font-size:9px;color:var(--faint);font-weight:500}
+  .cell .tg{display:block;height:3px;border-radius:2px;margin:6px auto 0;width:70%;background:var(--hair2)}
+  .cell.go .tg{background:var(--go)} .cell.maybe .tg{background:var(--maybe)}
+  .cell.on{border-color:var(--accent);background:rgba(255,159,74,.08)}
+  .cell.clickable{cursor:pointer} .cell.clickable:hover{border-color:var(--accent-dim)}
+  .cell .ex{font-family:var(--mono);font-size:9px;color:var(--faint);display:block;margin-top:3px}
+  .why{font-size:12.5px;color:var(--soft);line-height:1.55;margin-top:12px}
+  .grab{display:none}
+
+  /* hourly modal (shared with the list page) */
+  /*MODAL_CSS*/
+  .modal{z-index:900}   /* above the spot panel (700) */
+
+  @media (max-width:760px){
+    :root{--top:52px;--days:52px}
+    .eyebrow .hide-m{display:none}
+    .switch a{padding:7px 9px;font-size:10.5px}
+    .eyebrow{font-size:11px;letter-spacing:.14em}
+    .eyebrow .sep:last-of-type,#datelbl{display:none}
+    .panel{top:auto;right:0;left:0;bottom:0;width:auto;max-width:none;max-height:64dvh;border-radius:18px 18px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));
+      transform:translateY(105%)}
+    .panel.open{transform:none}
+    .grab{display:block;width:44px;height:5px;border-radius:3px;background:var(--hair2);margin:0 auto 10px}
+    .phead h2{font-size:21px}
+    .legend{bottom:14px;left:10px;max-width:calc(100% - 20px)}
+    .legend span.hide-m{display:none}
+    .switch .em{display:none}
+    .stage.has-panel .hint{opacity:0}
+    .hint{bottom:104px;font-size:10.5px;max-width:calc(100% - 24px);white-space:normal;text-align:center}
+    .leaflet-control-attribution{font-size:8.5px!important}
+  }
+  @media (prefers-reduced-motion:reduce){.panel,.mk,.cl{transition:none}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <p class="eyebrow"><span class="dot"></span><span>Wendy Surf</span><span class="sep hide-m">&middot;</span><span class="hide-m">Soulac &rarr; Biarritz</span><span class="sep">&middot;</span><span id="datelbl"></span></p>
+  <div class="switches">
+    <nav class="switch" aria-label="View"><a href="surf.html">List</a><a class="on" href="map.html" aria-current="page">Map</a></nav>
+    <nav class="switch" aria-label="Mode"><a href="index.html"><span class="em">&#127788;</span> Foil</a><a class="on" href="surf.html"><span class="em">&#127940;</span> Surf</a></nav>
+  </div>
+</header>
+<nav class="days" id="days" aria-label="Day"></nav>
+<div class="stage">
+  <div id="map" role="application" aria-label="Surf spots map"></div>
+  <div class="hint" id="hint">Tap a spot for its call, cam and tide</div>
+  <div class="legend"><span><i class="go"></i>go</span><span><i class="maybe"></i>maybe</span><span><i class="skip"></i>skip</span><span><i class="sea"></i>buoy</span><span class="hide-m">number = wave face, m</span>
+    <span class="base" role="group" aria-label="Basemap"><button data-base="dark" class="on" aria-pressed="true">map</button><button data-base="sat" aria-pressed="false">satellite</button></span></div>
+  <aside class="panel" id="panel" aria-label="Spot details" aria-hidden="true"></aside>
+</div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="sheet-h"><div class="sheet" id="sheet"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" integrity="sha512-TiMWaqipFi2Vqt4ugRzsF8oRoGFlFFuqIi30FFxEPNw58Ov9mOy6LgC05ysfkxwLE0xVeZtmr92wVg9siAFRWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+/*DATA*/
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const camLabel = f => f.cam_dedicated ? "cam" : `nearest cam, ${Math.round(f.cam_km)} km`;
+const camWarn = f => /stale|maintenance/i.test(f.cam_status||"") ? " (feed down at last check)" : "";
+const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
+const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>`).join(", ")}.`:""}</p>` : "";
+const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a><a href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></div>`;
+
+/*SHARED_MODAL*/
+
+// ---------- state ----------
+const SPOTS = DATA.groups.flatMap(g => g.spots);
+const byName = Object.fromEntries(SPOTS.map(s => [s.name, s]));
+let day = 0, selected = null;
+const mapEl = $("#map"), panel = $("#panel"), hint = $("#hint");
+$("#datelbl").textContent = DATA.weeklabel;
+
+// read deep link  #s=<spot number>&d=<day index>
+(function(){
+  const h = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const d = parseInt(h.get("d")); if (!isNaN(d) && d >= 0 && d < DATA.dates.length) day = d;
+  const n = parseInt(h.get("s")); const sp = SPOTS.find(s => s.n === n); if (sp) selected = sp.name;
+})();
+function writeHash(){
+  const parts = [`d=${day}`]; if (selected) parts.push(`s=${byName[selected].n}`);
+  history.replaceState(null, "", "#" + parts.join("&"));
+}
+
+// ---------- day chips ----------
+function counts(di){
+  const c = {go:0, maybe:0, skip:0};
+  SPOTS.forEach(s => { const cell = (DATA.grid[s.name]||[])[di]; if (cell) c[cell[0]] = (c[cell[0]]||0) + 1; });
+  return c;
+}
+function renderDays(){
+  $("#days").innerHTML = `<span class="lbl">Day</span>` + DATA.days.map((d, i) => {
+    const c = counts(i);
+    const dots = `<span class="n" aria-hidden="true">${c.go?`<i class="go"></i>`:""}${c.maybe?`<i class="maybe"></i>`:""}${(!c.go&&!c.maybe)?`<i class="skip"></i>`:""}</span>`;
+    return `<button class="chip${i===day?" on":""}" data-d="${i}" aria-pressed="${i===day}" aria-label="${esc(DATA.daylong[DATA.dates[i]]||d)}: ${c.go} go, ${c.maybe} maybe">${esc(d)}${dots}</button>`;
+  }).join("");
+}
+$("#days").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) setDay(parseInt(b.dataset.d)); });
+function setDay(d){
+  if (d === day) return;
+  day = d; renderDays(); drawMarkers(); if (selected) openSpot(selected, {keepView:true}); writeHash();
+  const on = $(".chip.on"); if (on && on.scrollIntoView) on.scrollIntoView({block:"nearest", inline:"center", behavior:"smooth"});
+}
+
+// ---------- map ----------
+const map = L.map("map", {zoomControl:false, minZoom:6, maxZoom:17, zoomSnap:0.5, wheelPxPerZoomLevel:90, tap:false});
+L.control.zoom({position: innerWidth <= 760 ? "topright" : "bottomright", zoomInTitle:"Zoom in", zoomOutTitle:"Zoom out"}).addTo(map);
+// Basemap: Esri dark grey canvas (free, attribution required, no key). Satellite = Esri World Imagery.
+// If the dark canvas cannot be reached, fall back to OpenStreetMap darkened with a CSS filter.
+const ESRI = "Tiles &copy; Esri";
+const dark = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {attribution:ESRI + " &mdash; HERE, Garmin, OpenStreetMap contributors", maxNativeZoom:16, maxZoom:17, className:"base-dark"});
+const darkRef = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {maxNativeZoom:16, maxZoom:17, className:"base-ref", pane:"overlayPane"});
+const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {attribution:ESRI + " &mdash; Maxar, Earthstar Geographics", maxNativeZoom:18, maxZoom:18, className:"base-sat"});
+const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19, className:"base-osm"});
+let baseMode = "dark", tileErrors = 0, swapped = false;
+dark.addTo(map); darkRef.addTo(map);
+dark.on("tileerror", () => {
+  if (swapped || baseMode !== "dark" || ++tileErrors < 6) return;
+  swapped = true; map.removeLayer(dark); map.removeLayer(darkRef); osm.addTo(map); mapEl.classList.add("osm-dark");
+});
+function setBase(mode){
+  if (mode === baseMode) return;
+  [dark, darkRef, sat, osm].forEach(l => map.hasLayer(l) && map.removeLayer(l));
+  baseMode = mode;
+  if (mode === "sat") sat.addTo(map); else if (swapped) osm.addTo(map); else { dark.addTo(map); darkRef.addTo(map); }
+  mapEl.classList.toggle("is-sat", mode === "sat");
+  document.querySelectorAll("[data-base]").forEach(b => { const on = b.dataset.base === mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+}
+document.querySelectorAll("[data-base]").forEach(b => b.addEventListener("click", () => setBase(b.dataset.base)));
+const bounds = L.latLngBounds(SPOTS.map(s => [s.lat, s.lon]));
+function panelPad(){ return (innerWidth > 760 && panel.classList.contains("open")) ? [parseInt(getComputedStyle(document.documentElement).getPropertyValue("--panelw")) + 40, 20] : [20, 20]; }
+map.fitBounds(bounds, {paddingTopLeft:[24, 24], paddingBottomRight:[panelPad()[0], innerWidth <= 760 ? 130 : 96]});
+function zoomClasses(){ const z = map.getZoom(); mapEl.classList.toggle("z10", z >= 10); mapEl.classList.toggle("z9", z >= 9); }
+map.on("zoomend", zoomClasses); zoomClasses();
+map.on("click", () => { if (selected) closeSpot(); });
+map.on("movestart", () => hint.classList.add("off"));
+setTimeout(() => hint.classList.add("off"), 6000);
+
+const cluster = L.markerClusterGroup({
+  maxClusterRadius: 46, disableClusteringAtZoom: 12, spiderfyOnMaxZoom: false, showCoverageOnHover: false,
+  zoomToBoundsOnClick: true, removeOutsideVisibleBounds: true, animate: true,
+  iconCreateFunction: cl => {
+    const ms = cl.getAllChildMarkers(); const n = ms.length;
+    const c = {go:0, maybe:0, skip:0}; ms.forEach(m => c[m.options.call] = (c[m.options.call]||0) + 1);
+    // ring split by verdict share, like a pie border
+    const col = {go:"var(--go)", maybe:"var(--maybe)", skip:"#3a2c20"};
+    let acc = 0; const segs = [];
+    ["go","maybe","skip"].forEach(k => { if (!c[k]) return; const a = acc, b = acc + c[k] / n * 360; segs.push(`${col[k]} ${a}deg ${b}deg`); acc = b; });
+    return L.divIcon({html:`<div class="cl${n >= 10 ? " big" : ""}" style="background:conic-gradient(${segs.join(",")})" role="button" aria-label="${n} spots, ${c.go} go, ${c.maybe} maybe. Zoom in."><span>${n}</span></div>`, className:"", iconSize:[0,0]});
+  }
+});
+map.addLayer(cluster);
+const markers = {};
+// marker label: the part that tells spots in the same town apart ("Anglet – La Barre / Cavaliers" -> "La Barre / Cavaliers")
+const mkLabel = n => { const p = n.split(" – "); const t = (p.length > 1 ? p.slice(1).join(" ") : n); return t.length > 26 ? t.slice(0, 25).replace(/\s+\S*$/, "") + "…" : t; };
+function drawMarkers(){
+  cluster.clearLayers();
+  SPOTS.forEach(s => {
+    const cell = (DATA.grid[s.name]||[])[day] || ["skip","–",0,"",""];
+    const [call, val, q, title, size] = cell;
+    const label = val === "–" ? "–" : `${val}<i>m</i>`;
+    const icon = L.divIcon({className:"", iconSize:[0,0], html:
+      `<div class="mkw${selected===s.name?" sel":""}" data-n="${s.n}"><div class="mk ${call}" title="${esc(s.name)}: ${esc(size||call)}">${label}</div><div class="nm">${esc(mkLabel(s.name))}</div></div>`});
+    const m = L.marker([s.lat, s.lon], {icon, call, title:"", alt:`${s.name}, ${call}, ${val} m`, keyboard:true, riseOnHover:true});
+    m.on("click", e => { L.DomEvent.stopPropagation(e); openSpot(s.name); });
+    m.on("keypress", e => { if (e.originalEvent.key === "Enter" || e.originalEvent.key === " ") openSpot(s.name); });
+    markers[s.name] = m;
+  });
+  cluster.addLayers(Object.values(markers));
+}
+
+// live buoys
+(DATA.buoys || []).forEach(b => {
+  if (b.lat == null) return;
+  const t = b.hs != null ? `${b.hs.toFixed(1)} m${b.tp?` @ ${Math.round(b.tp)} s`:""}` : "no reading";
+  const icon = L.divIcon({className:"", iconSize:[0,0], html:`<div class="by${b.hs==null?" nodata":""}" title="${esc(b.name)} buoy: ${t}${b.age_min!=null?", "+b.age_min+" min ago":""}"><span class="d"></span><span class="t">${esc(b.name)} ${b.hs!=null?t:""}</span></div>`});
+  L.marker([b.lat, b.lon], {icon, interactive:true, keyboard:false, zIndexOffset:-100}).addTo(map);
+});
+
+// ---------- spot panel ----------
+function strip(name){
+  return `<div class="strip"><div class="sk">7 days here &middot; tap a near day for the hourly chart</div><div class="cells">` +
+    (DATA.grid[name]||[]).map((c, di) => {
+      const key = name + "|" + (DATA.dates[di]||""); const clk = !!(DATA.hourly && DATA.hourly[key]);
+      return `<div class="cell ${c[0]}${di===day?" on":""}${clk?" clickable":""}" ${clk?`data-key="${esc(key)}" role="button" tabindex="0" aria-label="${esc(name)} ${esc(DATA.days[di])} hourly detail"`:""} title="${esc(c[3]||"")}">` +
+        `<span class="dl">${esc((DATA.days[di]||"").split(" ")[0])}</span><span class="vv">${esc(c[1])}<small>m</small></span><span class="tg"></span>${clk?`<span class="ex">&#8942;</span>`:""}</div>`;
+    }).join("") + `</div></div>`;
+}
+function openSpot(name, opts){
+  opts = opts || {};
+  const s = byName[name]; if (!s) return;
+  const date = DATA.dates[day]; const c0 = DATA.cards[name + "|" + date]; const f = c0 ? Object.assign({}, s, c0) : null;
+  const cell = (DATA.grid[name]||[])[day] || ["skip","–",0,"",""];
+  const call = f ? f.verdict.toLowerCase() : cell[0];
+  const prev = selected; selected = name;
+  panel.innerHTML = `<div class="grab"></div>
+    <div class="phead"><div><div class="sk">${esc(s.sub)}</div><h2>${esc(name)}</h2>
+      <div class="sd">${esc(DATA.daylong[date]||date)} <span class="pill ${call}">${call.toUpperCase()}</span>${f&&f.window?` <span>best ${esc(f.window)}</span>`:""}</div></div>
+      <button class="xbtn" id="pclose" aria-label="Close">&#10005;</button></div>` +
+    (f ? `<p class="plain">${esc(f.plain)}</p>
+      <div class="facts">
+        <div class="fact"><span class="k">size</span><span class="v">${f.face!=null?esc(f.face.toFixed(1))+" m":"–"}</span><span class="s">${esc(f.size)} faces</span></div>
+        <div class="fact"><span class="k">wind</span><span class="v">${esc(f.wind_plain)}</span><span class="s">${esc(f.wind_from)}</span></div>
+        <div class="fact"><span class="k">tide</span><span class="v">${esc(f.tide_plain)}</span><span class="s">${esc(f.tide_label)} here</span></div>
+        <div class="fact"><span class="k">water</span><span class="v">${f.water!=null?f.water.toFixed(0)+"°":"–"}</span><span class="s">air ${f.air!=null?f.air.toFixed(0)+"°":"–"}</span></div>
+      </div>
+      ${f.heads_up?`<div class="live"><span class="ld"></span><span class="lt">${esc(f.heads_up)}</span></div>`:""}
+      ${f.why?`<p class="why">${esc(f.why)}</p>`:""}
+      ${camline(f)}
+      ${linkrow(f)}` : `<p class="plain">No forecast for this day.</p>${camline(s)}${linkrow(s)}`) +
+    strip(name);
+  panel.classList.add("open"); panel.setAttribute("aria-hidden", "false"); panel.scrollTop = 0; document.querySelector(".stage").classList.add("has-panel");
+  $("#pclose").onclick = closeSpot;
+  // highlight the marker
+  if (prev && prev !== name && markers[prev]) refreshIcon(prev);
+  refreshIcon(name);
+  if (!opts.keepView){
+    const ll = L.latLng(s.lat, s.lon);
+    if (innerWidth <= 760){
+      // bottom sheet covers the lower part: put the spot in the upper third
+      const z = Math.max(map.getZoom(), 11);
+      const p = map.project(ll, z); p.y += mapEl.clientHeight * 0.5 - 110; map.setView(map.unproject(p, z), z, {animate:true});
+    } else {
+      const z = Math.max(map.getZoom(), 11);
+      const p = map.project(ll, z); p.x += panelPad()[0] / 2; map.setView(map.unproject(p, z), z, {animate:true});
+    }
+  }
+  writeHash();
+}
+function refreshIcon(name){
+  const m = markers[name]; if (!m) return;
+  const el = m.getElement(); if (!el) return;
+  const w = el.querySelector(".mkw"); if (w) w.classList.toggle("sel", selected === name);
+}
+function closeSpot(){
+  const prev = selected; selected = null;
+  panel.classList.remove("open"); panel.setAttribute("aria-hidden", "true"); document.querySelector(".stage").classList.remove("has-panel");
+  if (prev) refreshIcon(prev); writeHash();
+}
+panel.addEventListener("click", e => { if (e.target.closest("a")) return; const c = e.target.closest(".cell.clickable"); if (c) openModal(c.dataset.key); });
+panel.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ const c = e.target.closest(".cell.clickable"); if (c){ e.preventDefault(); openModal(c.dataset.key); } } });
+let modalWasOpen = false;
+window.addEventListener("keydown", e => { if (e.key === "Escape") modalWasOpen = modal.classList.contains("open"); }, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && selected && !modalWasOpen) closeSpot(); });
+// react to hash changes (back button, pasted link)
+addEventListener("hashchange", () => {
+  const h = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const d = parseInt(h.get("d")); if (!isNaN(d) && d >= 0 && d < DATA.dates.length && d !== day) setDay(d);
+  const sp = SPOTS.find(s => s.n === parseInt(h.get("s")));
+  if (sp && sp.name !== selected) openSpot(sp.name); else if (!sp && selected) closeSpot();
+});
+// swipe down on the sheet handle closes it (mobile)
+(function(){ let y0 = null;
+  panel.addEventListener("touchstart", e => { if (panel.scrollTop <= 0) y0 = e.touches[0].clientY; }, {passive:true});
+  panel.addEventListener("touchmove", e => { if (y0 != null && e.touches[0].clientY - y0 > 90 && innerWidth <= 760){ y0 = null; closeSpot(); } }, {passive:true});
+  panel.addEventListener("touchend", () => { y0 = null; });
+})();
+addEventListener("resize", () => { map.invalidateSize(); });
+
+// ---------- boot ----------
+renderDays(); drawMarkers();
+if (selected){ const n = selected; selected = null; openSpot(n); }
+window.__wendy = {map, cluster, markers, openSpot, closeSpot, setDay, get day(){return day;}, get selected(){return selected;}};
+</script>
+</body>
+</html>
