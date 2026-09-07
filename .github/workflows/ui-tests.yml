@@ -32,9 +32,13 @@ jobs:
           pip install -q playwright
           python -m playwright install --with-deps chromium
       - name: Build pages from committed data
-        run: python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html
-      - name: Run browser suite
-        run: SHOTS=tests/shots python3 tests/map_e2e.py
+        run: |
+          python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html
+          python3 gen_surf_dashboard.py data/surf-pt.out.txt docs/surf-pt.html
+      - name: Run browser suite (France)
+        run: SHOTS=tests/shots/fr python3 tests/map_e2e.py
+      - name: Run browser suite (Portugal)
+        run: MAP_PAGE=map-pt.html LIST_PAGE=surf-pt.html SHOTS=tests/shots/pt python3 tests/map_e2e.py
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

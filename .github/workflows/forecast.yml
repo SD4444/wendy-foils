@@ -63,7 +63,8 @@ jobs:
           COPERNICUS_PASSWORD: ${{ secrets.COPERNICUS_PASSWORD }}
         run: |
           pip install -q copernicusmarine
-          python3 fetch_copernicus.py data/copernicus.json
+          python3 fetch_copernicus.py data/copernicus.json fr
+          python3 fetch_copernicus.py data/copernicus-pt.json pt || echo "copernicus pt failed"
 
       - name: Run forecast engine
         env:
@@ -99,6 +100,10 @@ jobs:
             python3 surf.py > data/surf.out.txt 2>data/surf.err.txt || { echo "surf engine non-zero:"; cat data/surf.err.txt; }
             date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf.fetched_at.txt
             python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html || echo "surf dashboard gen failed"
+            # Portugal (once a day, no ping)
+            python3 surf.py pt > data/surf-pt.out.txt 2>data/surf-pt.err.txt || { echo "surf pt engine non-zero:"; cat data/surf-pt.err.txt; }
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > data/surf-pt.fetched_at.txt
+            python3 gen_surf_dashboard.py data/surf-pt.out.txt docs/surf-pt.html || echo "surf pt dashboard gen failed"
           fi
 
       - name: Commit output
@@ -109,11 +114,11 @@ jobs:
           # Generated outputs always win: park them, sync to the latest remote, put them back, commit, push.
           # (A plain rebase could conflict when a human push landed mid-run, and then every retry failed.)
           OUT="$(mktemp -d)"; mkdir -p "$OUT/docs"
-          cp -R data "$OUT/"; for f in index.html surf.html map.html; do [ -f "docs/$f" ] && cp "docs/$f" "$OUT/docs/"; done
+          cp -R data "$OUT/"; for f in index.html surf.html map.html surf-pt.html map-pt.html; do [ -f "docs/$f" ] && cp "docs/$f" "$OUT/docs/"; done
           for attempt in 1 2 3 4 5; do
             git fetch -q origin main && git reset -q --hard origin/main
             cp -R "$OUT/data/." data/; cp "$OUT"/docs/*.html docs/ 2>/dev/null || true
-            git add data/ docs/index.html docs/surf.html docs/map.html
+            git add data/ docs/*.html
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
             git commit -q -m "Wendy: $MODE forecast data $(date -u +%Y-%m-%d)"
             if git push; then echo "pushed on attempt $attempt"; exit 0; fi

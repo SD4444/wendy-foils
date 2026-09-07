@@ -15,7 +15,7 @@ local runs the script also reads them from a `.dev.vars` file next to it (gitign
 surf.py itself stays pure stdlib: it only reads the JSON this script writes, and falls back
 to the three Open-Meteo wave models if the file is missing or stale.
 
-Usage:  python3 fetch_copernicus.py [data/copernicus.json]
+Usage:  python3 fetch_copernicus.py [data/copernicus.json] [fr|pt]
 """
 import os, sys, json, math, tempfile
 from datetime import datetime, timedelta, timezone
@@ -51,7 +51,13 @@ def main():
     import xarray as xr
     import numpy as np
     sys.path.insert(0, HERE)
-    from surf import SPOTS, BUOYS
+    region = sys.argv[2] if len(sys.argv) > 2 else "fr"
+    if region == "pt":
+        from spots_pt import SPOTS, BUOYS
+    else:
+        from surf import SPOTS, BUOYS
+    if not SPOTS:
+        sys.exit(f"no spots for region {region}")
 
     lats = [s["lat"] for s in SPOTS]; lons = [s["lon"] for s in SPOTS]
     # generous margin so every beach has ocean cells to its west

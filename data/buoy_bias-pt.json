@@ -1,0 +1,45 @@
+{
+ "leixoes": {
+  "2026-09-07": {
+   "bias": 0.97,
+   "models": {
+    "best_match": 0.95,
+    "ecmwf_wam025": 1.01,
+    "ncep_gfswave025": 1.06,
+    "copernicus_ibi": 0.87
+   }
+  }
+ },
+ "nazare": {
+  "2026-09-07": {
+   "bias": 0.95,
+   "models": {
+    "best_match": 0.97,
+    "ecmwf_wam025": 0.99,
+    "ncep_gfswave025": 0.94,
+    "copernicus_ibi": 0.91
+   }
+  }
+ },
+ "sines": {
+  "2026-09-07": {
+   "bias": 1.08,
+   "models": {
+    "best_match": 1.1,
+    "ecmwf_wam025": 1.14,
+    "ncep_gfswave025": 1.1,
+    "copernicus_ibi": 0.95
+   }
+  }
+ },
+ "faro": {
+  "2026-09-07": {
+   "bias": 1.23,
+   "models": {
+    "best_match": 1.53,
+    "ncep_gfswave025": 1.23,
+    "copernicus_ibi": 0.96
+   }
+  }
+ }
+}

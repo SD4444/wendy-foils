@@ -1,0 +1,19 @@
+buoy Leixões 1.77m @ 8.9s age 155min consensus 1.72 bias 0.97 per model {'best_match': 0.95, 'ecmwf_wam025': 1.01, 'ncep_gfswave025': 1.06, 'copernicus_ibi': 0.87}
+buoy Nazaré 1.8m @ 7.2s age 68min consensus 1.71 bias 0.95 per model {'best_match': 0.97, 'ecmwf_wam025': 0.99, 'ncep_gfswave025': 0.94, 'copernicus_ibi': 0.91}
+buoy Sines 1.45m @ 7.0s age 101min consensus 1.56 bias 1.08 per model {'best_match': 1.1, 'ecmwf_wam025': 1.14, 'ncep_gfswave025': 1.1, 'copernicus_ibi': 0.95}
+buoy Faro 0.47m @ 5.5s age 132min consensus 0.58 bias 1.23 per model {'best_match': 1.53, 'ncep_gfswave025': 1.23, 'copernicus_ibi': 0.96}
+live wind: 15 station readings, 38 spots covered
+copernicus IBI loaded for 57 spots (0.0h old)
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.442&longitude=-8.797&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.343&longitude=-8.854&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.293&longitude=-8.866&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.2&longitude=-8.904&timezone=Europe/Lisbon&forecas
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.166&longitude=-8.904&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.116&longitude=-8.535&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.108&longitude=-8.94&timezone=Europe/Lisbon&foreca
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.087&longitude=-8.726&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.046&longitude=-8.872&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.026&longitude=-8.965&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.006&longitude=-8.948&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.006&longitude=-7.994&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.005&longitude=-8.94&timezone=Europe/Lisbon&foreca

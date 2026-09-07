@@ -164,7 +164,7 @@ Added 2026-09-05. The app has **two sides toggled by the Foil / Surf switch** at
 **What Simon asked for (2026-09-05):** whole coast, no fixed base, "anything above waist high and relatively clean". Dashboard only, refreshed three times a day (05:00, 12:00 and 18:00 local), plus ONE morning inbox ping with the five standouts. No dedupe: the ping goes out every trip morning even when the call is "nothing clean".
 
 **Files**
-- `surf.py` - surf engine. `python3 surf.py` (no args) does all 36 spots, 7 days. Same delimiter convention as wendy.py plus a `<!--SPOTS_START-->` block (spot metadata: cams, links, notes). Pure stdlib.
+- `surf.py` - surf engine. `python3 surf.py` (no args) does the 36 French spots, 7 days; `python3 surf.py pt` does the 57 Portuguese spots (section 8). Same delimiter convention as wendy.py plus a `<!--SPOTS_START-->` block (spot metadata: cams, links, notes). Pure stdlib.
 - `gen_surf_dashboard.py` - builds `docs/surf.html` AND `docs/map.html` from `data/surf.out.txt`. Usage: `python3 gen_surf_dashboard.py data/surf.out.txt docs/surf.html`. Do not hand-edit either output. List page template = `TEMPLATE` inside the script; map page template = `templates/surf_map.html`.
 - `docs/surf.html` - hosted at **https://sd4444.github.io/wendy-foils/surf.html**. Sections: headline in Wendy's voice, today's call card (size, swell, wind, tide, water/air, cam/report/forecast buttons), tiles, **Today's five** (ranked cards with cam links), 7-day matrix of all 36 spots grouped by department (click a near day for hourly size + tide curve + wind arrows), rules cards.
 - `data/surf.out.txt`, `data/surf.err.txt`, `data/surf.fetched_at.txt` - committed engine output the routine reads. Output blocks: SUBJECT, JSON (today's five + tomorrow), SPOTS (metadata incl. `tide_pref`, `buoy`, `shom`), BUOYS (live readings + bias), GRID (rows incl. `face`, `obs`, `corr`), EMAIL_HTML.
@@ -222,3 +222,22 @@ Both have a date guard and do nothing outside 14 Sep - 4 Oct. After the trip the
 **Lacanau report links (2026-09-07):** `report` = https://www.lacanausurfinfo.com/ (human daily Lacanau report; its "webcam" link is the same Viewsurf `viewsurf01` Surf Club camera we already use), `report2` = the surf-report.com Gironde page. `report2` is optional per spot and renders as "report 2" on cards and in the ping.
 
 **Gotcha (fixed 2026-09-05):** the workflow's "Pick mode" step compared the schedule against `50 15 * * 0`, a cron that no longer existed, so the Sunday 14:00 UTC run was being treated as `daily`. It now matches `0 14 * * 0` for weekly and `0 10 *` for surf.
+
+---
+
+## 8. Portugal (added 2026-09-07)
+
+Second country on the surf side, toggled with the **France | Portugal** switch in the header of every surf page (list and map). Same engine, same rules, same pages; different spot table. Not a trip: **refreshed once a day at 05:00 UTC on the daily run, no calendar ping.**
+
+**Files.** `spots_pt.py` holds `SPOTS` (57 spots, north to south, `n` 1-57, `dept` = region name), `BUOYS` (4 Instituto Hidrográfico buoys), `SYNOP_STATIONS` (WMO block 08, 10 coastal stations), `METAR_IDS/NAMES` (Porto, Montijo, Lisbon, Cascais, Sintra, Faro) and `SECTIONS` (derived from `dept`). `python3 surf.py pt` swaps them in (block before `main()`, also sets `TZ=Europe/Lisbon`, `data/buoy_bias-pt.json`, `data/copernicus-pt.json`) and prints a `<!--REGION_START-->` block that `gen_surf_dashboard.py` reads to name pages, sections and links. Outputs: `data/surf-pt.out.txt`, `docs/surf-pt.html`, `docs/map-pt.html` (https://sd4444.github.io/wendy-foils/surf-pt.html and /map-pt.html). `fetch_copernicus.py data/copernicus-pt.json pt` and `check_cams.py` (both regions in one status file) cover Portugal too. The browser suite runs against Portugal with `MAP_PAGE=map-pt.html LIST_PAGE=surf-pt.html`.
+
+**Regions and the area chips.** North (Moledo..Costa Nova, 10), Centre (Figueira..Santa Cruz, 12), Lisbon (Ericeira..Bicas, 14), Alentejo (São Torpes..Odeceixe, 9), Algarve (Monte Clérigo..Faro, 12). Simon asked for a north/centre/south toggle; it is implemented as **area chips** inside the pages (list: filters the section cards and the 7-day matrix; map: flies to that stretch), not as a header toggle. France got the same chips (its five sections).
+
+**Spot data.** Researched 2026-09-07 by five agents from surf-forecast.com guides, wannasurf, MEO Beachcam pages (opened one by one), surftotal, OSM Nominatim for coordinates, IPMA station list. `face` and `shelter` are map readings, not sourced. Nazaré Praia do Norte is in the table for completeness with an expert/big-wave note; its scoring is the same as everywhere else, so treat a GO there with suspicion. South-coast Algarve spots (Mareta, Zavial, Luz, Rocha, Faro) face ~180-200 and carry shelter 0.5-0.6 so they only light up on big W or S swells, which is the point of having them.
+
+**Cams.** Almost every Portuguese beach has a MEO Beachcam camera (beachcam.meo.pt/livecams/...); 46 of 57 spots have a dedicated one. No camera at Moledo, Coxos, Porto Covo, Malhão, Bordeira, Zavial, and the three Sagres beaches share one "Sagres" feed whose beach is not named. Beachcam pages are JS players with no datable still in the HTML, so `check_cams.py` reports them "unknown" (shown as normal); Afife and São Lourenço showed "not available" at research time.
+
+**Tide.** Instituto Hidrográfico tables sit behind a JS portal (geomar.hidrografico.pt) with no per-port URL; `tide_url` therefore links tide-forecast.com per reference port (Viana do Castelo, Leixões, Aveiro, Figueira da Foz, Peniche also for Nazaré, Cascais, Lisbon, Sesimbra, Sines, Lagos also for Sagres, Faro-Olhão). The Open-Meteo tide model is used for the times as in France; the same 30-60 min caveat applies (unverified for Portugal).
+
+**Live data.** Buoys Leixões (datawell:4), Nazaré (oceanor:2), Sines (datawell:19), Faro (datawell:20) via the same thesurfkit.com nearest endpoint; spots map to the nearest by latitude. Live wind from METAR + SYNOP (Viana, Porto, Ovar, Monte Real, Cabo Carvoeiro at Peniche, Sintra, Lisboa, Sines, Sagres, Faro), so coverage is much better than France.
+

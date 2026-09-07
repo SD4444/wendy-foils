@@ -113,6 +113,10 @@ def plain_call(r):
     return f"{(r.get('size') or '').capitalize()}, {wind_plain(r)}, {fmt_h(r['win'][0])} to {fmt_h(r['win'][1])}." if r.get("win") else (r.get("size") or "")
 
 SECTIONS = [("Médoc", 1, 7), ("Cap Ferret & Arcachon", 8, 15), ("North Landes", 16, 22), ("South Landes", 23, 31), ("Basque coast", 32, 36)]
+REGION = {"code": "fr", "name": "France", "title": "Soulac to Biarritz", "list": "surf.html", "map": "map.html",
+          "trip": ["2026-09-14", "2026-10-04"], "update_note": "Updated 05:00, 12:00 and 18:00 during the trip",
+          "sections": [list(x) for x in SECTIONS], "dept_short": DEPT_SHORT}
+COUNTRIES = [("fr", "France", "surf.html", "map.html"), ("pt", "Portugal", "surf-pt.html", "map-pt.html")]
 def section_of(n):
     for name, a, b in SECTIONS:
         if a <= n <= b: return name
@@ -160,14 +164,14 @@ def build_data(grid, spots_meta, flagged, buoys=None):
                                     "report": m["report"], "report2": m.get("report2"), "forecast": m["forecast"], "rel": m["rel"],
                                     "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                                     "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
-                                    "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"),
+                                    "shom": m.get("tide_url") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"), "section": section_of(m["n"]),
                                     "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide")})
 
     def card(r):
         m = meta[r["spot"]]
         return {"spot": r["spot"], "short": short(r["spot"]), "sector": m["sector"], "verdict": r["verdict"],
                 "score": r["score"], "size": r.get("size") or "", "hs": r.get("hs"), "face": r.get("face"), "swell": swell_txt(r),
-                "obs": obs_txt(r), "shom": r.get("shom") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
+                "obs": obs_txt(r), "shom": r.get("shom") or m.get("tide_url") or f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}",
                 "plain": plain_call(r), "tide_plain": tide_plain(r), "heads_up": heads_up(r), "wind_plain": wind_plain(r), "live_wind": live_wind(r),
                 "tide_label": TIDE_LABEL.get(m.get("tide_pref","mid"), "best mid tide"), "wind_from": wind_from(r),
                 "tide_pref": m.get("tide_pref", "mid"),
@@ -259,8 +263,8 @@ def build_data(grid, spots_meta, flagged, buoys=None):
     best = {"spot": feature["spot"], "day": 0} if feature and feature["verdict"] != "SKIP" else None
     return {"days": days, "dates": dates, "daylong": daylong, "groups": groups, "grid": matrix,
             "best": best, "feature": feature, "five": five, "headline": headline, "verdict": verdict,
-            "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel, "hourly": hourly, "cards": cards, "buoys": buoys or [],
-            "trip": (flagged or {}).get("trip", ["2026-09-14", "2026-10-04"])}
+            "tiles": tiles, "sources": SOURCES, "weeklabel": weeklabel, "hourly": hourly, "cards": cards, "buoys": buoys or [], "region": REGION,
+            "trip": REGION.get("trip") or (flagged or {}).get("trip") or []}
 
 MAP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "surf_map.html")
 
@@ -268,7 +272,12 @@ def buoy_points(txt):
     """Live buoy readings (BUOYS block) joined with their positions from surf.py."""
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from surf import BUOYS as POS
+        rg = re.search(r"<!--REGION_START-->(.*?)<!--REGION_END-->", txt, re.S)
+        code = json.loads(rg.group(1)).get("code", "fr") if rg else "fr"
+        if code == "pt":
+            from spots_pt import BUOYS as POS
+        else:
+            from surf import BUOYS as POS
     except Exception:
         return []
     b = re.search(r"<!--BUOYS_START-->(.*?)<!--BUOYS_END-->", txt, re.S)
@@ -304,6 +313,20 @@ def apply_cam_status(spots_meta):
             if ra: a["state"] = ra.get("state")
     return spots_meta
 
+def header_switches(region, page):
+    """Country + List/Map + Foil/Surf switches for the given region and page ('list' or 'map')."""
+    country = "".join(f'<a{" class=\"on\" aria-current=\"page\"" if c == region["code"] else ""} href="{l if page == "list" else m}">{n}</a>' for c, n, l, m in COUNTRIES)
+    view = (f'<a class="on" href="{region["list"]}" aria-current="page">List</a><a href="{region["map"]}">Map</a>' if page == "list" else
+            f'<a href="{region["list"]}">List</a><a class="on" href="{region["map"]}" aria-current="page">Map</a>')
+    return (f'<nav class="switch" aria-label="Country">{country}</nav>'
+            f'<nav class="switch" aria-label="View">{view}</nav>'
+            f'<nav class="switch" aria-label="Mode"><a href="index.html"><span class="em">&#127788;</span> Foil</a><a class="on" href="{region["list"]}"><span class="em">&#127940;</span> Surf</a></nav>')
+
+def fill_region(html, region, page):
+    html = html.replace("<title>Wendy Surf — France trip</title>", f"<title>Wendy Surf — {region['name']}</title>")
+    html = html.replace("<title>Wendy Surf map</title>", f"<title>Wendy Surf map — {region['name']}</title>")
+    return html.replace("<!--SWITCHES-->", header_switches(region, page))
+
 def render_map(data):
     """Map view: same DATA, Leaflet page. Reuses the list page's hourly chart/modal JS and CSS verbatim."""
     tpl = open(MAP_TEMPLATE, encoding="utf-8").read()
@@ -326,12 +349,16 @@ def main():
     j = re.search(r"<!--JSON_START-->(.*?)<!--JSON_END-->", txt, re.S)
     if not g or not s:
         sys.stderr.write("no GRID/SPOTS block in "+src+"\n"); sys.exit(1)
+    rg = re.search(r"<!--REGION_START-->(.*?)<!--REGION_END-->", txt, re.S)
+    global REGION, SECTIONS, DEPT_SHORT
+    if rg:
+        REGION = json.loads(rg.group(1)); SECTIONS = [tuple(x) for x in REGION.get("sections", [])]; DEPT_SHORT = REGION.get("dept_short", {})
     data = build_data(json.loads(g.group(1)), apply_cam_status(json.loads(s.group(1))), json.loads(j.group(1)) if j else None, buoy_points(txt))
     list_data = {k: v for k, v in data.items() if k not in ("cards", "buoys")}   # the list page does not need the per-day cards
-    open(dest, "w", encoding="utf-8").write(TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(list_data, ensure_ascii=False) + ";"))
+    open(dest, "w", encoding="utf-8").write(fill_region(TEMPLATE.replace("/*DATA*/", "const DATA = " + json.dumps(list_data, ensure_ascii=False) + ";"), REGION, "list"))
     print(f"wrote {dest} ({len(data['days'])} days, {sum(len(g['spots']) for g in data['groups'])} spots, {len(data['five'])} standouts)")
-    map_dest = os.path.join(os.path.dirname(dest), "map.html")
-    open(map_dest, "w", encoding="utf-8").write(render_map(data))
+    map_dest = os.path.join(os.path.dirname(dest), REGION.get("map", "map.html"))
+    open(map_dest, "w", encoding="utf-8").write(fill_region(render_map(data), REGION, "map"))
     print(f"wrote {map_dest} ({len(data['cards'])} cards, {len(data['buoys'])} buoys)")
 
 TEMPLATE = r"""<!doctype html>
@@ -390,6 +417,10 @@ TEMPLATE = r"""<!doctype html>
   .feature{position:relative;border:1px solid var(--hair2);border-radius:18px;padding:26px 28px;
     background:linear-gradient(160deg,rgba(58,36,20,.85),rgba(30,18,10,.75));backdrop-filter:blur(6px);overflow:hidden}
   .flabel{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+  .chip{font:inherit;font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:0 14px;height:36px;border-radius:999px;border:1px solid var(--hair2);color:var(--soft);background:rgba(255,255,255,.02);cursor:pointer}
+  .chip:hover{border-color:var(--accent-dim);color:var(--ink)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#1a0f06;font-weight:600}
   .pill{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:3px 9px;border-radius:20px}
   .pill.go{background:var(--go-bg);color:var(--go);box-shadow:inset 0 0 0 1px rgba(91,211,154,.3)}
   .pill.maybe{background:var(--maybe-bg);color:var(--maybe);box-shadow:inset 0 0 0 1px rgba(244,193,90,.3)}
@@ -546,10 +577,7 @@ TEMPLATE = r"""<!doctype html>
   <div class="wrap hero-in">
     <div class="topbar">
       <p class="eyebrow"><span class="dot"></span> <span id="eyebrow">Wendy Surf</span></p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <nav class="switch" aria-label="View"><a class="on" href="surf.html" aria-current="page">List</a><a href="map.html">Map</a></nav>
-        <nav class="switch" aria-label="Mode"><a href="index.html">&#127788; Foil</a><a class="on" href="surf.html">&#127940; Surf</a></nav>
-      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><!--SWITCHES--></div>
     </div>
     <h1 id="h1"></h1>
     <p class="verdict" id="verdict"></p>
@@ -562,8 +590,9 @@ TEMPLATE = r"""<!doctype html>
 
 <main>
 <section class="wrap">
+  <div class="chips" id="chips" role="group" aria-label="Area"></div>
   <div class="shead"><h2>Best spot in each area today</h2></div>
-  <p class="snote">North to south: Médoc, Cap Ferret and Arcachon, North Landes, South Landes, Basque coast.</p>
+  <p class="snote" id="snote"></p>
   <div class="five reveal" id="five"></div>
 </section>
 
@@ -606,7 +635,8 @@ const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" tar
 const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>${(a.state==="stale"||a.state==="down")?" (down)":""}`).join(", ")}.`:""}</p>` : "";
 const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
 
-$("#eyebrow").innerHTML = 'Wendy Surf <span class="sep">&middot;</span> Soulac &rarr; Biarritz <span class="sep">&middot;</span> ' + esc(DATA.weeklabel);
+$("#eyebrow").innerHTML = 'Wendy Surf <span class="sep">&middot;</span> ' + esc(DATA.region.title) + ' <span class="sep">&middot;</span> ' + esc(DATA.weeklabel);
+$("#snote").textContent = "North to south: " + DATA.region.sections.map(s=>s[0]).join(", ") + ".";
 $("#h1").textContent = DATA.headline;
 $("#verdict").innerHTML = DATA.verdict;
 
@@ -634,10 +664,22 @@ if (DATA.feature){
 
 $("#tiles").innerHTML = DATA.tiles.map(t=>`<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
 $("#sources").innerHTML = DATA.sources.map(s=>`<span class="s">${esc(s)}</span>`).join("");
-$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00, 12:00 and 18:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam links were checked one by one on 6 Sep 2026 (what each camera shows, whether it was live). Report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
+$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). ${esc(DATA.region.update_note)}${DATA.trip&&DATA.trip.length?` (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])})`:""}. Cam links were checked one by one on 6 Sep 2026 (what each camera shows, whether it was live). Report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
 
+// area chips: filter the section cards and the matrix
+let area = "";
+function renderChips(){
+  $("#chips").innerHTML = [["", "All"]].concat(DATA.region.sections.map(s=>[s[0], s[0]])).map(([v,l])=>`<button class="chip${area===v?" on":""}" data-area="${esc(v)}" aria-pressed="${area===v}">${esc(l)}</button>`).join("");
+}
+$("#chips").addEventListener("click", e=>{ const b=e.target.closest(".chip"); if(!b) return; area=b.dataset.area; renderChips(); renderFive(); applyMatrixFilter(); });
+function applyMatrixFilter(){
+  document.querySelectorAll(".matrix .srow").forEach(r=>{ r.hidden = !!area && r.dataset.sec!==area; });
+  document.querySelectorAll(".matrix .ghead").forEach(g=>{ let n=g.nextElementSibling, any=false; while(n && !n.classList.contains("ghead")){ if(n.classList.contains("srow") && !n.hidden) any=true; n=n.nextElementSibling; } g.hidden=!any; });
+}
+renderChips();
 // today's five
-$("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
+function renderFive(){ const list = area ? DATA.five.filter(f=>f.section===area) : DATA.five;
+$("#five").innerHTML = list.length ? list.map((f,i)=>
   `<article class="pick">
      <div class="sec">${esc(f.section||"")}</div>
      <div class="ph"><span class="nm">${esc(f.spot)}</span><span class="pill ${f.verdict.toLowerCase()}">${esc(f.verdict)}</span></div>
@@ -647,7 +689,8 @@ $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
      ${f.live_wind?`<div class="row"><span>${esc(f.live_wind)}</span></div>`:""}
      ${camline(f)}
      ${linkrow(f)}</article>`).join("")
-  : `<div class="empty">No data today.</div>`;
+  : `<div class="empty">No data today.</div>`; }
+renderFive();
 
 // matrix
 $(".matrix").style.setProperty("--ndays", DATA.days.length);
@@ -667,7 +710,7 @@ DATA.groups.forEach(g=>{
         `<span class="val">${esc(val)}<span class="kt">m</span></span><span class="sz">${esc(size)}</span>`+
         `<div class="qbar"><i style="width:${pct}%"></i></div>`+(clk?`<span class="exp" aria-hidden="true">&#8942;</span>`:"")+`</div>`;
     }).join("");
-    return `<div class="srow"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener" title="${esc(s.cam_shows)}">${camLabel(s)}</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a> &middot; <em>${esc(s.tide_label)}</em></span></div><div class="cells">${cells}</div></div>`;
+    return `<div class="srow" data-sec="${esc(s.section||"")}"><div class="sname"><span class="nm">${esc(s.name)}</span><span class="sub">${esc(s.sub)} &middot; <a href="${esc(s.cam)}" target="_blank" rel="noopener" title="${esc(s.cam_shows)}">${camLabel(s)}</a> &middot; <a href="${esc(s.forecast)}" target="_blank" rel="noopener">forecast</a> &middot; <a href="${esc(s.shom)}" target="_blank" rel="noopener">tide table</a> &middot; <em>${esc(s.tide_label)}</em></span></div><div class="cells">${cells}</div></div>`;
   }).join("");
 });
 $(".matrix").innerHTML = html;

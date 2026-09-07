@@ -23,7 +23,12 @@ from email.utils import parsedate_to_datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from surf import SPOTS
+from surf import SPOTS as SPOTS_FR
+try:
+    from spots_pt import SPOTS as SPOTS_PT
+except Exception:
+    SPOTS_PT = []
+SPOTS = SPOTS_FR + SPOTS_PT
 
 STALE_H = 24
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128 Safari/537.36"}
@@ -67,8 +72,11 @@ def frame_age_hours(page_html, page_url=""):
     if not cands:
         # other hosts: only files that look like camera output, never the site's static images
         host = re.sub(r"^https?://([^/]+).*$", r"\1", page_url)
-        camlike = re.compile(r"cam|video|live|solarmov|media|snapshot|capture|image_|/img/[^/]*\d{6,}", re.I)
-        cands = {u for u in MEDIA_RE.findall(page_html) if host and host in u and camlike.search(u) and not re.search(r"logo|icon|sprite|thumb|banner|bg[-_.]", u, re.I)}
+        camlike = re.compile(r"cam|video|live|solarmov|snapshot|capture|image_|/img/[^/]*\d{6,}", re.I)
+        # MEO Beachcam pages are JS players; their /media/ files are static page thumbnails, not frames
+        if "beachcam.meo.pt" in host: return text_age_hours(page_html) and None
+        cands = {u for u in MEDIA_RE.findall(page_html) if host and host in u and camlike.search(u)
+                 and not re.search(r"logo|icon|sprite|thumb|banner|bg[-_.]|\?width=|\d{3}x\d{3}", u, re.I)}
     best = None
     for u in list(cands)[:6]:
         try:

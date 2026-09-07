@@ -27,7 +27,7 @@
   html,body{height:100%}
   html{-webkit-text-size-adjust:100%}
   body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden;
-    display:grid;grid-template-rows:var(--top) var(--days) 1fr;grid-template-columns:minmax(0,1fr);height:100dvh;width:100vw;max-width:100%}
+    display:grid;grid-template-rows:var(--top) var(--days) var(--days) 1fr;grid-template-columns:minmax(0,1fr);height:100dvh;width:100vw;max-width:100%}
   a{color:var(--accent)}
   button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
@@ -38,7 +38,8 @@
   .eyebrow span{overflow:hidden;text-overflow:ellipsis}
   .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 4px rgba(255,159,74,.18),0 0 14px 2px rgba(255,159,74,.6)}
   .eyebrow .sep{color:var(--faint)}
-  .switches{display:flex;gap:8px;flex:none}
+  .switches{display:flex;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+  .areas .chip{height:32px;font-size:11.5px}
   .switch{display:inline-flex;border:1px solid var(--hair2);border-radius:999px;padding:3px;background:rgba(0,0,0,.25);font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
   .switch a{color:var(--soft);text-decoration:none;padding:7px 13px;border-radius:999px;line-height:1;display:flex;align-items:center;gap:6px;min-height:30px}
   .switch a.on{background:var(--accent);color:#1a0f06;font-weight:600}
@@ -189,13 +190,11 @@
 </head>
 <body>
 <header class="topbar">
-  <p class="eyebrow"><span class="dot"></span><span>Wendy Surf</span><span class="sep hide-m">&middot;</span><span class="hide-m">Soulac &rarr; Biarritz</span><span class="sep">&middot;</span><span id="datelbl"></span></p>
-  <div class="switches">
-    <nav class="switch" aria-label="View"><a href="surf.html">List</a><a class="on" href="map.html" aria-current="page">Map</a></nav>
-    <nav class="switch" aria-label="Mode"><a href="index.html"><span class="em">&#127788;</span> Foil</a><a class="on" href="surf.html"><span class="em">&#127940;</span> Surf</a></nav>
-  </div>
+  <p class="eyebrow"><span class="dot"></span><span>Wendy Surf</span><span class="sep hide-m">&middot;</span><span class="hide-m" id="titlelbl"></span><span class="sep">&middot;</span><span id="datelbl"></span></p>
+  <div class="switches"><!--SWITCHES--></div>
 </header>
 <nav class="days" id="days" aria-label="Day"></nav>
+<nav class="days areas" id="areas" aria-label="Area"></nav>
 <div class="stage">
   <div id="map" role="application" aria-label="Surf spots map"></div>
   <div class="hint" id="hint">Tap a spot for its call, cam and tide</div>
@@ -224,7 +223,7 @@ const SPOTS = DATA.groups.flatMap(g => g.spots);
 const byName = Object.fromEntries(SPOTS.map(s => [s.name, s]));
 let day = 0, selected = null;
 const mapEl = $("#map"), panel = $("#panel"), hint = $("#hint");
-$("#datelbl").textContent = DATA.weeklabel;
+$("#datelbl").textContent = DATA.weeklabel; $("#titlelbl").textContent = DATA.region.title;
 
 // read deep link  #s=<spot number>&d=<day index>
 (function(){
@@ -251,9 +250,21 @@ function renderDays(){
   }).join("");
 }
 $("#days").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) setDay(parseInt(b.dataset.d)); });
+function renderAreas(){
+  const secs = DATA.region.sections || [];
+  $("#areas").innerHTML = `<span class="lbl">Area</span>` + `<button class="chip" data-a="all">All</button>` +
+    secs.map((s, i) => `<button class="chip" data-a="${i}">${esc(s[0])}</button>`).join("");
+}
+$("#areas").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  const secs = DATA.region.sections || [];
+  const pts = b.dataset.a === "all" ? SPOTS : SPOTS.filter(s => s.n >= secs[+b.dataset.a][1] && s.n <= secs[+b.dataset.a][2]);
+  if (!pts.length) return;
+  map.fitBounds(L.latLngBounds(pts.map(s => [s.lat, s.lon])), {paddingTopLeft:[40, 40], paddingBottomRight:[panelPad()[0], innerWidth <= 760 ? 130 : 96], maxZoom: 12});
+});
 function setDay(d){
   if (d === day) return;
-  day = d; renderDays(); drawMarkers(); if (selected) openSpot(selected, {keepView:true}); writeHash();
+  day = d; renderDays(); renderAreas(); drawMarkers(); if (selected) openSpot(selected, {keepView:true}); writeHash();
   const on = $(".chip.on"); if (on && on.scrollIntoView) on.scrollIntoView({block:"nearest", inline:"center", behavior:"smooth"});
 }
 
@@ -413,7 +424,7 @@ addEventListener("hashchange", () => {
 addEventListener("resize", () => { map.invalidateSize(); });
 
 // ---------- boot ----------
-renderDays(); drawMarkers();
+renderDays(); renderAreas(); drawMarkers();
 if (selected){ const n = selected; selected = null; openSpot(n); }
 window.__wendy = {map, cluster, markers, openSpot, closeSpot, setDay, get day(){return day;}, get selected(){return selected;}};
 </script>

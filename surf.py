@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Wendy Surf - surf-trip forecast engine for the French Atlantic coast (Soulac to Biarritz).
+Wendy Surf - surf forecast engine. France (Soulac to Biarritz, default) and Portugal (`python3 surf.py pt`, Moledo to Faro).
 
 Usage:
   python3 surf.py            -> 7-day outlook for all 36 spots, ranked per day
@@ -45,7 +45,20 @@ FORECAST = "https://api.open-meteo.com/v1/forecast"
 MARINE   = "https://marine-api.open-meteo.com/v1/marine"
 
 TRIP_START, TRIP_END = "2026-09-14", "2026-10-04"
-MAP_URL = "https://sd4444.github.io/wendy-foils/map.html"
+SITE = "https://sd4444.github.io/wendy-foils/"
+# Region: `python3 surf.py` = France (default), `python3 surf.py pt` = Portugal. Everything region-specific
+# (spots, cams, buoys, wind stations, tide links, time zone, page names) is swapped in one block before main().
+REGION = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("fr", "pt") else os.environ.get("WENDY_REGION", "fr")
+REGION_INFO = {
+    "fr": {"code": "fr", "name": "France", "title": "Soulac to Biarritz", "tz": "Europe/Paris", "list": "surf.html", "map": "map.html",
+           "trip": [TRIP_START, TRIP_END], "update_note": "Updated 05:00, 12:00 and 18:00 during the trip",
+           "sections": [["Médoc", 1, 7], ["Cap Ferret & Arcachon", 8, 15], ["North Landes", 16, 22], ["South Landes", 23, 31], ["Basque coast", 32, 36]],
+           "dept_short": {"Gironde": "Gironde", "Landes": "Landes", "Pyrénées-Atlantiques": "Pays Basque"}},
+    "pt": {"code": "pt", "name": "Portugal", "title": "Moledo to Faro", "tz": "Europe/Lisbon", "list": "surf-pt.html", "map": "map-pt.html",
+           "trip": None, "update_note": "Updated once a day at 05:00", "sections": [], "dept_short": {}},
+}
+MAP_URL = SITE + REGION_INFO[REGION]["map"]
+LIST_URL = SITE + REGION_INFO[REGION]["list"]
 
 # ---- thresholds on BREAKING FACE HEIGHT (m, trough to crest, see breaker()) ----
 FACE_MIN      = 1.0    # waist-high. Below this, SKIP.
@@ -403,8 +416,10 @@ def fetch_mf_wind():
 # La Salie/Biscarrosse). SYNOP hourly from Cap Ferret, Biscarrosse, Cazaux, Socoa, Biarritz, Dax.
 # Both feed the same station pool as the optional Meteo-France 6-minute API; the nearest fresh station
 # within OBS_MAX_KM of a spot wins. North Medoc (Soulac..Carcans) has no station within range.
-METAR_URL = "https://aviationweather.gov/api/data/metar?ids=LFBZ,LFBC,LFBD&format=json"
-OGIMET_URL = "https://www.ogimet.com/cgi-bin/getsynop?block=07&begin={begin}"
+METAR_IDS = ["LFBZ", "LFBC", "LFBD"]
+METAR_URL = "https://aviationweather.gov/api/data/metar?ids={ids}&format=json"
+OGIMET_URL = "https://www.ogimet.com/cgi-bin/getsynop?block={block}&begin={begin}"
+SYNOP_BLOCK = "07"
 SYNOP_STATIONS = {  # WMO id: (name, lat, lon) from Ogimet's station table, 2026-09-07
     "07500": ("Cap Ferret", 44.632, -1.248), "07502": ("Cazaux", 44.534, -1.132), "07503": ("Biscarrosse", 44.432, -1.248),
     "07510": ("Bordeaux-Merignac", 44.831, -0.691), "07600": ("Socoa", 43.394, -1.686), "07602": ("Biarritz airport", 43.469, -1.534),
@@ -417,7 +432,7 @@ OBS_MAX_AGE_MIN = 100
 def fetch_metar():
     """[{name, lat, lon, kt, gust, deg, time(utc datetime)}] from the NOAA aviation feed."""
     out = []
-    j = try_json(METAR_URL)
+    j = try_json(METAR_URL.format(ids=",".join(METAR_IDS)))
     for m in (j or []):
         try:
             if m.get("wspd") is None: continue
@@ -435,7 +450,7 @@ def fetch_synop():
     from datetime import timedelta
     begin = (datetime.now(timezone.utc) - timedelta(hours=3)).strftime("%Y%m%d%H00")
     try:
-        req = urllib.request.Request(OGIMET_URL.format(begin=begin), headers={"User-Agent": "wendy-foils/surf/1.0"})
+        req = urllib.request.Request(OGIMET_URL.format(block=SYNOP_BLOCK, begin=begin), headers={"User-Agent": "wendy-foils/surf/1.0"})
         with urllib.request.urlopen(req, timeout=40) as r: txt = r.read().decode("utf-8", "ignore")
     except Exception as e:
         sys.stderr.write(f"WARN synop fetch failed: {e}\n"); return []
@@ -696,7 +711,7 @@ def tide_state(h, tides, rng_lo, rng):
 
 def analyse(spot, marine, alt, wind, buoys=None, obs_wind=None):
     M = marine["hourly"]; W = merge_wind(wind) if wind and "hourly" in wind else {}
-    ob = (buoys or {}).get(spot["buoy"])
+    ob = (buoys or {}).get(spot.get("buoy"))
     corr_today = corr_tomorrow = 1.0
     if ob and ob.get("bias_rolling"):
         corr_today = max(BIAS_CLAMP[0], min(BIAS_CLAMP[1], 1.0 / ob["bias_rolling"]))
@@ -707,7 +722,7 @@ def analyse(spot, marine, alt, wind, buoys=None, obs_wind=None):
     A = alt or {}
     global WEIGHTS
     if WEIGHTS is None: WEIGHTS = model_weights()
-    Wm = WEIGHTS.get(spot["buoy"], {})
+    Wm = WEIGHTS.get(spot.get("buoy"), {})
     def consensus(t, hs):
         pairs = [("best_match", hs)] + [(m, A[m].get(t)) for m in A]
         pairs = [(m, v) for m, v in pairs if v is not None]
@@ -822,7 +837,7 @@ def analyse(spot, marine, alt, wind, buoys=None, obs_wind=None):
                      "hs":r1(hs), "face":r1(face), "eff":r1(eff), "per":r1(per),
                      "obs":(ob if d == today_str else None), "corr":(round(corr_today,2) if d == today_str else None),
                      "obs_wind":(obs_wind if d == today_str else None),
-                     "tide_pref":pref, "shom":f"https://maree.shom.fr/harbor/{spot['shom']}", "sdeg":round(sdeg) if sdeg is not None else None,
+                     "tide_pref":pref, "shom":spot.get("tide_url") or f"https://maree.shom.fr/harbor/{spot.get('shom','CAPBRETON')}", "sdeg":round(sdeg) if sdeg is not None else None,
                      "sdir":dir16(sdeg) if sdeg is not None else None,
                      "kt":r1(kt), "wdeg":round(wdeg) if wdeg is not None else None,
                      "wdir":dir16(wdeg) if wdeg is not None else None, "rel":rel,
@@ -908,8 +923,8 @@ def build_html(rows, dates, today, spot_by_name):
     css = "font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;line-height:1.5;"
     p = [f'<div style="{css}max-width:640px">']
     p.append('<h2 style="margin:0 0 4px">🏄 Wendy Surf - today\'s five</h2>')
-    p.append(f'<div style="color:#666;font-size:13px;margin-bottom:14px">{weekday_name(today)} · Soulac to Biarritz · '
-             f'<a href="https://sd4444.github.io/wendy-foils/surf.html">list</a> · <a href="https://sd4444.github.io/wendy-foils/map.html">map</a></div>')
+    p.append(f'<div style="color:#666;font-size:13px;margin-bottom:14px">{weekday_name(today)} · {REGION_INFO[REGION]["title"]} · '
+             f'<a href="{LIST_URL}">list</a> · <a href="{MAP_URL}">map</a></div>')
     top = standouts(rows, today)
     if not top:
         p.append('<div style="background:#f2f2f2;border-left:4px solid #999;padding:12px 14px;border-radius:6px;margin-bottom:16px">'
@@ -952,6 +967,15 @@ def build_subject(rows, today):
     return (f"🏄 {weekday_name(today)}: {b['verdict']} {b['spot'].split(' – ')[0]} {b['size']}, "
             f"{fmt_h(b['win'][0])}-{fmt_h(b['win'][1])}, {len(top)} spots rideable")
 
+if REGION == "pt":
+    import spots_pt as _pt
+    SPOTS, BUOYS, SYNOP_STATIONS, METAR_NAMES, METAR_IDS = _pt.SPOTS, _pt.BUOYS, _pt.SYNOP_STATIONS, _pt.METAR_NAMES, _pt.METAR_IDS
+    SYNOP_BLOCK = "08"
+    TZ = REGION_INFO["pt"]["tz"]
+    REGION_INFO["pt"]["sections"] = _pt.SECTIONS
+    BIAS_LOG = BIAS_LOG.replace("buoy_bias.json", "buoy_bias-pt.json")
+    COPERNICUS_FILE = COPERNICUS_FILE.replace("copernicus.json", "copernicus-pt.json")
+
 def main():
     buoys = roll_bias(fetch_buoys())
     for b in buoys.values():
@@ -979,9 +1003,10 @@ def main():
     flagged = {"today": today, "standouts": [brief(r) for r in standouts(all_rows, today)],
                "tomorrow": [brief(r) for r in standouts(all_rows, dates[1], 3)] if len(dates) > 1 else [],
                "trip": [TRIP_START, TRIP_END]}
-    meta = [{k: s.get(k) for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","report2","forecast","rel","tide_pref","buoy","shom")} for s in SPOTS]
+    meta = [{k: s.get(k) for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","report2","forecast","rel","tide_pref","buoy","shom","tide_url")} for s in SPOTS]
     meta_buoys = buoys
     print(f"\n<!--SUBJECT_START-->{build_subject(all_rows, today)}<!--SUBJECT_END-->")
+    print(f"<!--REGION_START-->{json.dumps(REGION_INFO[REGION], ensure_ascii=False)}<!--REGION_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged, ensure_ascii=False)}<!--JSON_END-->")
     print(f"<!--SPOTS_START-->{json.dumps(meta, ensure_ascii=False)}<!--SPOTS_END-->")
     print(f"<!--BUOYS_START-->{json.dumps(meta_buoys, ensure_ascii=False)}<!--BUOYS_END-->")

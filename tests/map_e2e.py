@@ -18,6 +18,7 @@ port = free_port()
 srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1", "-d", ROOT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(0.8)
 BASE = f"http://127.0.0.1:{port}"
+MAP = os.environ.get("MAP_PAGE", "map.html"); LIST = os.environ.get("LIST_PAGE", "surf.html")
 results = []
 def check(name, ok, detail=""):
     results.append({"check": name, "ok": bool(ok), "detail": str(detail)[:300]})
@@ -39,15 +40,17 @@ with sync_playwright() as p:
     # ---------------- desktop ----------------
     ctx = browser.new_context(viewport={"width": 1400, "height": 900}, device_scale_factor=1)
     page = ctx.new_page(); errors, failed = [], []; wire(page, errors, failed)
-    t0 = time.time(); page.goto(BASE + "/map.html"); wait_ready(page); load_s = time.time() - t0
+    t0 = time.time(); page.goto(BASE + "/" + MAP); wait_ready(page); load_s = time.time() - t0
     check("desktop: page loads with markers", True, f"{load_s:.1f}s")
     n_mk, n_cl = page.locator(".mk").count(), page.locator(".cl").count()
     check("desktop: clusters or pills present at coast zoom", n_mk + n_cl > 0, f"pills={n_mk} clusters={n_cl}")
+    NSPOTS = page.evaluate("DATA.groups.flatMap(g=>g.spots).length"); DEEP_N = page.evaluate("DATA.groups.flatMap(g=>g.spots)[Math.floor(DATA.groups.flatMap(g=>g.spots).length*0.7)].n")
+    DEEP_NAME = page.evaluate(f"DATA.groups.flatMap(g=>g.spots).find(s=>s.n==={DEEP_N}).name")
     tot = page.evaluate("Object.keys(window.__wendy.markers).length")
-    check("desktop: 36 spot markers registered", tot == 36, tot)
+    check("desktop: all spot markers registered", tot == NSPOTS, f"{tot}/{NSPOTS}")
     # all spots inside the initial view
     inview = page.evaluate("""() => { const b = __wendy.map.getBounds(); return Object.values(__wendy.markers).filter(m => b.contains(m.getLatLng())).length; }""")
-    check("desktop: all 36 spots inside the initial view", inview == 36, inview)
+    check("desktop: all spots inside the initial view", inview == NSPOTS, inview)
     page.wait_for_timeout(2500)  # let tiles settle
     page.screenshot(path=f"{OUT}/d1_overview.png")
     # cluster click zooms in
@@ -57,18 +60,19 @@ with sync_playwright() as p:
         z1 = page.evaluate("__wendy.map.getZoom()")
         check("desktop: clicking a cluster zooms in", z1 > z0, f"{z0} -> {z1}")
     # zoom to Anglet/Biarritz: expect 5 individual pills with names
-    page.evaluate("__wendy.map.setView([43.50,-1.55],13,{animate:false})"); page.wait_for_timeout(1200)
+    DENSE = page.evaluate("(()=>{const S=DATA.groups.flatMap(g=>g.spots); let best=S[0],bn=0; S.forEach(a=>{const n=S.filter(b=>Math.hypot((a.lat-b.lat)*111,(a.lon-b.lon)*80)<6).length; if(n>bn){bn=n;best=a;}}); return [best.lat,best.lon];})()")
+    page.evaluate(f"__wendy.map.setView([{DENSE[0]},{DENSE[1]}],13,{{animate:false}})"); page.wait_for_timeout(1200)
     basque = page.evaluate("""() => Array.from(document.querySelectorAll('.mkw .nm')).filter(e => getComputedStyle(e).display!=='none').length""")
     pills = page.locator(".mk").count()
-    check("desktop: zoomed in shows individual pills, no clusters", pills >= 5 and page.locator(".cl").count() == 0, f"pills={pills} clusters={page.locator('.cl').count()}")
-    check("desktop: spot names visible when zoomed in", basque >= 5, basque)
+    check("desktop: zoomed in shows individual pills, no clusters", pills >= 2 and page.locator(".cl").count() == 0, f"pills={pills} clusters={page.locator('.cl').count()}")
+    check("desktop: spot names visible when zoomed in", basque >= 2, basque)
     page.wait_for_timeout(1500); page.screenshot(path=f"{OUT}/d2_biarritz.png")
     # click a pill -> panel
     page.locator(".mk").first.click(); page.wait_for_timeout(600)
     sel = page.evaluate("__wendy.selected")
     h2 = page.locator("#panel h2").inner_text()
     check("desktop: clicking a pill opens the panel for that spot", page.locator("#panel.open").count() == 1 and sel and sel == h2, f"{sel} / {h2}")
-    check("desktop: panel has cam/report/forecast/tide links", page.locator("#panel .links a").count() == 4, page.locator("#panel .links a").count())
+    check("desktop: panel has cam/report/forecast/tide links", page.locator("#panel .links a").count() >= 4, page.locator("#panel .links a").count())
     check("desktop: panel has 7-day strip", page.locator("#panel .cell").count() == 7, page.locator("#panel .cell").count())
     box = page.locator("#panel").bounding_box()
     check("desktop: panel inside viewport", box and box["x"] >= 0 and box["x"] + box["width"] <= 1400 and box["y"] + box["height"] <= 900, box)
@@ -99,8 +103,8 @@ with sync_playwright() as p:
     page.locator("#pclose").click(); page.wait_for_timeout(400)
     check("desktop: close button closes the panel", page.locator("#panel.open").count() == 0)
     # deep link
-    page.goto("about:blank"); page.goto(BASE + "/map.html#s=26&d=1"); wait_ready(page); page.wait_for_timeout(800)
-    check("desktop: deep link opens spot 26 on day 1", page.locator("#panel.open").count() == 1 and "Hossegor" in page.locator("#panel h2").inner_text() and page.evaluate("__wendy.day") == 1, page.locator("#panel h2").inner_text())
+    page.goto("about:blank"); page.goto(BASE + "/" + MAP + "#s=" + str(DEEP_N) + "&d=1"); wait_ready(page); page.wait_for_timeout(800)
+    check("desktop: deep link opens a spot on day 1", page.locator("#panel.open").count() == 1 and page.locator("#panel h2").inner_text() == DEEP_NAME and page.evaluate("__wendy.day") == 1, page.locator("#panel h2").inner_text())
     # keyboard: tab to a chip and press Enter
     page.locator(".chip").nth(3).focus(); page.keyboard.press("Enter"); page.wait_for_timeout(400)
     check("desktop: keyboard operates the day chips", page.evaluate("__wendy.day") == 3)
@@ -115,25 +119,30 @@ with sync_playwright() as p:
     check("desktop: no console errors", not errors, errors[:3])
     check("desktop: no failed requests (tiles excluded)", not failed, failed[:3])
     # buoys drawn
-    check("desktop: 3 buoy markers", page.locator(".by").count() == 3, page.locator(".by").count())
+    check("desktop: buoy markers drawn", page.locator(".by").count() == page.evaluate("DATA.buoys.length"), page.locator(".by").count())
+    # area chips fly the map
+    page.locator("#areas .chip").nth(1).click(); page.wait_for_timeout(900)
+    inside = page.evaluate("(()=>{const s=DATA.region.sections[0]; const pts=DATA.groups.flatMap(g=>g.spots).filter(p=>p.n>=s[1]&&p.n<=s[2]); const b=__wendy.map.getBounds(); return pts.filter(p=>b.contains([p.lat,p.lon])).length===pts.length;})()")
+    check("desktop: area chip frames that stretch", inside)
     # DOM weight
     nodes = page.evaluate("document.getElementsByTagName('*').length")
     check("desktop: DOM node count sane (<1500)", nodes < 1500, nodes)
     # list page still fine + has the switch
-    e2, f2 = [], []; pg2 = ctx.new_page(); wire(pg2, e2, f2); pg2.goto(BASE + "/surf.html"); pg2.wait_for_timeout(1500)
-    check("list page: List/Map switch present", pg2.locator('nav[aria-label="View"] a[href="map.html"]').count() == 1)
+    e2, f2 = [], []; pg2 = ctx.new_page(); wire(pg2, e2, f2); pg2.goto(BASE + "/" + LIST); pg2.wait_for_timeout(1500)
+    check("list page: List/Map switch present", pg2.locator(f'nav[aria-label="View"] a[href="{MAP}"]').count() == 1)
     check("list page: no console errors", not e2, e2[:3])
-    check("list page: renders 36 spot rows", pg2.locator(".srow").count() == 36, pg2.locator(".srow").count())
+    check("list page: renders all spot rows", pg2.locator(".srow").count() == NSPOTS, pg2.locator(".srow").count())
+    check("list page: country and area switches present", pg2.locator('nav[aria-label="Country"] a').count() == 2 and pg2.locator("#chips .chip").count() >= 2)
     ctx.close()
 
     # ---------------- mobile (iPhone 13 class) ----------------
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=3, is_mobile=True, has_touch=True,
                               user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1")
     page = ctx.new_page(); errors, failed = [], []; wire(page, errors, failed)
-    page.goto(BASE + "/map.html"); wait_ready(page)
+    page.goto(BASE + "/" + MAP); wait_ready(page)
     sw = page.evaluate("document.documentElement.scrollWidth"); check("mobile: no horizontal overflow", sw <= 390, sw)
     inview = page.evaluate("""() => { const b = __wendy.map.getBounds(); return Object.values(__wendy.markers).filter(m => b.contains(m.getLatLng())).length; }""")
-    check("mobile: all 36 spots inside the initial view", inview == 36, inview)
+    check("mobile: all spots inside the initial view", inview == NSPOTS, inview)
     chips = page.locator(".chip"); cb = chips.first.bounding_box()
     check("mobile: day chips tall enough to tap (>=38px)", cb and cb["height"] >= 38, cb)
     check("mobile: map fills below the chips", page.locator("#map").bounding_box()["height"] > 500, page.locator("#map").bounding_box())
@@ -142,7 +151,7 @@ with sync_playwright() as p:
     if page.locator(".cl").count():
         z0 = page.evaluate("__wendy.map.getZoom()"); page.locator(".cl").first.tap(); page.wait_for_timeout(900)
         check("mobile: tapping a cluster zooms in", page.evaluate("__wendy.map.getZoom()") > z0)
-    page.evaluate("__wendy.map.setView([43.50,-1.55],13,{animate:false})"); page.wait_for_timeout(1000)
+    page.evaluate(f"__wendy.map.setView([{DENSE[0]},{DENSE[1]}],13,{{animate:false}})"); page.wait_for_timeout(1000)
     page.locator(".mk").first.tap(); page.wait_for_timeout(700)
     check("mobile: tapping a pill opens the bottom sheet", page.locator("#panel.open").count() == 1)
     pb = page.locator("#panel").bounding_box()
@@ -190,7 +199,7 @@ with sync_playwright() as p:
     # ---------------- small desktop / tablet widths ----------------
     for w, h in ((768, 1024), (1024, 700)):
         ctx = browser.new_context(viewport={"width": w, "height": h}); page = ctx.new_page(); e, f = [], []; wire(page, e, f)
-        page.goto(BASE + "/map.html#s=8&d=0"); wait_ready(page); page.wait_for_timeout(800)
+        page.goto(BASE + "/" + MAP + "#s=" + str(DEEP_N) + "&d=0"); wait_ready(page); page.wait_for_timeout(800)
         pb = page.locator("#panel").bounding_box(); sw = page.evaluate("document.documentElement.scrollWidth")
         check(f"{w}x{h}: panel fits, no overflow, no errors", pb and pb["x"] >= 0 and pb["x"] + pb["width"] <= w + 1 and pb["y"] + pb["height"] <= h + 1 and sw <= w and not e, f"panel={pb} sw={sw} err={e[:1]}")
         page.screenshot(path=f"{OUT}/t_{w}.png"); ctx.close()
