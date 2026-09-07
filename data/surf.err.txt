@@ -1,16 +1,5 @@
-buoy Anglet 1.0m @ 6.4s age 21min consensus 1.07 bias 1.07 per model {'best_match': 1.06, 'ecmwf_wam025': 1.08, 'copernicus_ibi': 1.06}
-buoy Saint-Jean-de-Luz 0.9m @ 7.0s age 21min consensus 1.02 bias 1.13 per model {'best_match': 1.07, 'ecmwf_wam025': 1.2, 'ncep_gfswave025': 1.13, 'copernicus_ibi': 1.11}
-copernicus IBI loaded for 36 spots (0.1h old)
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.483&longitude=-1.15&timezone=Europe/Paris&fo
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.001&longitude=-1.203&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.74&longitude=-1.245&timezone=Europe/Paris&forecas
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.64&longitude=-1.255&timezone=Europe/Paris&forecas
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.092&longitude=-1.325&timezone=Europe/Paris&f
-no marine data for Contis
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.85&longitude=-1.385&timezone=Europe/Paris&fo
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.712&longitude=-1.435&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.642&longitude=-1.447&timezone=Europe/Paris&f
-no marine data for Capbreton – Le Prévent
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.537&longitude=-1.512&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.493&longitude=-1.548&timezone=Europe/Paris&f
+copernicus.json is 24h old, ignoring
+buoy Anglet 1.0m @ 7.5s age 19min consensus 1.08 bias 1.08 per model {'best_match': 1.06, 'ecmwf_wam025': 1.1}
+buoy Saint-Jean-de-Luz 0.9m @ 7.5s age 19min consensus 1.02 bias 1.13 per model {'best_match': 1.07, 'ecmwf_wam025': 1.22, 'ncep_gfswave025': 1.11}
+live wind: 9 station readings, 22 spots covered
+copernicus.json is 24h old, ignoring

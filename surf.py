@@ -398,6 +398,96 @@ def fetch_mf_wind():
     if out: sys.stderr.write(f"meteo-france: live wind for {len(out)} spots from {len(cache)} stations\n")
     return out
 
+# ---- free live wind: airport METARs (NOAA) + hourly SYNOP from Meteo-France coastal stations (via Ogimet) ----
+# No key. METAR every 30 min (Biarritz airport is right behind the Anglet/Biarritz beaches; Cazaux covers
+# La Salie/Biscarrosse). SYNOP hourly from Cap Ferret, Biscarrosse, Cazaux, Socoa, Biarritz, Dax.
+# Both feed the same station pool as the optional Meteo-France 6-minute API; the nearest fresh station
+# within OBS_MAX_KM of a spot wins. North Medoc (Soulac..Carcans) has no station within range.
+METAR_URL = "https://aviationweather.gov/api/data/metar?ids=LFBZ,LFBC,LFBD&format=json"
+OGIMET_URL = "https://www.ogimet.com/cgi-bin/getsynop?block=07&begin={begin}"
+SYNOP_STATIONS = {  # WMO id: (name, lat, lon) from Ogimet's station table, 2026-09-07
+    "07500": ("Cap Ferret", 44.632, -1.248), "07502": ("Cazaux", 44.534, -1.132), "07503": ("Biscarrosse", 44.432, -1.248),
+    "07510": ("Bordeaux-Merignac", 44.831, -0.691), "07600": ("Socoa", 43.394, -1.686), "07602": ("Biarritz airport", 43.469, -1.534),
+    "07603": ("Dax", 43.689, -1.07),
+}
+METAR_NAMES = {"LFBZ": "Biarritz airport", "LFBC": "Cazaux airbase", "LFBD": "Bordeaux airport"}
+OBS_MAX_KM = 30
+OBS_MAX_AGE_MIN = 100
+
+def fetch_metar():
+    """[{name, lat, lon, kt, gust, deg, time(utc datetime)}] from the NOAA aviation feed."""
+    out = []
+    j = try_json(METAR_URL)
+    for m in (j or []):
+        try:
+            if m.get("wspd") is None: continue
+            ts = datetime.fromisoformat(m["reportTime"].replace("Z", "+00:00")) if "T" in str(m.get("reportTime")) \
+                 else datetime.fromtimestamp(int(m["obsTime"]), tz=timezone.utc)
+            deg = m.get("wdir"); deg = None if deg in (None, "VRB") else int(deg)
+            out.append({"name": METAR_NAMES.get(m["icaoId"], m["icaoId"]), "lat": float(m["lat"]), "lon": float(m["lon"]),
+                        "kt": float(m["wspd"]), "gust": (float(m["wgst"]) if m.get("wgst") else None), "deg": deg, "time": ts, "src": "METAR"})
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+def fetch_synop():
+    """Latest hourly SYNOP wind for SYNOP_STATIONS via Ogimet (CSV: id,YYYY,MM,DD,HH,mm,message)."""
+    from datetime import timedelta
+    begin = (datetime.now(timezone.utc) - timedelta(hours=3)).strftime("%Y%m%d%H00")
+    try:
+        req = urllib.request.Request(OGIMET_URL.format(begin=begin), headers={"User-Agent": "wendy-foils/surf/1.0"})
+        with urllib.request.urlopen(req, timeout=40) as r: txt = r.read().decode("utf-8", "ignore")
+    except Exception as e:
+        sys.stderr.write(f"WARN synop fetch failed: {e}\n"); return []
+    latest = {}
+    for line in txt.splitlines():
+        parts = line.split(",", 6)
+        if len(parts) < 7 or parts[0] not in SYNOP_STATIONS: continue
+        sid, y, mo, d, h, mi, msg = parts
+        try: ts = datetime(int(y), int(mo), int(d), int(h), int(mi), tzinfo=timezone.utc)
+        except ValueError: continue
+        if sid in latest and latest[sid][0] >= ts: continue
+        latest[sid] = (ts, msg)
+    out = []
+    for sid, (ts, msg) in latest.items():
+        g = msg.replace("=", "").split()
+        try:
+            i = g.index(sid)                 # AAXX YYGGiw IIiii irixhVV Nddff ...
+            iw = g[i - 1][4]                 # 0/1 = m/s, 3/4 = knots
+            nddff = g[i + 2]
+            if len(nddff) != 5 or not nddff[1:].isdigit(): continue
+            dd, ff = int(nddff[1:3]), int(nddff[3:5])
+            if ff == 99 and g[i + 3].startswith("00"): ff = int(g[i + 3][2:5])
+            kt = ff * 1.94384 if iw in "01" else float(ff)
+            deg = None if dd in (0, 99) else dd * 10
+            name, lat, lon = SYNOP_STATIONS[sid]
+            out.append({"name": name, "lat": lat, "lon": lon, "kt": round(kt, 1), "gust": None, "deg": deg, "time": ts, "src": "SYNOP"})
+        except (ValueError, IndexError):
+            continue
+    return out
+
+def obs_wind_by_spot():
+    """{spot name: {station, kt, gust, deg, age_min, dist_km, src}} from the freshest station within OBS_MAX_KM.
+    Pool = METAR + SYNOP (+ Meteo-France 6-minute when a key is set, which wins on freshness)."""
+    import math
+    now = datetime.now(timezone.utc)
+    pool = [o for o in fetch_metar() + fetch_synop() if (now - o["time"]).total_seconds() / 60 <= OBS_MAX_AGE_MIN]
+    def dist(a, b, c, d): return math.hypot((a - c) * 111.0, (b - d) * 111.0 * math.cos(math.radians(a)))
+    out = {}
+    mf = fetch_mf_wind()
+    for sp in SPOTS:
+        if sp["name"] in mf: out[sp["name"]] = dict(mf[sp["name"]], src="Meteo-France"); continue
+        near = [(dist(sp["lat"], sp["lon"], o["lat"], o["lon"]), o) for o in pool]
+        near = [(dk, o) for dk, o in near if dk <= OBS_MAX_KM]
+        if not near: continue
+        # nearest first; a METAR and SYNOP from the same site: prefer the fresher
+        near.sort(key=lambda x: (round(x[0] / 3), -x[1]["time"].timestamp()))
+        dk, o = near[0]
+        out[sp["name"]] = {"station": o["name"], "kt": o["kt"], "gust": o["gust"], "deg": o["deg"],
+                           "age_min": round((now - o["time"]).total_seconds() / 60), "dist_km": round(dk, 1), "src": o["src"]}
+    if pool: sys.stderr.write(f"live wind: {len(pool)} station readings, {len(out)} spots covered\n")
+    return out
+
 # ---- fetch ----
 COPERNICUS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "copernicus.json")
 COPERNICUS_MAX_AGE_H = 18
@@ -866,7 +956,7 @@ def main():
     buoys = roll_bias(fetch_buoys())
     for b in buoys.values():
         sys.stderr.write(f"buoy {b['name']} {b['hs']}m @ {b['tp']}s age {b['age_min']}min consensus {b['model_hs']} bias {b['bias']} per model {b['model_bias']}\n")
-    mf = fetch_mf_wind()
+    mf = obs_wind_by_spot()
     all_rows = []
     for spot in SPOTS:
         marine, alt, wind = fetch_spot(spot)
