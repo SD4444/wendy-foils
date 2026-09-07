@@ -15,6 +15,9 @@ on:
     # Surf trip (France, 14 Sep - 4 Oct 2026): midday refresh of the surf side, 10:00 UTC = 12:00 Paris.
     - cron: "0 10 14-30 9 *"
     - cron: "0 10 1-4 10 *"
+    # Evening refresh during the trip, 16:00 UTC = 18:00 Paris (added 2026-09-07).
+    - cron: "0 16 14-30 9 *"
+    - cron: "0 16 1-4 10 *"
   workflow_dispatch:
     inputs:
       mode:
@@ -43,7 +46,7 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "${{ github.event.schedule }}" in
               "0 14 * * 0") echo "mode=weekly" >> "$GITHUB_OUTPUT";;
-              "0 10 "*)     echo "mode=surf"   >> "$GITHUB_OUTPUT";;
+              "0 10 "*|"0 16 "*) echo "mode=surf" >> "$GITHUB_OUTPUT";;
               *)            echo "mode=daily"  >> "$GITHUB_OUTPUT";;
             esac
           else

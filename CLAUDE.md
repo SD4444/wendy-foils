@@ -161,7 +161,7 @@ Each routine's step 1 is a **self-healing freshness gate** (updated 2026-07-05):
 
 Added 2026-09-05. The app has **two sides toggled by the Foil / Surf switch** at the top of every dashboard page. The foil side (sections 1-6) is unchanged. The surf side is a separate engine + page for Simon's surf trip along the French Atlantic coast, Soulac-sur-Mer to Biarritz (Gironde, Landes, Pays Basque).
 
-**What Simon asked for (2026-09-05):** whole coast, no fixed base, "anything above waist high and relatively clean". Dashboard only, refreshed twice a day (05:00 and 12:00 local), plus ONE morning inbox ping with the five standouts. No dedupe: the ping goes out every trip morning even when the call is "nothing clean".
+**What Simon asked for (2026-09-05):** whole coast, no fixed base, "anything above waist high and relatively clean". Dashboard only, refreshed three times a day (05:00, 12:00 and 18:00 local), plus ONE morning inbox ping with the five standouts. No dedupe: the ping goes out every trip morning even when the call is "nothing clean".
 
 **Files**
 - `surf.py` - surf engine. `python3 surf.py` (no args) does all 36 spots, 7 days. Same delimiter convention as wendy.py plus a `<!--SPOTS_START-->` block (spot metadata: cams, links, notes). Pure stdlib.
@@ -210,7 +210,7 @@ Added 2026-09-05. The app has **two sides toggled by the Foil / Surf switch** at
 - **Surfline** (LOLA + ML spot forecasts, the industry reference, WSL uses it): no public API; third-party scrapers exist (pysurfline, Apify) but are ToS-grey. Surf-Forecast.com, Windguru, Windy all run on the same public models we already read (ECMWF/GFS/ICON + MFWAM/WAM), so they are cross-check UIs, not extra data. Magicseaweed shut down in 2023 (merged into Surfline). Human cross-check links stay in the spot table.
 - **Tide authority**: SHOM API is paid; SHOM website free. maree.info / point-maree scrape-only.
 
-**Schedule.** `forecast.yml` gained mode `surf`: the daily 03:00 UTC run also refreshes the surf side, and extra crons `0 10 14-30 9 *` + `0 10 1-4 10 *` (12:00 Paris) do the midday refresh during the trip. Manual: `gh workflow run forecast.yml -f mode=surf` (as SD4444). Morning ping routines (RemoteTrigger, same self-healing freshness gate as the foil routines, reading `data/surf.fetched_at.txt`, calendar invite to simon.demarmels@gmail.com at 07:00 Paris, dashboard link to surf.html, logs `surf` lines to `logs/runs.md`):
+**Schedule.** `forecast.yml` gained mode `surf`: the daily 03:00 UTC run also refreshes the surf side, and extra crons `0 10 14-30 9 *` + `0 10 1-4 10 *` (12:00 Paris) and `0 16 14-30 9 *` + `0 16 1-4 10 *` (18:00 Paris, added 2026-09-07) do the midday and evening refreshes during the trip. The "Pick mode" step maps any `0 10 *` or `0 16 *` schedule to `surf`. Manual: `gh workflow run forecast.yml -f mode=surf` (as SD4444). Morning ping routines (RemoteTrigger, same self-healing freshness gate as the foil routines, reading `data/surf.fetched_at.txt`, calendar invite to simon.demarmels@gmail.com at 07:00 Paris, dashboard link to surf.html, logs `surf` lines to `logs/runs.md`):
 - `trig_011UZB6qkSrVY9XF7nN3J3wo` - cron `30 4 14-30 9 *` (06:30 Paris, 14-30 Sep).
 - `trig_01TJmtxJVGEdt7FvttCddP7H` - cron `30 4 1-4 10 *` (06:30 Paris, 1-4 Oct).
 Both have a date guard and do nothing outside 14 Sep - 4 Oct. After the trip they simply never fire again; delete them at https://claude.ai/code/routines if you want the list clean.

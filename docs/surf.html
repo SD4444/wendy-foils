@@ -298,7 +298,7 @@ if (DATA.feature){
 
 $("#tiles").innerHTML = DATA.tiles.map(t=>`<div class="tile"><span class="k">${esc(t[0])}</span><span class="v">${esc(t[1])}</span><span class="s">${esc(t[2]||"")}</span></div>`).join("");
 $("#sources").innerHTML = DATA.sources.map(s=>`<span class="s">${esc(s)}</span>`).join("");
-$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00 and 12:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam links were checked one by one on 6 Sep 2026 (what each camera shows, whether it was live). Report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
+$("#fmeta").innerHTML = `Wave, tide and wind data from <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0). Updated 05:00, 12:00 and 18:00 during the trip (${esc(DATA.trip[0])} to ${esc(DATA.trip[1])}). Cam links were checked one by one on 6 Sep 2026 (what each camera shows, whether it was live). Report and forecast links come from your spreadsheet. Foil side: <a href="index.html">Wendy Foils</a>.`;
 
 // today's five
 $("#five").innerHTML = DATA.five.length ? DATA.five.map((f,i)=>
