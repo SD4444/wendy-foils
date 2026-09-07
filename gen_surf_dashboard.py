@@ -157,7 +157,7 @@ def build_data(grid, spots_meta, flagged, buoys=None):
         if not groups or groups[-1]["dept"] != g:
             groups.append({"dept": g, "spots": []})
         groups[-1]["spots"].append({"name": s, "short": short(s), "sub": m["sector"], "cam": m["cam"], "n": m["n"], "lat": m["lat"], "lon": m["lon"],
-                                    "report": m["report"], "forecast": m["forecast"], "rel": m["rel"],
+                                    "report": m["report"], "report2": m.get("report2"), "forecast": m["forecast"], "rel": m["rel"],
                                     "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                                     "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                                     "shom": f"https://maree.shom.fr/harbor/{m.get('shom','CAPBRETON')}", "tide_pref": m.get("tide_pref","mid"),
@@ -174,7 +174,7 @@ def build_data(grid, spots_meta, flagged, buoys=None):
                 "wind": wind_txt(r), "window": f"{fmt_h(r['win'][0])}–{fmt_h(r['win'][1])}" if r.get("win") else "",
                 "tide": tide_txt(r.get("tides") or {}), "water": r.get("water"), "air": r.get("air"),
                 "why": (r.get("why") or ""), "conf": r.get("conf") or "", "cam": m["cam"], "report": m["report"],
-                "forecast": m["forecast"], "rel": r.get("rel"), "sdeg": r.get("sdeg"), "wdeg": r.get("wdeg"),
+                "forecast": m["forecast"], "report2": m.get("report2"), "rel": r.get("rel"), "sdeg": r.get("sdeg"), "wdeg": r.get("wdeg"),
                 "cam_shows": m.get("cam_shows",""), "cam_dedicated": m.get("cam_dedicated", True), "cam_km": m.get("cam_km", 0),
                 "cam_alts": m.get("cam_alts", []), "cam_status": m.get("cam_status",""),
                 "date": r["date"], "day": dlong(r["date"])}
@@ -308,7 +308,7 @@ def render_map(data):
     """Map view: same DATA, Leaflet page. Reuses the list page's hourly chart/modal JS and CSS verbatim."""
     tpl = open(MAP_TEMPLATE, encoding="utf-8").read()
     # per-day cards carry only what changes by day; the static spot fields (cams, links, tide pref) live once in groups
-    static = {"cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","shom",
+    static = {"cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","report2","forecast","shom",
               "sector","short","spot","tide_label","tide_pref","date","day","section","why_best","swell","obs","tide","wind"}
     data = dict(data, cards={k: {kk: vv for kk, vv in v.items() if kk not in static} for k, v in data["cards"].items()})
     js_a = TEMPLATE.index("// hourly modal")
@@ -602,7 +602,7 @@ const arrow = (deg, label, col) => (deg==null) ? "" :
      <g transform="rotate(${deg} 15 15)"><path d="M15 4 L19 16 L15 13 L11 16 Z" fill="${col}"/></g></svg>`;
 const camLabel = f => f.cam_dedicated ? "cam" : `nearest cam, ${Math.round(f.cam_km)} km`;
 const camWarn = f => /stale|maintenance/i.test(f.cam_status||"") ? " (feed down at last check)" : "";
-const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}${camWarn(f)?" (down)":""}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
+const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}${camWarn(f)?" (down)":""}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a>${f.report2?`<a href="${esc(f.report2)}" target="_blank" rel="noopener">report 2</a>`:""}<a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a></div>`;
 const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>${(a.state==="stale"||a.state==="down")?" (down)":""}`).join(", ")}.`:""}</p>` : "";
 const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
 

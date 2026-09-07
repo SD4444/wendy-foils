@@ -215,7 +215,7 @@ const camLabel = f => f.cam_dedicated ? "cam" : `nearest cam, ${Math.round(f.cam
 const camWarn = f => /stale|maintenance/i.test(f.cam_status||"") ? " (feed down at last check)" : "";
 const altLabel = t => t.replace(/\s\d+(\.\d+)?\s*km.*$/,"").split(/[,;:(]/)[0].trim().slice(0,42);
 const camline = f => f.cam_shows ? `<p class="camline"><b>${f.cam_dedicated?"Cam":"No cam here"}${camWarn(f)}:</b> ${esc(f.cam_shows.replace(/[.\s]*$/,"."))}${(f.cam_alts&&f.cam_alts.length)?` Also: ${f.cam_alts.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.shows)}">${esc(altLabel(a.shows))}</a>${(a.state==="stale"||a.state==="down")?" (down)":""}`).join(", ")}.`:""}</p>` : "";
-const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}${camWarn(f)?" (down)":""}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a><a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a><a href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></div>`;
+const linkrow = f => `<div class="links"><a class="cam" href="${esc(f.cam)}" target="_blank" rel="noopener" title="${esc(f.cam_shows)}">&#128247; ${camLabel(f)}${camWarn(f)?" (down)":""}</a><a href="${esc(f.report)}" target="_blank" rel="noopener">report</a>${f.report2?`<a href="${esc(f.report2)}" target="_blank" rel="noopener">report 2</a>`:""}<a href="${esc(f.forecast)}" target="_blank" rel="noopener">forecast</a><a href="${esc(f.shom)}" target="_blank" rel="noopener">tide table</a></div>`;
 
 /*SHARED_MODAL*/
 

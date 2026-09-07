@@ -101,7 +101,7 @@ SPOTS = [
   "cam":"https://m.viewsurf.com/univers/surf/vue/1255-1202898780-france-aquitaine-carcans-la-plage","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/carcans/584204204e65fad6a7709034",
   "rel":"Medium","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":8,"name":"Lacanau-Océan","dept":"Gironde","sector":"Lacanau","lat":45.001,"lon":-1.203,"face":275,"shelter":0,
-  "cam":"https://gosurf.fr/webcam/fr/9/Lacanau-Plage-de-Lacanau-Ocean","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/lacanau/5842041f4e65fad6a7708c8d",
+  "cam":"https://gosurf.fr/webcam/fr/9/Lacanau-Plage-de-Lacanau-Ocean","report":"https://www.lacanausurfinfo.com/","report2":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/lacanau/5842041f4e65fad6a7708c8d",
   "rel":"High","tide_pref":"any","buoy":"cap_ferret","shom":"ARCACHON_EYRAC"},
  {"n":9,"name":"Le Porge-Océan","dept":"Gironde","sector":"Le Porge","lat":44.885,"lon":-1.222,"face":275,"shelter":0,
   "cam":"https://www.medocpleinsud.com/organiser/webcam-le-porge-ocean/","report":"https://www.surf-report.com/meteo-surf/france/gironde/","forecast":"https://www.surfline.com/surf-report/le-porge/584204204e65fad6a7708fe2",
@@ -922,7 +922,7 @@ def build_html(rows, dates, today, spot_by_name):
             p.append(f'<li style="margin-bottom:10px"><strong>{r["spot"]}</strong> '
                      f'<span style="background:{c};color:#fff;padding:1px 7px;border-radius:10px;font-size:12px">{r["verdict"]}</span> '
                      f'{stars(r["score"])}<br><span style="font-size:14px;color:#444">{r["why"].split(";")[0]}; {tide_words(r["tides"])}</span><br>'
-                     f'<span style="font-size:12px"><a href="{MAP_URL}#s={s["n"]}&amp;d=0">map</a> · <a href="{s["cam"]}">{"cam" if s.get("cam_dedicated", True) else f"nearest cam, {round(s.get('cam_km', 0))} km"}</a> · <a href="{s["report"]}">report</a> · <a href="{s["forecast"]}">forecast</a></span></li>')
+                     f'<span style="font-size:12px"><a href="{MAP_URL}#s={s["n"]}&amp;d=0">map</a> · <a href="{s["cam"]}">{"cam" if s.get("cam_dedicated", True) else f"nearest cam, {round(s.get('cam_km', 0))} km"}</a> · <a href="{s["report"]}">report</a>{(' · <a href="' + s["report2"] + '">report 2</a>') if s.get("report2") else ''} · <a href="{s["forecast"]}">forecast</a></span></li>')
         p.append('</ol>')
     # tomorrow preview
     if len(dates) > 1:
@@ -979,7 +979,7 @@ def main():
     flagged = {"today": today, "standouts": [brief(r) for r in standouts(all_rows, today)],
                "tomorrow": [brief(r) for r in standouts(all_rows, dates[1], 3)] if len(dates) > 1 else [],
                "trip": [TRIP_START, TRIP_END]}
-    meta = [{k: s[k] for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","forecast","rel","tide_pref","buoy","shom")} for s in SPOTS]
+    meta = [{k: s.get(k) for k in ("n","name","dept","sector","lat","lon","face","shelter","cam","cam_shows","cam_type","cam_status","cam_dedicated","cam_km","cam_alts","report","report2","forecast","rel","tide_pref","buoy","shom")} for s in SPOTS]
     meta_buoys = buoys
     print(f"\n<!--SUBJECT_START-->{build_subject(all_rows, today)}<!--SUBJECT_END-->")
     print(f"<!--JSON_START-->{json.dumps(flagged, ensure_ascii=False)}<!--JSON_END-->")

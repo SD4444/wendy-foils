@@ -106,16 +106,17 @@ jobs:
           MODE="${{ steps.mode.outputs.mode }}"
           git config user.name "wendy-bot"
           git config user.email "actions@github.com"
-          git add data/ docs/index.html docs/surf.html docs/map.html
-          if git diff --cached --quiet; then
-            echo "No changes to commit"; exit 0
-          fi
-          git commit -m "Wendy: $MODE forecast data $(date -u +%Y-%m-%d)"
-          # The cloud routine pushes to the same branch, so rebase-and-retry to avoid races.
+          # Generated outputs always win: park them, sync to the latest remote, put them back, commit, push.
+          # (A plain rebase could conflict when a human push landed mid-run, and then every retry failed.)
+          OUT="$(mktemp -d)"; mkdir -p "$OUT/docs"
+          cp -R data "$OUT/"; for f in index.html surf.html map.html; do [ -f "docs/$f" ] && cp "docs/$f" "$OUT/docs/"; done
           for attempt in 1 2 3 4 5; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -R "$OUT/data/." data/; cp "$OUT"/docs/*.html docs/ 2>/dev/null || true
+            git add data/ docs/index.html docs/surf.html docs/map.html
+            if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
+            git commit -q -m "Wendy: $MODE forecast data $(date -u +%Y-%m-%d)"
             if git push; then echo "pushed on attempt $attempt"; exit 0; fi
-            echo "push rejected, rebasing (attempt $attempt)"
-            git pull --rebase --autostash origin main || true
-            sleep 3
+            echo "push rejected, resyncing (attempt $attempt)"; sleep 5
           done
           echo "push failed after retries"; exit 1

@@ -13,10 +13,11 @@
    }
   },
   "2026-09-07": {
-   "bias": 1.08,
+   "bias": 1.07,
    "models": {
-    "best_match": 1.06,
-    "ecmwf_wam025": 1.1
+    "best_match": 1.04,
+    "ecmwf_wam025": 1.12,
+    "copernicus_ibi": 1.04
    }
   }
  },
@@ -34,9 +35,10 @@
   "2026-09-07": {
    "bias": 1.13,
    "models": {
-    "best_match": 1.07,
-    "ecmwf_wam025": 1.22,
-    "ncep_gfswave025": 1.11
+    "best_match": 1.04,
+    "ecmwf_wam025": 1.24,
+    "ncep_gfswave025": 1.13,
+    "copernicus_ibi": 1.12
    }
   }
  }
