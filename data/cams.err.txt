@@ -1,0 +1,1 @@
+cams: 72 urls, {'stale': 5, 'live': 51, 'unknown': 14, 'down': 2}; best cam not live for: Soulac-sur-Mer: stale (248h); La Salie Nord / Sud: stale; Mimizan: down
