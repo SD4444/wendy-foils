@@ -1,6 +1,15 @@
 {
  "cap_ferret": {
-  "2026-09-05": 1.51
+  "2026-09-05": 1.51,
+  "2026-09-08": {
+   "bias": 1.35,
+   "models": {
+    "best_match": 1.38,
+    "ecmwf_wam025": 1.28,
+    "ncep_gfswave025": 1.52,
+    "copernicus_ibi": 1.24
+   }
+  }
  },
  "anglet": {
   "2026-09-05": 1.37,
@@ -18,6 +27,14 @@
     "best_match": 1.04,
     "ecmwf_wam025": 1.12,
     "copernicus_ibi": 1.04
+   }
+  },
+  "2026-09-08": {
+   "bias": 1.12,
+   "models": {
+    "best_match": 1.12,
+    "ecmwf_wam025": 1.14,
+    "copernicus_ibi": 1.11
    }
   }
  },
@@ -39,6 +56,15 @@
     "ecmwf_wam025": 1.24,
     "ncep_gfswave025": 1.13,
     "copernicus_ibi": 1.12
+   }
+  },
+  "2026-09-08": {
+   "bias": 1.47,
+   "models": {
+    "best_match": 1.37,
+    "ecmwf_wam025": 1.63,
+    "ncep_gfswave025": 1.37,
+    "copernicus_ibi": 1.53
    }
   }
  }
