@@ -1,17 +1,17 @@
 {
- "checked_at": "2026-09-09T05:15:27Z",
+ "checked_at": "2026-09-09T07:45:24Z",
  "stale_hours": 24,
  "cams": {
   "https://pv.viewsurf.com/2180/Soulac": {
    "url": "https://pv.viewsurf.com/2180/Soulac",
    "http": 200,
-   "frame_age_h": 296.4,
+   "frame_age_h": 298.9,
    "state": "stale"
   },
   "https://viewsurf.com/univers/surf/vue/15742-france-aquitaine-soulac-sur-mer-panoramique-hd": {
    "url": "https://viewsurf.com/univers/surf/vue/15742-france-aquitaine-soulac-sur-mer-panoramique-hd",
    "http": 200,
-   "frame_age_h": 296.4,
+   "frame_age_h": 298.9,
    "state": "stale"
   },
   "https://pv.viewsurf.com/1704/Vendays-Montalivet-Plage": {
@@ -23,7 +23,7 @@
   "https://viewsurf.com/univers/surf/vue/13900-france-aquitaine-vendays-montalivet-plage-nord": {
    "url": "https://viewsurf.com/univers/surf/vue/13900-france-aquitaine-vendays-montalivet-plage-nord",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.9,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/57/Montalivet-Plage-Centrale": {
@@ -35,7 +35,7 @@
   "https://viewsurf.com/univers/surf/vue/13896-france-aquitaine-vendays-montalivet-panoramique-hd": {
    "url": "https://viewsurf.com/univers/surf/vue/13896-france-aquitaine-vendays-montalivet-panoramique-hd",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 4.9,
    "state": "live"
   },
   "https://pv.viewsurf.com/410/Lacanau-Plage-Nord-Surf-club": {
@@ -47,37 +47,37 @@
   "https://viewsurf.com/univers/plage/vue/11106-france-aquitaine-hourtin-plage": {
    "url": "https://viewsurf.com/univers/plage/vue/11106-france-aquitaine-hourtin-plage",
    "http": 200,
-   "frame_age_h": 13.5,
+   "frame_age_h": 1.7,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/656-france-aquitaine-lacanau-plage-centrale": {
    "url": "https://viewsurf.com/univers/surf/vue/656-france-aquitaine-lacanau-plage-centrale",
    "http": 200,
-   "frame_age_h": 9.1,
+   "frame_age_h": 5.6,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/1255-france-aquitaine-carcans-la-plage": {
    "url": "https://viewsurf.com/univers/surf/vue/1255-france-aquitaine-carcans-la-plage",
    "http": 200,
-   "frame_age_h": 2.1,
+   "frame_age_h": 2.7,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/658-france-aquitaine-lacanau-lacanau-surf-club": {
    "url": "https://viewsurf.com/univers/surf/vue/658-france-aquitaine-lacanau-lacanau-surf-club",
    "http": 200,
-   "frame_age_h": 2.5,
+   "frame_age_h": 13.5,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/660-france-aquitaine-lacanau-poste-de-secours-nord": {
    "url": "https://viewsurf.com/univers/surf/vue/660-france-aquitaine-lacanau-poste-de-secours-nord",
    "http": 200,
-   "frame_age_h": 1.4,
+   "frame_age_h": 6.9,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/654-france-aquitaine-lacanau-sud-du-poste-de-secours-nord": {
    "url": "https://viewsurf.com/univers/surf/vue/654-france-aquitaine-lacanau-sud-du-poste-de-secours-nord",
    "http": 200,
-   "frame_age_h": 1.7,
+   "frame_age_h": 2.2,
    "state": "live"
   },
   "https://www.skaping.com/medoc-plein-sud/le-porge-ocean/live": {
@@ -107,7 +107,7 @@
   "https://barrelsurfing.fr/truc-vert/": {
    "url": "https://barrelsurfing.fr/truc-vert/",
    "http": 200,
-   "frame_age_h": 0.3,
+   "frame_age_h": 0.1,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/18462-france-aquitaine-la-teste-de-buch-plage-de-la-salie": {
@@ -134,7 +134,7 @@
   "https://viewsurf.com/univers/surf/vue/11358-france-aquitaine-biscarrosse-live": {
    "url": "https://viewsurf.com/univers/surf/vue/11358-france-aquitaine-biscarrosse-live",
    "http": 200,
-   "frame_age_h": 0.8,
+   "frame_age_h": 0.4,
    "state": "live"
   },
   "https://www.biscagrandslacs.co.uk/discover/all-our-webcams/webcam-biscarrosse-plage-centrale": {
@@ -170,43 +170,43 @@
   "https://www.viewsurf.com/univers/surf/vue/3112-france-aquitaine-mimizan-panoramique-video": {
    "url": "https://www.viewsurf.com/univers/surf/vue/3112-france-aquitaine-mimizan-panoramique-video",
    "http": 200,
-   "frame_age_h": 0.6,
+   "frame_age_h": 1.1,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/184/Mimizan-Plage-Centrale": {
    "url": "https://gosurf.fr/webcam/fr/184/Mimizan-Plage-Centrale",
    "http": 200,
-   "frame_age_h": 0.0,
+   "frame_age_h": 0.1,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/163/Contis-Plage-de-Contis": {
    "url": "https://gosurf.fr/webcam/fr/163/Contis-Plage-de-Contis",
    "http": 200,
-   "frame_age_h": 0.0,
+   "frame_age_h": 0.1,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/17572-france-aquitaine-contis-plage-de-contis-vue-ouest": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17572-france-aquitaine-contis-plage-de-contis-vue-ouest",
    "http": 200,
-   "frame_age_h": 0.5,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/17344-france-aquitaine-contis-panoramique-hd": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17344-france-aquitaine-contis-panoramique-hd",
    "http": 200,
-   "frame_age_h": 14.5,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/14302-france-aquitaine-moliets-et-maa-nord": {
    "url": "https://www.viewsurf.com/univers/surf/vue/14302-france-aquitaine-moliets-et-maa-nord",
    "http": 200,
-   "frame_age_h": 11.6,
+   "frame_age_h": 1.1,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/17346-france-aquitaine-contis-plage-de-contis": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17346-france-aquitaine-contis-plage-de-contis",
    "http": 200,
-   "frame_age_h": 0.8,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/187/Moliets-Plage-Centrale": {
@@ -230,7 +230,7 @@
   "https://www.viewsurf.com/univers/surf/vue/13364-france-aquitaine-moliets-et-maa-panoramique-hd": {
    "url": "https://www.viewsurf.com/univers/surf/vue/13364-france-aquitaine-moliets-et-maa-panoramique-hd",
    "http": 200,
-   "frame_age_h": 0.5,
+   "frame_age_h": 1.1,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/85/Vieux-Boucau-Plage-de-Vieux-Boucau": {
@@ -248,7 +248,7 @@
   "https://gosurf.fr/webcam/fr/49/Seignosse-Plage-du-Penon": {
    "url": "https://gosurf.fr/webcam/fr/49/Seignosse-Plage-du-Penon",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://www.seignosse-tourisme.com/infos/webcams-seignosse/": {
@@ -260,37 +260,37 @@
   "https://www.viewsurf.com/univers/surf/vue/14378-france-aquitaine-seignosse-le-penon": {
    "url": "https://www.viewsurf.com/univers/surf/vue/14378-france-aquitaine-seignosse-le-penon",
    "http": 200,
-   "frame_age_h": 2.5,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/79/Seignosse-Plage-des-Bourdaines-Plage-des-Estagnots": {
    "url": "https://gosurf.fr/webcam/fr/79/Seignosse-Plage-des-Bourdaines-Plage-des-Estagnots",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://pv.viewsurf.com/2368/Seignosse-Les-Bourdaines": {
    "url": "https://pv.viewsurf.com/2368/Seignosse-Les-Bourdaines",
    "http": 200,
-   "frame_age_h": 0.2,
+   "frame_age_h": 0.7,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/21/Hossegor-La-Centrale": {
    "url": "https://gosurf.fr/webcam/fr/21/Hossegor-La-Centrale",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/170/Hossegor-Plage-de-la-Nord": {
    "url": "https://gosurf.fr/webcam/fr/170/Hossegor-Plage-de-la-Nord",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/2058-france-aquitaine-soorts-hossegor-plage": {
    "url": "https://www.viewsurf.com/univers/surf/vue/2058-france-aquitaine-soorts-hossegor-plage",
    "http": 200,
-   "frame_age_h": 2.4,
+   "frame_age_h": 1.0,
    "state": "live"
   },
   "https://pv.viewsurf.com/2534/Capbreton-Santocha": {
@@ -302,7 +302,7 @@
   "https://gosurf.fr/webcam/fr/83/Capbreton-Plage-du-Santosha-de-La-Piste": {
    "url": "https://gosurf.fr/webcam/fr/83/Capbreton-Plage-du-Santosha-de-La-Piste",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://www.landesatlantiquesud.com/webcams/capbreton/": {
@@ -320,7 +320,7 @@
   "https://gosurf.fr/webcam/fr/19/Capbreton-Plage-du-Prevent": {
    "url": "https://gosurf.fr/webcam/fr/19/Capbreton-Plage-du-Prevent",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://www.landesatlantiquesud.com/webcams/labenne/": {
@@ -338,13 +338,13 @@
   "https://viewsurf.com/univers/surf/vue/5892-france-aquitaine-ondres-la-plage": {
    "url": "https://viewsurf.com/univers/surf/vue/5892-france-aquitaine-ondres-la-plage",
    "http": 200,
-   "frame_age_h": 10.8,
+   "frame_age_h": 0.3,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/15934-france-aquitaine-ondres-panoramique": {
    "url": "https://viewsurf.com/univers/surf/vue/15934-france-aquitaine-ondres-panoramique",
    "http": 200,
-   "frame_age_h": 1.2,
+   "frame_age_h": 17.4,
    "state": "live"
   },
   "https://pv.viewsurf.com/2134/Anglet-Plage-de-La-Barre-et-embouchure-de-l-Adour": {

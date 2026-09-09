@@ -1,13 +1,8 @@
 live wind: 9 station readings, 22 spots covered
 copernicus IBI loaded for 36 spots (0.1h old)
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&f
-no marine data for Le Pin Sec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.885&longitude=-1.222&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.67&longitude=-1.253&timezone=Europe/Paris&forecas
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.092&longitude=-1.325&timezone=Europe/Paris&f
-no marine data for Contis
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.705&longitude=-1.25&timezone=Europe/Paris&forecas
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=44.448&longitude=-1.255&timezone=Europe/Paris&foreca
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.818&longitude=-1.395&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.672&longitude=-1.445&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.565&longitude=-1.485&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.485&longitude=-1.559&timezone=Europe/Paris&f
-no marine data for Biarritz – Grande Plage
+no marine data for Messanges
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.52&longitude=-1.535&timezone=Europe/Paris&forecas
