@@ -1,1 +1,1 @@
-cams: 133 urls, {'stale': 5, 'live': 52, 'unknown': 76}; best cam not live for: Soulac-sur-Mer: stale (320h); La Salie Nord / Sud: stale
+cams: 133 urls, {'stale': 5, 'live': 52, 'unknown': 76}; best cam not live for: Soulac-sur-Mer: stale (323h); La Salie Nord / Sud: stale
