@@ -64,12 +64,11 @@
    }
   },
   "2026-09-11": {
-   "bias": 1.04,
+   "bias": 0.96,
    "models": {
-    "best_match": 1.08,
-    "ecmwf_wam025": 1.02,
-    "ncep_gfswave025": 0.98,
-    "copernicus_ibi": 1.09
+    "ecmwf_wam025": 0.92,
+    "ncep_gfswave025": 0.92,
+    "copernicus_ibi": 1.04
    }
   }
  },
@@ -110,11 +109,12 @@
    }
   },
   "2026-09-11": {
-   "bias": 1.51,
+   "bias": 1.56,
    "models": {
     "best_match": 1.7,
-    "ecmwf_wam025": 1.4,
-    "copernicus_ibi": 1.44
+    "ecmwf_wam025": 1.39,
+    "ncep_gfswave025": 1.67,
+    "copernicus_ibi": 1.5
    }
   }
  },
@@ -151,11 +151,11 @@
    }
   },
   "2026-09-11": {
-   "bias": 1.35,
+   "bias": 1.21,
    "models": {
-    "best_match": 1.48,
-    "ncep_gfswave025": 1.48,
-    "copernicus_ibi": 1.13
+    "best_match": 1.33,
+    "ncep_gfswave025": 1.33,
+    "copernicus_ibi": 1.0
    }
   }
  }

@@ -4,12 +4,14 @@ WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out>
 no marine data for Le Pin Sec
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.885&longitude=-1.222&timezone=Europe/Paris&f
 no marine data for Le Porge-Océan
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.705&longitude=-1.25&timezone=Europe/Paris&fo
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.67&longitude=-1.253&timezone=Europe/Paris&fo
+no marine data for La Garonne / Le Petit Train
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.448&longitude=-1.255&timezone=Europe/Paris&f
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.955&longitude=-1.355&timezone=Europe/Paris&f
 no marine data for Saint-Girons / La Lette Blanche
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.712&longitude=-1.435&timezone=Europe/Paris&f
 no marine data for Seignosse – Le Penon
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.655&longitude=-1.448&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.537&longitude=-1.512&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.485&longitude=-1.559&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.642&longitude=-1.447&timezone=Europe/Paris&f
+no marine data for Capbreton – Le Prévent
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.493&longitude=-1.548&timezone=Europe/Paris&f
+no marine data for Anglet – VVF / Le Club / Chambre d'Amour
