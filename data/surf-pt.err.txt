@@ -1,32 +1,37 @@
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.316&longitude=-8.983&timezone=Europe/Lisbon&
-buoy Leixões 2.31m @ 5.5s age 103min consensus 2.3 bias 1.0 per model {'best_match': 1.01, 'ecmwf_wam025': 1.01, 'copernicus_ibi': 0.96}
-buoy Nazaré 3.0m @ 6.3s age 15min consensus 2.8 bias 0.93 per model {'best_match': 0.93, 'ecmwf_wam025': 0.93, 'ncep_gfswave025': 0.93, 'copernicus_ibi': 0.95}
-buoy Sines 1.48m @ 4.9s age 78min consensus 1.8 bias 1.22 per model {'best_match': 1.26, 'ecmwf_wam025': 1.16, 'ncep_gfswave025': 1.35, 'copernicus_ibi': 1.1}
-buoy Faro 0.75m @ 4.1s age 79min consensus 0.72 bias 0.96 per model {'best_match': 1.17, 'ncep_gfswave025': 0.91, 'copernicus_ibi': 0.81}
-live wind: 12 station readings, 35 spots covered
-copernicus IBI loaded for 57 spots (0.1h old)
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.849&longitude=-8.867&timezone=Europe/Lisbon&
-model weights from buoy record: {'leixoes': {'best_match': 1.2, 'ecmwf_wam025': 0.97, 'ncep_gfswave025': 0.75, 'copernicus_ibi': 1.09}, 'nazare': {'best_match': 0.68, 'ecmwf_wam025': 1.1, 'ncep_gfswave025': 1.04, 'copernicus_ibi': 1.18}, 'sines': {'best_match': 0.64, 'ecmwf_wam025': 1.37, 'ncep_gfswave025': 0.75, 'copernicus_ibi': 1.24}, 'faro': {'best_match': 1.09, 'ncep_gfswave025': 1.16, 'copernicus_ibi': 0.75}}
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=41.19&longitude=-8.707&timezone=Europe/Lisbon&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=40.618&longitude=-8.755&timezone=Europe/Lisbon&
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.6&longitude=-9.076&timezone=Europe/Lisbon&fo
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.345&longitude=-9.364&timezone=Europe/Lisbon&
-no marine data for Supertubos
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=39.013&longitude=-9.423&timezone=Europe/Lisbon&forec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=38.957&longitude=-9.418&timezone=Europe/Lisbon&forec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.659&longitude=-9.253&timezone=Europe/Lisbon&
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=37.92&longitude=-8.805&timezone=Europe/Lisbon&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=37.717&longitude=-8.787&timezone=Europe/Lisbon&forec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=37.442&longitude=-8.797&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.921&longitude=-8.929&timezone=Europe/Lisbon&
+buoy Nazaré 2.8m @ 6.8s age 75min consensus 2.85 bias 1.02 per model {'best_match': 1.03, 'ecmwf_wam025': 1.01, 'ncep_gfswave025': 0.96, 'copernicus_ibi': 1.07}
+buoy Sines 1.82m @ 6.9s age 138min consensus 2.0 bias 1.1 per model {'ecmwf_wam025': 1.04, 'ncep_gfswave025': 1.21, 'copernicus_ibi': 1.05}
+buoy Faro 0.7m @ 5.1s age 79min consensus 0.71 bias 1.01 per model {'best_match': 1.11, 'ncep_gfswave025': 1.14, 'copernicus_ibi': 0.79}
+live wind: 10 station readings, 29 spots covered
+copernicus IBI loaded for 57 spots (0.2h old)
+model weights from buoy record: {'leixoes': {'best_match': 1.2, 'ecmwf_wam025': 0.97, 'ncep_gfswave025': 0.75, 'copernicus_ibi': 1.09}, 'nazare': {'best_match': 0.71, 'ecmwf_wam025': 1.11, 'ncep_gfswave025': 1.04, 'copernicus_ibi': 1.14}, 'sines': {'best_match': 0.6, 'ecmwf_wam025': 1.4, 'ncep_gfswave025': 0.75, 'copernicus_ibi': 1.25}, 'faro': {'best_match': 1.12, 'ncep_gfswave025': 1.15, 'copernicus_ibi': 0.73}}
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.682&longitude=-8.833&timezone=Europe/Lisbon&
+no marine data for Viana – Cabedelo
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.008&longitude=-8.647&timezone=Europe/Lisbon&
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.756&longitude=-9.034&timezone=Europe/Lisbon&
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=39.365&longitude=-9.343&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=39.14&longitude=-9.379&timezone=Europe/Lisbon&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.957&longitude=-9.418&timezone=Europe/Lisbon&
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=38.659&longitude=-9.253&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.857&longitude=-8.794&timezone=Europe/Lisbon&
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.523&longitude=-8.788&timezone=Europe/Lisbon&
+no marine data for Zambujeira do Mar
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.442&longitude=-8.797&timezone=Europe/Lisbon&forec
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.343&longitude=-8.854&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.293&longitude=-8.866&timezone=Europe/Lisbon&
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.293&longitude=-8.866&timezone=Europe/Lisbon&forec
+no marine data for Arrifana
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.2&longitude=-8.904&timezone=Europe/Lisbon&forecas
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=37.166&longitude=-8.904&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.166&longitude=-8.904&timezone=Europe/Lisbon&forec
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.116&longitude=-8.535&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.108&longitude=-8.94&timezone=Europe/Lisbon&f
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.108&longitude=-8.94&timezone=Europe/Lisbon&foreca
+no marine data for Cordoama / Castelejo
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.087&longitude=-8.726&timezone=Europe/Lisbon&forec
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.046&longitude=-8.872&timezone=Europe/Lisbon&forec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=37.026&longitude=-8.965&timezone=Europe/Lisbon&forec
+WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.026&longitude=-8.965&timezone=Europe/Lisbon&forec
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.006&longitude=-8.948&timezone=Europe/Lisbon&
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.006&longitude=-8.948&timezone=Europe/Lisbon&forec
+no marine data for Tonel
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.006&longitude=-7.994&timezone=Europe/Lisbon&forec
 WARN fetch failed: Expecting value: line 1 column 13 (char 12) :: https://api.open-meteo.com/v1/forecast?latitude=37.005&longitude=-8.94&timezone=Europe/Lisbon&foreca
