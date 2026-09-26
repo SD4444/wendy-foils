@@ -1,17 +1,27 @@
-buoy Anglet 1.2m @ 6.3s age 27min consensus 1.42 bias 1.18 per model {'best_match': 1.23, 'ecmwf_wam025': 1.1, 'copernicus_ibi': 1.21}
-buoy Saint-Jean-de-Luz 1.2m @ 7.5s age 27min consensus 1.4 bias 1.17 per model {'best_match': 1.13, 'ecmwf_wam025': 1.1, 'ncep_gfswave025': 1.23, 'copernicus_ibi': 1.2}
+buoy Anglet 1.7m @ 13.2s age 8min consensus 2.07 bias 1.22 per model {'best_match': 1.19, 'ecmwf_wam025': 1.25, 'copernicus_ibi': 1.21}
+buoy Saint-Jean-de-Luz 1.8m @ 14.5s age 8min consensus 1.94 bias 1.08 per model {'best_match': 1.03, 'ecmwf_wam025': 1.18, 'ncep_gfswave025': 0.98, 'copernicus_ibi': 1.13}
 live wind: 9 station readings, 22 spots covered
 copernicus IBI loaded for 36 spots (0.0h old)
-model weights from buoy record: {'cap_ferret': {'best_match': 1.02, 'ecmwf_wam025': 1.22, 'ncep_gfswave025': 0.52, 'copernicus_ibi': 1.25}, 'anglet': {'best_match': 1.16, 'ecmwf_wam025': 0.91, 'copernicus_ibi': 0.92}, 'sjdl': {'best_match': 1.39, 'ecmwf_wam025': 0.81, 'ncep_gfswave025': 0.98, 'copernicus_ibi': 0.82}}
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.483&longitude=-1.15&timezone=Europe/Paris&fo
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&f
-no marine data for Hourtin-Plage
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.885&longitude=-1.222&timezone=Europe/Paris&f
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.512&longitude=-1.135&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.512&longitude=-1.135&timezone=Europe/Paris&foreca
+model weights from buoy record: {'cap_ferret': {'best_match': 1.02, 'ecmwf_wam025': 1.22, 'ncep_gfswave025': 0.52, 'copernicus_ibi': 1.25}, 'anglet': {'best_match': 1.18, 'ecmwf_wam025': 0.88, 'copernicus_ibi': 0.95}, 'sjdl': {'best_match': 1.4, 'ecmwf_wam025': 0.78, 'ncep_gfswave025': 1.0, 'copernicus_ibi': 0.82}}
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.483&longitude=-1.15&timezone=Europe/Paris&forecas
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.483&longitude=-1.15&timezone=Europe/Paris&forecas
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.435&longitude=-1.155&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.435&longitude=-1.155&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.378&longitude=-1.152&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.378&longitude=-1.152&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&foreca
+WARN fetch failed: HTTP Error 500: Internal Server Error :: https://api.open-meteo.com/v1/forecast?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&foreca
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.67&longitude=-1.253&timezone=Europe/Paris&fo
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.212&longitude=-1.298&timezone=Europe/Paris&f
+no marine data for La Garonne / Le Petit Train
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=44.585&longitude=-1.24&timezone=Europe/Paris&forecas
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=44.585&longitude=-1.24&timezone=Europe/Paris&forecas
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=44.212&longitude=-1.298&timezone=Europe/Paris&foreca
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=44.212&longitude=-1.298&timezone=Europe/Paris&foreca
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.955&longitude=-1.355&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.712&longitude=-1.435&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.655&longitude=-1.448&timezone=Europe/Paris&foreca
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.537&longitude=-1.512&timezone=Europe/Paris&f
-no marine data for Tarnos – Le Métro / La Digue
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.493&longitude=-1.548&timezone=Europe/Paris&f
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=43.955&longitude=-1.355&timezone=Europe/Paris&foreca
+WARN fetch failed: Expecting value: line 1 column 1 (char 0) :: https://api.open-meteo.com/v1/forecast?latitude=43.955&longitude=-1.355&timezone=Europe/Paris&foreca
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.655&longitude=-1.448&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.505&longitude=-1.54&timezone=Europe/Paris&forecas
