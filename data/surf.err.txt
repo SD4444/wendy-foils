@@ -1,22 +1,18 @@
-buoy Cap Ferret 1.0m @ 8.0s age 22min consensus 1.23 bias 1.23 per model {'best_match': 1.32, 'ecmwf_wam025': 1.22, 'ncep_gfswave025': 1.24, 'copernicus_ibi': 1.13}
-buoy Anglet 1.0m @ 9.5s age 22min consensus 1.18 bias 1.18 per model {'best_match': 1.18, 'ecmwf_wam025': 1.2, 'copernicus_ibi': 1.17}
-buoy Saint-Jean-de-Luz 0.9m @ 9.0s age 22min consensus 1.11 bias 1.23 per model {'best_match': 1.18, 'ecmwf_wam025': 1.33, 'ncep_gfswave025': 1.18, 'copernicus_ibi': 1.27}
+buoy Cap Ferret 1.1m @ 10.0s age 14min consensus 1.33 bias 1.21 per model {'best_match': 1.27, 'ecmwf_wam025': 1.24, 'ncep_gfswave025': 1.18, 'copernicus_ibi': 1.15}
+buoy Anglet 1.1m @ 9.9s age 14min consensus 1.24 bias 1.13 per model {'best_match': 1.11, 'ecmwf_wam025': 1.15, 'copernicus_ibi': 1.12}
+buoy Saint-Jean-de-Luz 1.0m @ 9.8s age 14min consensus 1.17 bias 1.17 per model {'best_match': 1.12, 'ecmwf_wam025': 1.26, 'ncep_gfswave025': 1.1, 'copernicus_ibi': 1.21}
 live wind: 9 station readings, 22 spots covered
 copernicus IBI loaded for 36 spots (0.1h old)
-model weights from buoy record: {'cap_ferret': {'best_match': 0.82, 'ecmwf_wam025': 1.12, 'ncep_gfswave025': 0.63, 'copernicus_ibi': 1.44}, 'anglet': {'best_match': 1.11, 'ecmwf_wam025': 0.9, 'copernicus_ibi': 0.99}, 'sjdl': {'best_match': 1.38, 'ecmwf_wam025': 0.82, 'ncep_gfswave025': 0.96, 'copernicus_ibi': 0.85}}
+model weights from buoy record: {'cap_ferret': {'best_match': 0.85, 'ecmwf_wam025': 1.09, 'ncep_gfswave025': 0.65, 'copernicus_ibi': 1.41}, 'anglet': {'best_match': 1.13, 'ecmwf_wam025': 0.89, 'copernicus_ibi': 0.98}, 'sjdl': {'best_match': 1.38, 'ecmwf_wam025': 0.82, 'ncep_gfswave025': 0.96, 'copernicus_ibi': 0.84}}
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.483&longitude=-1.15&timezone=Europe/Paris&fo
 no marine data for L'Amélie
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.302&longitude=-1.162&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.885&longitude=-1.222&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.67&longitude=-1.253&timezone=Europe/Paris&fo
-no marine data for La Garonne / Le Petit Train
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.448&longitude=-1.255&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=45.223&longitude=-1.172&timezone=Europe/Paris&f
+no marine data for Hourtin-Plage
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.835&longitude=-1.23&timezone=Europe/Paris&fo
+no marine data for La Jenny
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=44.64&longitude=-1.255&timezone=Europe/Paris&fo
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.955&longitude=-1.355&timezone=Europe/Paris&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.712&longitude=-1.435&timezone=Europe/Paris&f
-no marine data for Seignosse – Le Penon
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.642&longitude=-1.447&timezone=Europe/Paris&f
-no marine data for Capbreton – Le Prévent
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.52&longitude=-1.535&timezone=Europe/Paris&fo
-no marine data for Anglet – La Barre / Cavaliers / Océan
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.477&longitude=-1.567&timezone=Europe/Paris&f
-no marine data for Biarritz – Côte des Basques
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.672&longitude=-1.445&timezone=Europe/Paris&f
+no marine data for Hossegor – Centrale / Gravière / Nord
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=43.537&longitude=-1.512&timezone=Europe/Paris&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=43.477&longitude=-1.567&timezone=Europe/Paris&foreca
