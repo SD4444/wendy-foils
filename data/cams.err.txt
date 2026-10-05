@@ -1,1 +1,1 @@
-cams: 133 urls, {'stale': 7, 'live': 50, 'unknown': 76}; best cam not live for: Soulac-sur-Mer: stale (910h); La Salie Nord / Sud: stale; Biarritz – Grande Plage: stale (33h)
+cams: 133 urls, {'stale': 5, 'live': 52, 'unknown': 76}; best cam not live for: Soulac-sur-Mer: stale (925h); La Salie Nord / Sud: stale
