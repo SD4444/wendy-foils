@@ -1,1 +1,1 @@
-cams: 133 urls, {'stale': 5, 'live': 52, 'unknown': 76}; best cam not live for: Soulac-sur-Mer: stale (1187h); La Salie Nord / Sud: stale
+cams: 133 urls, {'live': 52, 'unknown': 76, 'stale': 5}; best cam not live for: La Salie Nord / Sud: stale; Capbreton – Santocha / La Piste: stale (43h); Capbreton – Le Prévent: stale (43h)
