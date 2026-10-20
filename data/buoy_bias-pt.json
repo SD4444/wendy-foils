@@ -944,6 +944,15 @@
     "ecmwf_wam025": 0.93,
     "copernicus_ibi": 1.03
    }
+  },
+  "2026-10-20": {
+   "bias": 1.11,
+   "models": {
+    "best_match": 1.19,
+    "ecmwf_wam025": 1.13,
+    "ncep_gfswave025": 1.07,
+    "copernicus_ibi": 1.02
+   }
   }
  },
  "faro": {
