@@ -971,6 +971,14 @@
     "ncep_gfswave025": 0.94,
     "copernicus_ibi": 1.09
    }
+  },
+  "2026-10-22": {
+   "bias": 0.98,
+   "models": {
+    "ecmwf_wam025": 1.06,
+    "ncep_gfswave025": 0.94,
+    "copernicus_ibi": 0.95
+   }
   }
  },
  "faro": {
