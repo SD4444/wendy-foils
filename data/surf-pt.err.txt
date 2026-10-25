@@ -1,21 +1,19 @@
 live wind: 11 station readings, 33 spots covered
-copernicus IBI loaded for 57 spots (0.2h old)
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.849&longitude=-8.867&timezone=Europe/Lisbon&
+copernicus IBI loaded for 57 spots (0.1h old)
 model weights from buoy record: {'leixoes': {'best_match': 1.09, 'ecmwf_wam025': 1.01, 'ncep_gfswave025': 0.8, 'copernicus_ibi': 1.1}, 'nazare': {'best_match': 0.95, 'ecmwf_wam025': 1.23, 'ncep_gfswave025': 0.51, 'copernicus_ibi': 1.31}, 'sines': {'best_match': 0.63, 'ecmwf_wam025': 1.39, 'ncep_gfswave025': 0.81, 'copernicus_ibi': 1.16}, 'faro': {'best_match': 1.15, 'ncep_gfswave025': 1.11, 'copernicus_ibi': 0.74}}
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.19&longitude=-8.707&timezone=Europe/Lisbon&f
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=41.522&longitude=-8.79&timezone=Europe/Lisbon&f
+no marine data for Ofir
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=40.64&longitude=-8.756&timezone=Europe/Lisbon&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.612&longitude=-9.086&timezone=Europe/Lisbon&
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://api.open-meteo.com/v1/forecast?latitude=39.349&longitude=-9.367&timezone=Europe/Lisbon&forec
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.013&longitude=-9.423&timezone=Europe/Lisbon&
-no marine data for Ericeira – São Lourenço
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.957&longitude=-9.418&timezone=Europe/Lisbon&
-no marine data for Ericeira – Praia do Sul
+no marine data for Praia da Barra
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.6&longitude=-9.076&timezone=Europe/Lisbon&fo
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=39.326&longitude=-9.362&timezone=Europe/Lisbon&
+no marine data for Consolação
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.988&longitude=-9.42&timezone=Europe/Lisbon&f
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.693&longitude=-9.37&timezone=Europe/Lisbon&f
+no marine data for São Pedro do Estoril
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=38.465&longitude=-9.192&timezone=Europe/Lisbon&
-no marine data for Bicas
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.722&longitude=-8.79&timezone=Europe/Lisbon&f
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.501&longitude=-8.793&timezone=Europe/Lisbon&
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.293&longitude=-8.866&timezone=Europe/Lisbon&
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.717&longitude=-8.787&timezone=Europe/Lisbon&
+no marine data for Furnas
+WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.343&longitude=-8.854&timezone=Europe/Lisbon&
 WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.087&longitude=-8.726&timezone=Europe/Lisbon&
 no marine data for Praia da Luz
-WARN fetch failed: <urlopen error _ssl.c:983: The handshake operation timed out> :: https://marine-api.open-meteo.com/v1/marine?latitude=37.006&longitude=-7.994&timezone=Europe/Lisbon&
