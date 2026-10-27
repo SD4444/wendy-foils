@@ -1,1 +1,1 @@
-cams: 133 urls, {'live': 51, 'unknown': 76, 'stale': 6}; best cam not live for: Grand Crohot: stale (190h); La Salie Nord / Sud: stale; Capbreton – Santocha / La Piste: stale (260h); Capbreton – Le Prévent: stale (260h)
+cams: 133 urls, {'live': 50, 'unknown': 76, 'stale': 6, 'down': 1}; best cam not live for: Grand Crohot: stale (214h); La Salie Nord / Sud: stale; Capbreton – Santocha / La Piste: stale (284h); Capbreton – Le Prévent: stale (284h)
