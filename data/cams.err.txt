@@ -1,1 +1,1 @@
-cams: 133 urls, {'live': 53, 'unknown': 76, 'stale': 4}; best cam not live for: Le Truc Vert: stale (5611h); La Garonne / Le Petit Train: stale (5611h); L'Horizon / Les Dunes / La Pointe: stale (5611h); La Salie Nord / Sud: stale
+cams: 133 urls, {'live': 52, 'unknown': 78, 'stale': 3}; best cam not live for: La Salie Nord / Sud: stale
