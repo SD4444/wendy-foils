@@ -1,1 +1,1 @@
-cams: 133 urls, {'live': 50, 'unknown': 78, 'stale': 5}; best cam not live for: La Salie Nord / Sud: stale; Saint-Girons / La Lette Blanche: stale (40h)
+cams: 133 urls, {'live': 50, 'unknown': 78, 'stale': 5}; best cam not live for: La Salie Nord / Sud: stale; Saint-Girons / La Lette Blanche: stale (64h)
