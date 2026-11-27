@@ -1,17 +1,17 @@
 {
- "checked_at": "2026-11-26T11:45:13Z",
+ "checked_at": "2026-11-27T11:39:02Z",
  "stale_hours": 24,
  "cams": {
   "https://pv.viewsurf.com/2180/Soulac": {
    "url": "https://pv.viewsurf.com/2180/Soulac",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.0,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/15742-france-aquitaine-soulac-sur-mer-panoramique-hd": {
    "url": "https://viewsurf.com/univers/surf/vue/15742-france-aquitaine-soulac-sur-mer-panoramique-hd",
    "http": 200,
-   "frame_age_h": 0.2,
+   "frame_age_h": 0.5,
    "state": "live"
   },
   "https://pv.viewsurf.com/1704/Vendays-Montalivet-Plage": {
@@ -35,7 +35,7 @@
   "https://viewsurf.com/univers/surf/vue/13896-france-aquitaine-vendays-montalivet-panoramique-hd": {
    "url": "https://viewsurf.com/univers/surf/vue/13896-france-aquitaine-vendays-montalivet-panoramique-hd",
    "http": 200,
-   "frame_age_h": 6.9,
+   "frame_age_h": 18.7,
    "state": "live"
   },
   "https://pv.viewsurf.com/410/Lacanau-Plage-Nord-Surf-club": {
@@ -47,44 +47,44 @@
   "https://viewsurf.com/univers/plage/vue/11106-france-aquitaine-hourtin-plage": {
    "url": "https://viewsurf.com/univers/plage/vue/11106-france-aquitaine-hourtin-plage",
    "http": 200,
-   "frame_age_h": 3.2,
+   "frame_age_h": 1.6,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/656-france-aquitaine-lacanau-plage-centrale": {
    "url": "https://viewsurf.com/univers/surf/vue/656-france-aquitaine-lacanau-plage-centrale",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/1255-france-aquitaine-carcans-la-plage": {
    "url": "https://viewsurf.com/univers/surf/vue/1255-france-aquitaine-carcans-la-plage",
    "http": 200,
-   "frame_age_h": 4.7,
+   "frame_age_h": 7.6,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/658-france-aquitaine-lacanau-lacanau-surf-club": {
    "url": "https://viewsurf.com/univers/surf/vue/658-france-aquitaine-lacanau-lacanau-surf-club",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 5.4,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/660-france-aquitaine-lacanau-poste-de-secours-nord": {
    "url": "https://viewsurf.com/univers/surf/vue/660-france-aquitaine-lacanau-poste-de-secours-nord",
    "http": 200,
-   "frame_age_h": 8.9,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/654-france-aquitaine-lacanau-sud-du-poste-de-secours-nord": {
    "url": "https://viewsurf.com/univers/surf/vue/654-france-aquitaine-lacanau-sud-du-poste-de-secours-nord",
    "http": 200,
-   "frame_age_h": 4.2,
+   "frame_age_h": 5.6,
    "state": "live"
   },
   "https://www.skaping.com/medoc-plein-sud/le-porge-ocean/live": {
    "url": "https://www.skaping.com/medoc-plein-sud/le-porge-ocean/live",
-   "http": 200,
+   "http": 0,
    "frame_age_h": null,
-   "state": "unknown"
+   "state": "down"
   },
   "https://www.allosurf.net/meteo/live/webcam-live-le-porge-plage-centrale-live-366-850-vue-2779.html": {
    "url": "https://www.allosurf.net/meteo/live/webcam-live-le-porge-plage-centrale-live-366-850-vue-2779.html",
@@ -134,7 +134,7 @@
   "https://viewsurf.com/univers/surf/vue/11358-france-aquitaine-biscarrosse-live": {
    "url": "https://viewsurf.com/univers/surf/vue/11358-france-aquitaine-biscarrosse-live",
    "http": 200,
-   "frame_age_h": 0.1,
+   "frame_age_h": 0.2,
    "state": "live"
   },
   "https://www.biscagrandslacs.co.uk/discover/all-our-webcams/webcam-biscarrosse-plage-centrale": {
@@ -170,7 +170,7 @@
   "https://www.viewsurf.com/univers/surf/vue/3112-france-aquitaine-mimizan-panoramique-video": {
    "url": "https://www.viewsurf.com/univers/surf/vue/3112-france-aquitaine-mimizan-panoramique-video",
    "http": 200,
-   "frame_age_h": 2.8,
+   "frame_age_h": 1.0,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/184/Mimizan-Plage-Centrale": {
@@ -188,25 +188,25 @@
   "https://www.viewsurf.com/univers/surf/vue/17572-france-aquitaine-contis-plage-de-contis-vue-ouest": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17572-france-aquitaine-contis-plage-de-contis-vue-ouest",
    "http": 200,
-   "frame_age_h": 20.0,
+   "frame_age_h": 18.7,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/17344-france-aquitaine-contis-panoramique-hd": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17344-france-aquitaine-contis-panoramique-hd",
    "http": 200,
-   "frame_age_h": 1.5,
+   "frame_age_h": 0.6,
    "state": "live"
   },
   "https://www.viewsurf.com/univers/surf/vue/14302-france-aquitaine-moliets-et-maa-nord": {
    "url": "https://www.viewsurf.com/univers/surf/vue/14302-france-aquitaine-moliets-et-maa-nord",
    "http": 200,
-   "frame_age_h": 377.4,
+   "frame_age_h": 401.3,
    "state": "stale"
   },
   "https://www.viewsurf.com/univers/surf/vue/17346-france-aquitaine-contis-plage-de-contis": {
    "url": "https://www.viewsurf.com/univers/surf/vue/17346-france-aquitaine-contis-plage-de-contis",
    "http": 200,
-   "frame_age_h": 16.7,
+   "frame_age_h": 5.4,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/187/Moliets-Plage-Centrale": {
@@ -230,7 +230,7 @@
   "https://www.viewsurf.com/univers/surf/vue/13364-france-aquitaine-moliets-et-maa-panoramique-hd": {
    "url": "https://www.viewsurf.com/univers/surf/vue/13364-france-aquitaine-moliets-et-maa-panoramique-hd",
    "http": 200,
-   "frame_age_h": 378.4,
+   "frame_age_h": 402.3,
    "state": "stale"
   },
   "https://gosurf.fr/webcam/fr/85/Vieux-Boucau-Plage-de-Vieux-Boucau": {
@@ -260,7 +260,7 @@
   "https://www.viewsurf.com/univers/surf/vue/14378-france-aquitaine-seignosse-le-penon": {
    "url": "https://www.viewsurf.com/univers/surf/vue/14378-france-aquitaine-seignosse-le-penon",
    "http": 200,
-   "frame_age_h": 0.9,
+   "frame_age_h": 0.1,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/79/Seignosse-Plage-des-Bourdaines-Plage-des-Estagnots": {
@@ -272,7 +272,7 @@
   "https://pv.viewsurf.com/2368/Seignosse-Les-Bourdaines": {
    "url": "https://pv.viewsurf.com/2368/Seignosse-Les-Bourdaines",
    "http": 200,
-   "frame_age_h": 0.7,
+   "frame_age_h": 0.6,
    "state": "live"
   },
   "https://gosurf.fr/webcam/fr/21/Hossegor-La-Centrale": {
@@ -290,7 +290,7 @@
   "https://www.viewsurf.com/univers/surf/vue/2058-france-aquitaine-soorts-hossegor-plage": {
    "url": "https://www.viewsurf.com/univers/surf/vue/2058-france-aquitaine-soorts-hossegor-plage",
    "http": 200,
-   "frame_age_h": 0.4,
+   "frame_age_h": 4.1,
    "state": "live"
   },
   "https://pv.viewsurf.com/2534/Capbreton-Santocha": {
@@ -338,13 +338,13 @@
   "https://viewsurf.com/univers/surf/vue/5892-france-aquitaine-ondres-la-plage": {
    "url": "https://viewsurf.com/univers/surf/vue/5892-france-aquitaine-ondres-la-plage",
    "http": 200,
-   "frame_age_h": 15.2,
+   "frame_age_h": 4.1,
    "state": "live"
   },
   "https://viewsurf.com/univers/surf/vue/15934-france-aquitaine-ondres-panoramique": {
    "url": "https://viewsurf.com/univers/surf/vue/15934-france-aquitaine-ondres-panoramique",
    "http": 200,
-   "frame_age_h": 1.6,
+   "frame_age_h": 3.0,
    "state": "live"
   },
   "https://pv.viewsurf.com/2134/Anglet-Plage-de-La-Barre-et-embouchure-de-l-Adour": {
@@ -397,9 +397,9 @@
   },
   "https://www.skaping.com/anglet/chambre-d-amour": {
    "url": "https://www.skaping.com/anglet/chambre-d-amour",
-   "http": 200,
+   "http": 0,
    "frame_age_h": null,
-   "state": "unknown"
+   "state": "down"
   },
   "https://pv.viewsurf.com/1802/Biarritz-Grande-Plage": {
    "url": "https://pv.viewsurf.com/1802/Biarritz-Grande-Plage",
@@ -439,367 +439,367 @@
   },
   "https://beachcam.meo.pt/livecams/viana-do-castelo-afife-arda/": {
    "url": "https://beachcam.meo.pt/livecams/viana-do-castelo-afife-arda/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/viana-do-castelo-cabedelo/": {
    "url": "https://beachcam.meo.pt/livecams/viana-do-castelo-cabedelo/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/ofir/": {
    "url": "https://beachcam.meo.pt/livecams/ofir/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/leca-da-palmeira/": {
    "url": "https://beachcam.meo.pt/livecams/leca-da-palmeira/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/leca-da-palmeira-panoraminca-aterro/": {
    "url": "https://beachcam.meo.pt/livecams/leca-da-palmeira-panoraminca-aterro/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-de-matosinhos/": {
    "url": "https://beachcam.meo.pt/livecams/praia-de-matosinhos/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-de-espinho/": {
    "url": "https://beachcam.meo.pt/livecams/praia-de-espinho/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/espinhopicodocasino/": {
    "url": "https://beachcam.meo.pt/livecams/espinhopicodocasino/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/furadouro/": {
    "url": "https://beachcam.meo.pt/livecams/furadouro/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-da-barra/": {
    "url": "https://beachcam.meo.pt/livecams/praia-da-barra/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-de-sao-jacinto-barra/": {
    "url": "https://beachcam.meo.pt/livecams/praia-de-sao-jacinto-barra/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/costa-nova/": {
    "url": "https://beachcam.meo.pt/livecams/costa-nova/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/figueira-da-foz-cabedelo/": {
    "url": "https://beachcam.meo.pt/livecams/figueira-da-foz-cabedelo/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/sao-pedro-de-moel/": {
    "url": "https://beachcam.meo.pt/livecams/sao-pedro-de-moel/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-do-norte-canhao-nazare/": {
    "url": "https://beachcam.meo.pt/livecams/praia-do-norte-canhao-nazare/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-da-nazare/": {
    "url": "https://beachcam.meo.pt/livecams/praia-da-nazare/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/lagide/": {
    "url": "https://beachcam.meo.pt/livecams/lagide/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/peniche-baleal-panoramica/": {
    "url": "https://beachcam.meo.pt/livecams/peniche-baleal-panoramica/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/peniche-molhe-leste/": {
    "url": "https://beachcam.meo.pt/livecams/peniche-molhe-leste/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/peniche-supertubos/": {
    "url": "https://beachcam.meo.pt/livecams/peniche-supertubos/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-da-consolacao/": {
    "url": "https://beachcam.meo.pt/livecams/praia-da-consolacao/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/areia-branca/": {
    "url": "https://beachcam.meo.pt/livecams/areia-branca/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/santa-cruz/": {
    "url": "https://beachcam.meo.pt/livecams/santa-cruz/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/santa-cruz-praia-azul/": {
    "url": "https://beachcam.meo.pt/livecams/santa-cruz-praia-azul/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/ericeira-sao-lourenco/": {
    "url": "https://beachcam.meo.pt/livecams/ericeira-sao-lourenco/",
-   "http": 403,
+   "http": 404,
    "frame_age_h": null,
-   "state": "unknown"
+   "state": "down"
   },
   "https://beachcam.meo.pt/livecams/ribeira-dilhas/": {
    "url": "https://beachcam.meo.pt/livecams/ribeira-dilhas/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/ribeira-dilhas-estatica/": {
    "url": "https://beachcam.meo.pt/livecams/ribeira-dilhas-estatica/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/ericeira/": {
    "url": "https://beachcam.meo.pt/livecams/ericeira/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/ericeira-praia-do-sul/": {
    "url": "https://beachcam.meo.pt/livecams/ericeira-praia-do-sul/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/foz-do-lizandro/": {
    "url": "https://beachcam.meo.pt/livecams/foz-do-lizandro/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-grande/": {
    "url": "https://beachcam.meo.pt/livecams/praia-grande/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-grande-sul/": {
    "url": "https://beachcam.meo.pt/livecams/praia-grande-sul/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-do-guincho/": {
    "url": "https://beachcam.meo.pt/livecams/praia-do-guincho/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-do-guincho-norte/": {
    "url": "https://beachcam.meo.pt/livecams/praia-do-guincho-norte/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/sao-pedro-do-estoril/": {
    "url": "https://beachcam.meo.pt/livecams/sao-pedro-do-estoril/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-de-carcavelos/": {
    "url": "https://beachcam.meo.pt/livecams/praia-de-carcavelos/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/carcavelos-calhau/": {
    "url": "https://beachcam.meo.pt/livecams/carcavelos-calhau/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/costa-de-caparica-sao-joao-cova-do-vapor/": {
    "url": "https://beachcam.meo.pt/livecams/costa-de-caparica-sao-joao-cova-do-vapor/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/costa-da-caparica/": {
    "url": "https://beachcam.meo.pt/livecams/costa-da-caparica/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/costa-da-caparica-cds/": {
    "url": "https://beachcam.meo.pt/livecams/costa-da-caparica-cds/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/costa-de-caparica-praia-do-norte/": {
    "url": "https://beachcam.meo.pt/livecams/costa-de-caparica-praia-do-norte/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/fonte-da-telha/": {
    "url": "https://beachcam.meo.pt/livecams/fonte-da-telha/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/fonte-da-telha-sul/": {
    "url": "https://beachcam.meo.pt/livecams/fonte-da-telha-sul/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-das-bicas/": {
    "url": "https://beachcam.meo.pt/livecams/praia-das-bicas/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-de-sao-torpes/": {
    "url": "https://beachcam.meo.pt/livecams/praia-de-sao-torpes/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-farol/": {
    "url": "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-farol/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-franquia/": {
    "url": "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-franquia/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-furnas-mar/": {
    "url": "https://beachcam.meo.pt/livecams/vila-nova-de-milfontes-furnas-mar/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/almograve/": {
    "url": "https://beachcam.meo.pt/livecams/almograve/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/zambujeira-do-mar/": {
    "url": "https://beachcam.meo.pt/livecams/zambujeira-do-mar/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/carvalhal/": {
    "url": "https://beachcam.meo.pt/livecams/carvalhal/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/odeceixe/": {
    "url": "https://beachcam.meo.pt/livecams/odeceixe/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/monte-clerigo/": {
    "url": "https://beachcam.meo.pt/livecams/monte-clerigo/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/arrifana/": {
    "url": "https://beachcam.meo.pt/livecams/arrifana/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-do-amado/": {
    "url": "https://beachcam.meo.pt/livecams/praia-do-amado/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-da-rocha/": {
    "url": "https://beachcam.meo.pt/livecams/praia-da-rocha/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/cordoama/": {
    "url": "https://beachcam.meo.pt/livecams/cordoama/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/praia-da-luz/": {
    "url": "https://beachcam.meo.pt/livecams/praia-da-luz/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/sagres/": {
    "url": "https://beachcam.meo.pt/livecams/sagres/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/faro/": {
    "url": "https://beachcam.meo.pt/livecams/faro/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   },
   "https://beachcam.meo.pt/livecams/faro-oeste/": {
    "url": "https://beachcam.meo.pt/livecams/faro-oeste/",
-   "http": 403,
+   "http": 200,
    "frame_age_h": null,
    "state": "unknown"
   }
